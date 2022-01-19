@@ -1,3 +1,4 @@
+import data.Appointment;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -19,7 +20,8 @@ public class App extends Application {
 
             @Override
             public void handle(ActionEvent arg0) {
-                System.out.println("I was clicked hard");
+                Appointment appointment = new Appointment(null, null, "14:15");
+                System.out.println(appointment.getTime());
             }
 
         });
