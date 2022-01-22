@@ -38,4 +38,9 @@ public class Backup {
     this.daylist = daylist;
   }
 
+  public static Backup load(String filepath) {
+    // TODO: Load JSON file and return data as backup
+    return null;
+  }
+
 }

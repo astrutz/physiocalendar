@@ -1,6 +1,6 @@
 package data;
 
-public enum Weekday {
+public enum Weekday implements EnumIterable<Weekday> {
   Montag,
   Dienstag,
   Mittwoch,

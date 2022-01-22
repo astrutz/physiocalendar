@@ -1,39 +1,43 @@
-import data.Appointment;
+import java.io.IOException;
+
+import data.Backup;
+import data.Daylist;
+import data.Masterlist;
 import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.layout.StackPane;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 public class App extends Application {
-    public static void main(String[] args) throws Exception {
+    Masterlist masterlist;
+    Daylist daylist;
+
+    public static void main(String[] args) throws IOException {
         launch(args);
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
-        Button btn = new Button();
-        btn.setText("Klick mich du Sau");
-        btn.setOnAction(new EventHandler<ActionEvent>() {
+    public void start(Stage stage) throws IOException {
+        Backup backup = Backup.load("");
+        daylist = backup.getDaylist();
+        masterlist = backup.getMasterlist();
 
-            @Override
-            public void handle(ActionEvent arg0) {
-                Appointment appointment = new Appointment(null, null, "14:15");
-                System.out.println(appointment.getTime());
-            }
+        // TODO: Use Masterlist and Daylist in Controller class
 
-        });
+        Parent rootNode = FXMLLoader.load(getClass().getResource("App.fxml"));
 
-        StackPane root = new StackPane();
-        root.getChildren().add(btn);
+        Scene scene = new Scene(rootNode, 1600, 900);
+        Image icon = new Image("icon.png");
 
-        Scene scene = new Scene(root, 350, 250);
-
-        primaryStage.setTitle("Hello world");
-        primaryStage.setScene(scene);
-        primaryStage.show();
-        
+        stage.getIcons().add(icon);
+        stage.setTitle("Physiocalendar");
+        stage.setMaximized(true);
+        stage.setScene(scene);
+        stage.setMinWidth(1600);
+        stage.setMinHeight(900);
+        stage.show();
     }
+
 }
