@@ -1,6 +1,8 @@
 package data;
 
-public class ListDay {
+import java.io.Serializable;
+
+public class ListDay implements Serializable {
   private Appointment[] appointments;
   private Therapist[] therapists;
 

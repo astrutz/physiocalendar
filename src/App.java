@@ -20,9 +20,9 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        Backup backup = Backup.load("");
-        daylist = backup.getDaylist();
-        masterlist = backup.getMasterlist();
+        // Backup backup = Backup.load("");
+        // daylist = backup.getDaylist();
+        // masterlist = backup.getMasterlist();
 
         // TODO: Use Masterlist and Daylist in Controller class
 

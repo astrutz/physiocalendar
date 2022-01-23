@@ -1,6 +1,8 @@
 package data;
 
-public class Masterlist {
+import java.io.Serializable;
+
+public class Masterlist implements Serializable {
 
   private ListWeekDay[] elements;
 

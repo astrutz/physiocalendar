@@ -1,6 +1,8 @@
 package data;
 
-public class Appointment {
+import java.io.Serializable;
+
+public class Appointment implements Serializable {
 
   private Therapist therapist;
   private Patient patient;

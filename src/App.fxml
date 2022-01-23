@@ -21,9 +21,10 @@
                 <Menu mnemonicParsing="false" text="Menü">
                   <items>
                     <MenuItem mnemonicParsing="false" text="Terminfinder" />
-                        <MenuItem mnemonicParsing="false" text="Backup speichern" />
-                        <MenuItem mnemonicParsing="false" text="Backup laden" />
+                        <MenuItem mnemonicParsing="false" onAction="#loadBackup" text="Backup laden" />
+                        <MenuItem mnemonicParsing="false" onAction="#saveBackup" text="Backup speichern" />
                         <MenuItem mnemonicParsing="false" text="Therapeuten verwalten" />
+                        <MenuItem mnemonicParsing="false" onAction="#scaffoldData" text="Scaffold Data" />
                   </items>
                 </Menu>
               </menus>

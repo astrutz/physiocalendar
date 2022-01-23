@@ -1,6 +1,8 @@
 package data;
 
-public class Therapist {
+import java.io.Serializable;
+
+public class Therapist implements Serializable {
 
   private String name;
   private Patient[] patients;

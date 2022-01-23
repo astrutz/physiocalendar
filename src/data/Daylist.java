@@ -1,6 +1,8 @@
 package data;
 
-public class Daylist {
+import java.io.Serializable;
+
+public class Daylist implements Serializable {
 
   private ListSingleDay[] elements;
 

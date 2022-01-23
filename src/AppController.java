@@ -4,6 +4,7 @@ import java.time.format.TextStyle;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import data.Backup;
 import data.Weekday;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -18,6 +19,8 @@ public class AppController implements Initializable {
   @FXML
   private Text singleDay;
 
+  private Backup backup;
+
   @Override
   public void initialize(URL arg0, ResourceBundle arg1) {
     LocalDate now = LocalDate.now();
@@ -31,6 +34,19 @@ public class AppController implements Initializable {
     } catch (IllegalArgumentException e) {
       weekDay.setText(Weekday.Montag.toString());
     }
+  }
+
+  public void scaffoldData() {
+    backup = Backup.scaffoldBackup();
+  }
+
+  public void loadBackup() {
+    backup = Backup.load("data.bin");
+    System.out.println(backup.getCreatedDate());
+  }
+
+  public void saveBackup() {
+    backup.save("data.bin");
   }
 
   public void nextWeekdayDay(ActionEvent e) {
