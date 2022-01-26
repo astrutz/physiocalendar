@@ -9,8 +9,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import AppBar from './components/AppBar.vue';
-import ListTabs from './components/ListTabs.vue';
+import AppBar from '@/components/AppBar.vue';
+import ListTabs from '@/components/ListTabs.vue';
 
 export default Vue.extend({
   name: 'App',

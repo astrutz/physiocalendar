@@ -1,17 +1,23 @@
 <template>
-  <div>Calendar with {{ listType }}</div>
+  <v-container>
+    <WeekDayPicker v-if="listType === 'masterlist'" />
+    <SingleDayPicker v-if="listType === 'daylist'" />
+  </v-container>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { Component, Prop, Vue } from 'vue-property-decorator';
+import WeekDayPicker from '@/components/WeekDayPicker.vue';
+import SingleDayPicker from '@/components/SingleDayPicker.vue';
 
-export default Vue.extend({
-  name: 'CalendarList',
-  props: {
-    listType: {
-      type: String,
-      required: true,
-    },
+@Component({
+  components: {
+    WeekDayPicker,
+    SingleDayPicker,
   },
-});
+})
+
+export default class CalendarList extends Vue {
+  @Prop() readonly listType!: string;
+}
 </script>

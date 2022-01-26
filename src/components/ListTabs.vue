@@ -1,6 +1,7 @@
 <template>
   <div>
     <v-tabs class="mt-4" v-model="tab" background-color="transparent" grow>
+      <v-tabs-slider></v-tabs-slider>
       <v-tab v-for="list in lists" :key="list.name">
         {{ list.name }}
       </v-tab>
@@ -14,16 +15,18 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import CalendarList from './CalendarList.vue';
+import { Component, Vue } from 'vue-property-decorator';
+import CalendarList from '@/components/CalendarList.vue';
 
-export default Vue.extend({
-  name: 'ListTabs',
-  components: { CalendarList },
-  data: () => ({
-    tab: null,
-    lists: [{ name: 'Terminliste', type: 'Masterlist' }, { name: 'Stammliste', type: 'Daylist' }],
-  }),
-});
+@Component({
+  components: {
+    CalendarList,
+  },
+})
 
+export default class ListTabs extends Vue {
+  private tab = null;
+
+  private lists: Array<Record<string, string>> = [{ name: 'Terminliste', type: 'daylist' }, { name: 'Stammliste', type: 'masterlist' }]
+}
 </script>

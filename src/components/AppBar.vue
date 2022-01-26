@@ -11,10 +11,10 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { Component, Vue } from 'vue-property-decorator';
 
-export default Vue.extend({
-  name: 'AppBar',
-});
+@Component
+export default class AppBar extends Vue {
+}
 
 </script>
