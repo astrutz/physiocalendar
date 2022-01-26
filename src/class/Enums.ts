@@ -1,5 +1,15 @@
-type Weekday = 'Montag' | 'Dienstag' | 'Mittwoch' | 'Donnerstag' | 'Freitag';
-type TimeOfDay = 'Morgens' | 'Vormittags' | 'Mittags' | 'Nachmittags' | 'Abends';
+export enum Weekday {
+  MONDAY= 'Montag',
+  TUESDAY= 'Dienstag',
+  WEDNESDAY= 'Mittwoch',
+  THURSDAY= 'Donnerstag',
+  FRIDAY= 'Freitag'
+}
 
-export type { Weekday };
-export type { TimeOfDay };
+export enum TimeOfDay {
+  MORNING= 'Morgens',
+  FORENOON= 'Vormittags',
+  NOON= 'Mittags',
+  AFTERNOON= 'Nachmittags',
+  EVENING= 'Abends'
+}

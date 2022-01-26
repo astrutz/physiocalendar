@@ -1,7 +1,7 @@
 <template>
   <v-row align="center" justify="center">
     <v-col cols="auto"
-      ><v-btn text @click="previousWeekDay">
+      ><v-btn text @click="setPreviousWeekDay">
         <v-icon>mdi-arrow-left</v-icon>
       </v-btn>
     </v-col>
@@ -28,14 +28,17 @@ import { Component, Vue } from 'vue-property-decorator';
 
 @Component
 export default class WeekDayPicker extends Vue {
-  private weekDay: Weekday = 'Montag';
+  private weekDay: Weekday = Weekday.MONDAY;
 
   setNextWeekDay() : void {
-    this.weekDay = 'Dienstag';
+    Object.values(Weekday).forEach((weekday) => {
+      console.log(weekday);
+    });
+    this.weekDay = Weekday.TUESDAY;
   }
 
-  previousWeekDay() : void {
-    this.weekDay = 'Freitag';
+  setPreviousWeekDay() : void {
+    this.weekDay = Weekday.FRIDAY;
   }
 }
 
