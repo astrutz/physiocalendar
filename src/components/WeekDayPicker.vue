@@ -20,8 +20,8 @@
 </template>
 
 <script lang="ts">
-import { Weekday } from '@/class/Enums';
 import { Component, Vue } from 'vue-property-decorator';
+import { Weekday } from '../class/Enums';
 
 @Component
 export default class WeekDayPicker extends Vue {
