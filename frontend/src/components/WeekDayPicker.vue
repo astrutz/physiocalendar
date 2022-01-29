@@ -20,7 +20,7 @@
 </template>
 
 <script lang="ts">
-import { Weekday } from '@/class/Enums';
+import { Weekday } from '../class/Enums';
 import { Component, Vue } from 'vue-property-decorator';
 
 @Component

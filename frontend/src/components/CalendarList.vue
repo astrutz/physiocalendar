@@ -9,10 +9,10 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
-import WeekDayPicker from '@/components/WeekDayPicker.vue';
-import Masterlist from '@/components/Masterlist.vue';
-import SingleDayPicker from '@/components/SingleDayPicker.vue';
-import Daylist from '@/components/Daylist.vue';
+import WeekDayPicker from './WeekDayPicker.vue';
+import Masterlist from './Masterlist.vue';
+import SingleDayPicker from './SingleDayPicker.vue';
+import Daylist from './Daylist.vue';
 
 @Component({
   components: {

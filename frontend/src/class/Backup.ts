@@ -11,20 +11,21 @@ export default class Backup {
   constructor(
     masterlist : Masterlist,
     daylist : Daylist,
+    createdDate: Date
   ) {
     this.masterlist = masterlist;
     this.daylist = daylist;
-    this.createdDate = new Date();
+    this.createdDate = createdDate || new Date();
   }
 
-  static import(fileName : string) : Backup {
-    const backupString : string = JSON.stringify(backup);
-    // TODO: Read from somewhere and create a Backup object
-    // return new Backup(null, null);
-  }
+  // static import(fileName : string) : Backup {
+  //   const backupString : string = JSON.stringify(backup);
+  //   // TODO: Read from somewhere and create a Backup object
+  //   // return new Backup(null, null);
+  // }
 
-  static export(backup : Backup, fileName : string) : void {
-    const backupString : string = JSON.stringify(backup);
-    // TODO: Write this anywhere
-  }
+  // static export(backup : Backup, fileName : string) : void {
+  //   const backupString : string = JSON.stringify(backup);
+  //   // TODO: Write this anywhere
+  // }
 }
