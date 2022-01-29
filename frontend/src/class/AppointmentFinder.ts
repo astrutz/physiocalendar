@@ -1,7 +1,7 @@
 import AppointmentRequest from './AppointmentRequest';
 import AppointmentSuggestion from './AppointmentSuggestion';
 import Patient from './Patient';
-import Therapist from './Therpist';
+import Therapist from './Therapist';
 
 export default class AppointmentFinder {
   patient : Patient;

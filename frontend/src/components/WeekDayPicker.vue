@@ -7,10 +7,7 @@
     </v-col>
     <v-col cols="auto">
       <v-btn
-        color="secondary"
-        v-model="dateFormatted"
-        v-bind="attrs"
-        v-on="on"
+        color="primary"
         >{{ weekDay }}</v-btn
       >
     </v-col>

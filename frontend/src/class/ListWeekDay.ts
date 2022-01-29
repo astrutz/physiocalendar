@@ -1,7 +1,7 @@
 import Appointment from './Appointment';
 import { Weekday } from './Enums';
 import ListDay from './ListDay';
-import Therapist from './Therpist';
+import Therapist from './Therapist';
 
 export default class ListWeekDay extends ListDay {
   weekday : Weekday;

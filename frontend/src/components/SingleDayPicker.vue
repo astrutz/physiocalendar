@@ -15,7 +15,7 @@
         min-width="auto"
       >
         <template v-slot:activator="{ on, attrs }">
-          <v-btn color="secondary" v-model="dateFormatted" v-bind="attrs" v-on="on">{{
+          <v-btn color="primary" v-model="dateFormatted" v-bind="attrs" v-on="on">{{
             dateFormatted
           }}</v-btn>
         </template>

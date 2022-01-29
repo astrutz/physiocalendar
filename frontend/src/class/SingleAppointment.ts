@@ -1,6 +1,7 @@
 import Appointment from './Appointment';
+import { Time } from './Enums';
 import Patient from './Patient';
-import Therapist from './Therpist';
+import Therapist from './Therapist';
 
 export default class SingleAppointment extends Appointment {
   date : Date;
@@ -8,7 +9,7 @@ export default class SingleAppointment extends Appointment {
   constructor(
     therapist : Therapist,
     patient: Patient[],
-    time: Date,
+    time: Time,
     date: Date,
   ) {
     super(therapist, patient, time);

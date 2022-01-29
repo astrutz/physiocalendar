@@ -1,6 +1,6 @@
 import Appointment from './Appointment';
 import ListDay from './ListDay';
-import Therapist from './Therpist';
+import Therapist from './Therapist';
 
 export default class ListSingleDay extends ListDay {
   date : Date;

@@ -1,5 +1,5 @@
 import Appointment from './Appointment';
-import Therapist from './Therpist';
+import Therapist from './Therapist';
 
 export default class ListDay {
   appointments : Appointment[];
