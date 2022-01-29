@@ -1,9 +1,12 @@
 import axios from 'axios';
-import { VuexModule, Module, Mutation, Action } from 'vuex-module-decorators';
+import {
+  VuexModule, Module, Mutation, Action,
+} from 'vuex-module-decorators';
 
+import store from './index';
 import Backup from '../class/Backup';
 
-@Module({ namespaced: true, name: 'storebackup' })
+@Module({ name: 'StoreBackup', dynamic: true, store })
 class StoreBackup extends VuexModule {
   public backup: Backup | null = null;
 
@@ -11,7 +14,7 @@ class StoreBackup extends VuexModule {
   public async loadBackup(): Promise<void> {
     // TODO: GET HTTP JSON Data
     try {
-      const responseData: object = (await axios.get('http://localhost:4000/backup')).data as object;
+      const responseData: Record<string, unknown> = (await axios.get('http://localhost:4000/backup')).data as Record<string, unknown>;
       console.log(responseData);
       this.context.commit('setBackup', null);
     } catch (err) {
