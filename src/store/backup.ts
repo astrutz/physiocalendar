@@ -3,8 +3,10 @@ import {
   VuexModule, Module, Mutation, Action,
 } from 'vuex-module-decorators';
 
+import { JSONBackup } from '@/class/JSONBackup';
 import store from './index';
 import Backup from '../class/Backup';
+import convertToBackup from './convert';
 
 @Module({ name: 'StoreBackup', dynamic: true, store })
 class StoreBackup extends VuexModule {
@@ -12,11 +14,10 @@ class StoreBackup extends VuexModule {
 
   @Action
   public async loadBackup(): Promise<void> {
-    // TODO: GET HTTP JSON Data
     try {
-      const responseData: Record<string, unknown> = (await axios.get('http://localhost:4000/backup')).data as Record<string, unknown>;
-      console.log(responseData);
-      this.context.commit('setBackup', null);
+      const responseData: JSONBackup = (await axios.get('http://localhost:4000/backup')).data as JSONBackup;
+      const backup = convertToBackup(responseData);
+      this.context.commit('setBackup', backup);
     } catch (err) {
       console.error(err);
       this.context.commit('setBackup', null);
@@ -26,6 +27,10 @@ class StoreBackup extends VuexModule {
   @Mutation
   public setBackup(newBackup: Backup): void {
     this.backup = newBackup;
+  }
+
+  get getBackup() : Backup | null {
+    return this.backup;
   }
 }
 export default StoreBackup;

@@ -1,13 +1,12 @@
 import Appointment from './Appointment';
 import ListDay from './ListDay';
-import Therapist from './Therapist';
 
 export default class ListSingleDay extends ListDay {
   date : Date;
 
   constructor(
     appointments : Appointment[],
-    therapists : Therapist[],
+    therapists : string[],
     date: Date,
   ) {
     super(appointments, therapists);

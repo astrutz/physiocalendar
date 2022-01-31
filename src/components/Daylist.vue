@@ -1,7 +1,7 @@
 <template>
   <v-data-table
     :headers="headers"
-    :items="desserts"
+    :items="rows"
     class="elevation-1 mt-4"
     disable-filtering
     disable-sort
@@ -21,15 +21,13 @@
 </template>
 
 <script lang="ts">
+import { Time } from '@/class/Enums';
 import { Component, Vue } from 'vue-property-decorator';
 
 @Component
 export default class Daylist extends Vue {
   private headers = [
-    {
-      text: '',
-      value: 'time',
-    },
+    { text: '', value: 'time' },
     { text: 'Torben', value: 'torben' },
     { text: 'Andre', value: 'andre' },
     { text: 'Lisa', value: 'lisa' },
@@ -37,96 +35,25 @@ export default class Daylist extends Vue {
     { text: 'Max', value: 'max' },
   ];
 
-  private desserts = [
-    {
-      time: '07:00',
+  private rows = [{}];
+
+  mounted() : void {
+    this.createRows();
+  }
+
+  createRows(): void {
+    const times = Object.values(Time).filter((time): time is string => time.toString().includes(':'));
+
+    // TODO: Fill therapists dynamically and fill appointments dynamically
+    this.rows = times.map((time) => ({
+      time: time.toString(),
       torben: '',
       andre: '',
       lisa: '',
       tom: '',
       max: '',
-    },
-    {
-      time: '07:20',
-      torben: '',
-      andre: '',
-      lisa: '',
-      tom: '',
-      max: '',
-    },
-    {
-      time: '07:40',
-      torben: '',
-      andre: '',
-      lisa: '',
-      tom: '',
-      max: '',
-    },
-    {
-      time: '08:00',
-      torben: '',
-      andre: '',
-      lisa: '',
-      tom: 'Fr. Test',
-      max: '',
-    },
-    {
-      time: '08:20',
-      torben: '',
-      andre: '',
-      lisa: '',
-      tom: '',
-      max: '',
-    },
-    {
-      time: '08:40',
-      torben: '',
-      andre: '',
-      lisa: '',
-      tom: '',
-      max: '',
-    },
-    {
-      time: '09:20',
-      torben: '',
-      andre: '',
-      lisa: '',
-      tom: '',
-      max: '',
-    },
-    {
-      time: '09:40',
-      torben: '',
-      andre: '',
-      lisa: '',
-      tom: '',
-      max: '',
-    },
-    {
-      time: '10:00',
-      torben: '',
-      andre: '',
-      lisa: '',
-      tom: '',
-      max: '',
-    },
-    {
-      time: '10:20',
-      torben: '',
-      andre: '',
-      lisa: '',
-      tom: '',
-      max: '',
-    },
-    {
-      time: '10:40',
-      torben: '',
-      andre: '',
-      lisa: '',
-      tom: '',
-      max: '',
-    },
-  ]
+    }));
+  }
 }
 
 </script>

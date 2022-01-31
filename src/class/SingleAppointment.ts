@@ -1,14 +1,12 @@
 import Appointment from './Appointment';
 import { Time } from './Enums';
-import Patient from './Patient';
-import Therapist from './Therapist';
 
 export default class SingleAppointment extends Appointment {
   date : Date;
 
   constructor(
-    therapist : Therapist,
-    patient: Patient[],
+    therapist : string,
+    patient: string,
     time: Time,
     date: Date,
   ) {

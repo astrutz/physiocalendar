@@ -1,20 +1,18 @@
 import AppointmentRequest from './AppointmentRequest';
 import AppointmentSuggestion from './AppointmentSuggestion';
-import Patient from './Patient';
-import Therapist from './Therapist';
 
 export default class AppointmentFinder {
-  patient : Patient;
+  patient : string;
 
-  therapists : Therapist[];
+  therapists : string[];
 
   appointmentRequests : AppointmentRequest[];
 
   appointmentSuggestions : AppointmentSuggestion[];
 
   constructor(
-    patient: Patient,
-    therapists: Therapist[],
+    patient: string,
+    therapists: string[],
     appointmentRequests : AppointmentRequest[],
     appointmentSuggestions: AppointmentSuggestion[],
   ) {

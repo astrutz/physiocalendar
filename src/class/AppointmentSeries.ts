@@ -1,7 +1,5 @@
 import Appointment from './Appointment';
 import { Time, Weekday } from './Enums';
-import Patient from './Patient';
-import Therapist from './Therapist';
 
 export default class AppointmentSeries extends Appointment {
   weekday : Weekday;
@@ -13,8 +11,8 @@ export default class AppointmentSeries extends Appointment {
   endDate : Date;
 
   constructor(
-    therapist : Therapist,
-    patient: Patient[],
+    therapist : string,
+    patient: string,
     time: Time,
     weekday : Weekday,
     hasEnd : boolean,

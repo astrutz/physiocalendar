@@ -1,17 +1,15 @@
 import { Time } from './Enums';
-import Patient from './Patient';
-import Therapist from './Therapist';
 
 export default class Appointment {
-  therapist : Therapist;
+  therapist : string;
 
-  patient : Patient[];
+  patient : string;
 
   time: Time;
 
   constructor(
-    therapist : Therapist,
-    patient: Patient[],
+    therapist : string,
+    patient: string,
     time: Time,
   ) {
     this.therapist = therapist;

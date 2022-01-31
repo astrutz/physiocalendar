@@ -11,7 +11,6 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
 import Store from './store/backup';
-import Backup from './class/Backup';
 import AppBar from './components/AppBar.vue';
 import ListTabs from './components/ListTabs.vue';
 
@@ -27,7 +26,9 @@ export default class App extends Vue {
 
   mounted() : void {
     this.store.loadBackup().then(() => {
-      // TODO: Handle new data from getter
+      // TODO: Set loading state, so other components load backup now
+      const backup = this.store.getBackup;
+      console.log(backup);
     });
   }
 }
