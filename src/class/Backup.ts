@@ -1,31 +1,25 @@
 import Daylist from './Daylist';
 import Masterlist from './Masterlist';
+import Therapist from './Therapist';
 
 export default class Backup {
-  createdDate : Date;
+  createdDate: Date;
 
-  masterlist : Masterlist;
+  masterlist: Masterlist;
 
-  daylist : Daylist;
+  daylist: Daylist;
+
+  therapists: Therapist[];
 
   constructor(
-    masterlist : Masterlist,
-    daylist : Daylist,
-    createdDate: Date
+    masterlist: Masterlist,
+    daylist: Daylist,
+    createdDate: Date,
+    therapists: Therapist[],
   ) {
     this.masterlist = masterlist;
     this.daylist = daylist;
     this.createdDate = createdDate || new Date();
+    this.therapists = therapists;
   }
-
-  // static import(fileName : string) : Backup {
-  //   const backupString : string = JSON.stringify(backup);
-  //   // TODO: Read from somewhere and create a Backup object
-  //   // return new Backup(null, null);
-  // }
-
-  // static export(backup : Backup, fileName : string) : void {
-  //   const backupString : string = JSON.stringify(backup);
-  //   // TODO: Write this anywhere
-  // }
 }

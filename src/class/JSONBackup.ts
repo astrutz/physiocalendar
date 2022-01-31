@@ -4,7 +4,6 @@ import { Weekday } from './Enums';
 /* eslint-disable semi */
 export interface JSONListWeekDay {
   weekday: Weekday;
-  therapists: string[];
   appointments: Appointment[];
 }
 
@@ -14,7 +13,6 @@ export interface JSONMasterlist {
 
 export interface JSONListSingleDay {
   date: number;
-  therapists: string[];
   appointments: Appointment[];
 }
 
@@ -22,8 +20,15 @@ export interface JSONDaylist {
   elements: JSONListSingleDay[];
 }
 
+export interface JSONTherapist {
+  name: string;
+  activeSince: number;
+  activeUntil: number;
+}
+
 export interface JSONBackup {
   createdDate: number;
   masterlist: JSONMasterlist;
   daylist: JSONDaylist;
+  therapists: JSONTherapist[];
 }

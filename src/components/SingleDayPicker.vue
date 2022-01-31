@@ -51,6 +51,7 @@ export default class SingleDayPicker extends Vue {
   @Watch('date')
   dateChanged(): void {
     this.dateFormatted = SingleDayPicker.formatDateString(this.date);
+    this.$emit('currentDayChanged', this.dateFormatted);
   }
 
   static formatDateString(date: string): string {

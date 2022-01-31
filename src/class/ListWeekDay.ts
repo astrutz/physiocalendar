@@ -7,10 +7,9 @@ export default class ListWeekDay extends ListDay {
 
   constructor(
     appointments : Appointment[],
-    therapists : string[],
     weekday: Weekday,
   ) {
-    super(appointments, therapists);
+    super(appointments);
     this.weekday = weekday;
   }
 }

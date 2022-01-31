@@ -25,11 +25,7 @@ export default class App extends Vue {
   store = getModule(Store);
 
   mounted() : void {
-    this.store.loadBackup().then(() => {
-      // TODO: Set loading state, so other components load backup now
-      const backup = this.store.getBackup;
-      console.log(backup);
-    });
+    this.store.loadBackup();
   }
 }
 </script>

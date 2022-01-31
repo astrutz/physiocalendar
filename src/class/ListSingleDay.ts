@@ -6,10 +6,9 @@ export default class ListSingleDay extends ListDay {
 
   constructor(
     appointments : Appointment[],
-    therapists : string[],
     date: Date,
   ) {
-    super(appointments, therapists);
+    super(appointments);
     this.date = date;
   }
 }

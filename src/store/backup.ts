@@ -33,4 +33,5 @@ class StoreBackup extends VuexModule {
     return this.backup;
   }
 }
+
 export default StoreBackup;

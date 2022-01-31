@@ -1,14 +1,24 @@
 <template>
   <v-container>
-    <WeekDayPicker v-if="listType === 'masterlist'" />
+    <WeekDayPicker
+      @weekDayChanged="currentWeekDay = $event"
+      v-if="listType === 'masterlist'"
+    />
     <Masterlist v-if="listType === 'masterlist'" />
-    <SingleDayPicker v-if="listType === 'daylist'" />
-    <Daylist v-if="listType === 'daylist'" />
+    <SingleDayPicker
+      @currentDayChanged="currentSingleDay = $event"
+      v-if="listType === 'daylist'"
+    />
+    <Daylist
+      :currentSingleDay="currentSingleDay"
+      v-if="listType === 'daylist'"
+    />
   </v-container>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Weekday } from '@/class/Enums';
 import WeekDayPicker from './WeekDayPicker.vue';
 import Masterlist from './Masterlist.vue';
 import SingleDayPicker from './SingleDayPicker.vue';
@@ -25,5 +35,10 @@ import Daylist from './Daylist.vue';
 
 export default class CalendarList extends Vue {
   @Prop() readonly listType!: string;
+
+  currentSingleDay =
+    SingleDayPicker.formatDateString((new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10)));
+
+  currentWeekDay = Weekday.MONDAY;
 }
 </script>

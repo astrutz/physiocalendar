@@ -32,10 +32,12 @@ export default class WeekDayPicker extends Vue {
       console.log(weekday);
     });
     this.weekDay = Weekday.TUESDAY;
+    this.$emit('weekDayChanged', this.weekDay);
   }
 
   setPreviousWeekDay() : void {
     this.weekDay = Weekday.FRIDAY;
+    this.$emit('weekDayChanged', this.weekDay);
   }
 }
 
