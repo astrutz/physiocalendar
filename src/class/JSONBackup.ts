@@ -1,10 +1,11 @@
-import Appointment from './Appointment';
+import AppointmentSeries from './AppointmentSeries';
 import { Weekday } from './Enums';
+import SingleAppointment from './SingleAppointment';
 
 /* eslint-disable semi */
 export interface JSONListWeekDay {
   weekday: Weekday;
-  appointments: Appointment[];
+  appointments: AppointmentSeries[];
 }
 
 export interface JSONMasterlist {
@@ -13,7 +14,7 @@ export interface JSONMasterlist {
 
 export interface JSONListSingleDay {
   date: number;
-  appointments: Appointment[];
+  appointments: SingleAppointment[];
 }
 
 export interface JSONDaylist {

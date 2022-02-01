@@ -1,4 +1,3 @@
-import Appointment from '@/class/Appointment';
 import Backup from '@/class/Backup';
 import Daylist from '@/class/Daylist';
 import {
@@ -9,13 +8,18 @@ import ListSingleDay from '@/class/ListSingleDay';
 import ListWeekDay from '@/class/ListWeekDay';
 import Masterlist from '@/class/Masterlist';
 import Therapist from '@/class/Therapist';
+import AppointmentSeries from '@/class/AppointmentSeries';
+import SingleAppointment from '@/class/SingleAppointment';
 
 function getListWeekDays(listWeekDaysJSON: JSONMasterlist): ListWeekDay[] {
   const listWeekDays = listWeekDaysJSON.elements.map((jsonElement) => {
-    const appointments = jsonElement.appointments.map(
-      (jsonAppointment) => new Appointment(jsonAppointment.therapist, jsonAppointment.patient, jsonAppointment.time as Time),
-    );
     const weekday = jsonElement.weekday as Weekday;
+    const appointments = jsonElement.appointments.map(
+      (jsonAppointment) => new AppointmentSeries(
+        jsonAppointment.therapist, jsonAppointment.patient, jsonAppointment.time as Time, weekday,
+        jsonAppointment.hasEnd, jsonAppointment.startDate, jsonAppointment.endDate,
+      ),
+    );
     return new ListWeekDay(appointments, weekday);
   });
   return listWeekDays;
@@ -23,10 +27,10 @@ function getListWeekDays(listWeekDaysJSON: JSONMasterlist): ListWeekDay[] {
 
 function getListSingleDays(listSingleDaysJSON: JSONDaylist): ListSingleDay[] {
   const listSingleDays = listSingleDaysJSON.elements.map((jsonElement) => {
-    const appointments = jsonElement.appointments.map(
-      (jsonAppointment) => new Appointment(jsonAppointment.therapist, jsonAppointment.patient, jsonAppointment.time as Time),
-    );
     const date = new Date(jsonElement.date);
+    const appointments = jsonElement.appointments.map(
+      (jsonAppointment) => new SingleAppointment(jsonAppointment.therapist, jsonAppointment.patient, jsonAppointment.time as Time, date),
+    );
     return new ListSingleDay(appointments, date);
   });
   return listSingleDays;

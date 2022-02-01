@@ -10,7 +10,7 @@
     hide-default-footer
     dense
   >
-    <template v-slot:item.time="{ item }">
+    <template v-slot:item.timeString="{ item }">
       <span class="text-subtitle-2" style="color: black">{{ item.time }}</span>
     </template>
     <template v-for="header in headers" v-slot:[`header.${header.value}`]="{}">
@@ -18,12 +18,24 @@
         header.text
       }}</span>
     </template>
+    <!-- <template v-slot:item="{ item }">
+      <tr>
+        <td
+          class="text-start"
+          v-for="key in Object.keys(item).filter((key) => key !== 'time')"
+          :key="`${key}-${item[key]}`"
+        >
+          {{ item[key] }}
+        </td>
+      </tr>
+    </template> -->
   </v-data-table>
   <div v-else>wird geladen</div>
 </template>
 
 <script lang="ts">
 import Backup from '@/class/Backup';
+import Dateconversions from '@/class/Dateconversions';
 import { Time } from '@/class/Enums';
 import {
   Component, Prop, Vue, Watch,
@@ -41,7 +53,9 @@ export default class Daylist extends Vue {
     { text: '', value: 'time' },
   ];
 
-  private rows = [{ time: '', tom: '' }];
+  private rows: {
+    [key: string]: string | Time
+  }[] = [{ timeString: '' }];
 
   get localBackup(): Backup | null {
     return this.store.getBackup;
@@ -59,33 +73,45 @@ export default class Daylist extends Vue {
     this.createRows();
   }
 
-  mounted() : void {
+  mounted(): void {
     this.createHeaders();
     this.createRows();
   }
 
   createHeaders(): void {
     if (this.localBackup !== null) {
-      const [day, month, year] = this.currentSingleDay.split('.');
-      const currentSingleDate = new Date(`${year}-${month}-${day}`);
+      const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
       const therapistHeaders = this.localBackup.therapists.filter(
         (therapist) => therapist.activeSince < currentSingleDate && therapist.activeUntil > currentSingleDate,
-      ).map((therapist) => ({ text: therapist.name, value: therapist.name.toLowerCase() }));
+      ).map((therapist) => ({ text: therapist.name, value: therapist.name }));
       this.headers = [{ text: '', value: 'time' }].concat(therapistHeaders);
     }
   }
 
   createRows(): void {
+    type TableRow = {
+      [key: string]: string | Time
+    }
+
     const times = Object.values(Time).filter((time): time is string => time.toString().includes(':'));
-    // TODO: Fill fill appointments with therapists dynamically
-    this.rows = times.map((time) => ({
-      time: time.toString(),
-      torben: '',
-      andre: '',
-      lisa: '',
-      tom: '',
-      max: '',
+    const emptyRows = times.map((time) => ({
+      timeString: time.toString(),
+      time: time as unknown as Time,
     }));
+
+    this.rows = emptyRows.map((row) => {
+      const newRow: TableRow = {
+        timeString: row.timeString,
+        time: row.time,
+      };
+      this.headers.forEach((header) => {
+        if (header.text !== '') {
+          newRow[header.text] = this
+            .localBackup?.daylist.searchAppointment(header.text, this.currentSingleDay, row.time as Time) || '';
+        }
+      });
+      return newRow;
+    });
   }
 }
 

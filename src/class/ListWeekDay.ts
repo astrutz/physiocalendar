@@ -1,4 +1,4 @@
-import Appointment from './Appointment';
+import AppointmentSeries from './AppointmentSeries';
 import { Weekday } from './Enums';
 import ListDay from './ListDay';
 
@@ -6,7 +6,7 @@ export default class ListWeekDay extends ListDay {
   weekday : Weekday;
 
   constructor(
-    appointments : Appointment[],
+    appointments : AppointmentSeries[],
     weekday: Weekday,
   ) {
     super(appointments);

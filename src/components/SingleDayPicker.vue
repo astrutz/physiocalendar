@@ -38,25 +38,21 @@
 </template>
 
 <script lang="ts">
+import Dateconversions from '@/class/Dateconversions';
 import { Component, Watch, Vue } from 'vue-property-decorator';
 
 @Component
 export default class SingleDayPicker extends Vue {
   private date: string = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10)
 
-  private dateFormatted: string = SingleDayPicker.formatDateString(this.date)
+  private dateFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.date)
 
   private menu = false;
 
   @Watch('date')
   dateChanged(): void {
-    this.dateFormatted = SingleDayPicker.formatDateString(this.date);
+    this.dateFormatted = Dateconversions.convertEnglishToGermanReadableString(this.date);
     this.$emit('currentDayChanged', this.dateFormatted);
-  }
-
-  static formatDateString(date: string): string {
-    const [year, month, day] = date.split('-');
-    return `${day}.${month}.${year}`;
   }
 
   getCombinedDate(): Date {
