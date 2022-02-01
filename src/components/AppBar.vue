@@ -1,5 +1,6 @@
 <template>
-  <v-app-bar app color="primary" dark>
+  <v-app-bar app color="#2a2f79" dark>
+    <img src="@/assets/icon-inverted.png" height="50px" class="mr-4"/>
     <div class="d-flex align-center">
       <h1 class="text-h4">Physiokalender - Praxis Meyer</h1>
     </div>
