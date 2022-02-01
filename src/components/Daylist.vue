@@ -18,17 +18,27 @@
         header.text
       }}</span>
     </template>
-    <!-- <template v-slot:item="{ item }">
+    <template v-slot:item="{ item }">
       <tr>
         <td
-          class="text-start"
+          style="overflow: hidden; white-space: nowrap; width: 0%"
+          class="text-center"
           v-for="key in Object.keys(item).filter((key) => key !== 'time')"
           :key="`${key}-${item[key]}`"
         >
-          {{ item[key] }}
+          <DaylistElement
+            v-if="!item[key].includes(':')"
+            @appointmentAdded="addAppointment($event)"
+            @appointmentChanged="changeAppointment($event)"
+            :patient="item[key]"
+            :therapist="key"
+            :time="Object.values(item)[0]"
+            :date="currentSingleDay"
+          />
+          <span v-else>{{ item[key] }}</span>
         </td>
       </tr>
-    </template> -->
+    </template>
   </v-data-table>
   <div v-else>wird geladen</div>
 </template>
@@ -37,20 +47,27 @@
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import { Time } from '@/class/Enums';
+import SingleAppointment from '@/class/SingleAppointment';
 import {
   Component, Prop, Vue, Watch,
 } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
 import Store from '../store/backup';
+import DaylistElement from './DaylistElement.vue';
 
-@Component
+@Component({
+  components: {
+    DaylistElement,
+  },
+})
+
 export default class Daylist extends Vue {
   @Prop() readonly currentSingleDay!: string;
 
   store = getModule(Store);
 
   private headers = [
-    { text: '', value: 'time' },
+    { text: '', value: 'time', align: 'center' },
   ];
 
   private rows: {
@@ -83,8 +100,8 @@ export default class Daylist extends Vue {
       const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
       const therapistHeaders = this.localBackup.therapists.filter(
         (therapist) => therapist.activeSince < currentSingleDate && therapist.activeUntil > currentSingleDate,
-      ).map((therapist) => ({ text: therapist.name, value: therapist.name }));
-      this.headers = [{ text: '', value: 'time' }].concat(therapistHeaders);
+      ).map((therapist) => ({ text: therapist.name, value: therapist.name, align: 'center' }));
+      this.headers = [{ text: '', value: 'time', align: 'center' }].concat(therapistHeaders);
     }
   }
 
@@ -112,6 +129,24 @@ export default class Daylist extends Vue {
       });
       return newRow;
     });
+  }
+
+  addAppointment(event: { therapist: string, patient: string, time: string }): void {
+    const appointment = new SingleAppointment(
+      event.therapist, event.patient, event.time as unknown as Time, Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+    );
+    if (this.localBackup) {
+      this.store.addSingleAppointment(appointment);
+    }
+  }
+
+  changeAppointment(event: { therapist: string, patient: string, time: string }): void {
+    const appointment = new SingleAppointment(
+      event.therapist, event.patient, event.time as unknown as Time, Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+    );
+    if (this.localBackup) {
+      this.store.changeSingleAppointment(appointment);
+    }
   }
 }
 

@@ -4,6 +4,7 @@ import {
 } from 'vuex-module-decorators';
 
 import { JSONBackup } from '@/class/JSONBackup';
+import SingleAppointment from '@/class/SingleAppointment';
 import store from './index';
 import Backup from '../class/Backup';
 import convertToBackup from './convert';
@@ -24,12 +25,39 @@ class StoreBackup extends VuexModule {
     }
   }
 
+  @Action
+  public addSingleAppointment(appointment: SingleAppointment): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      localBackup.daylist.addAppointment(appointment);
+      this.setBackup(localBackup);
+      // TODO: Save changes in backend
+    }
+  }
+
+  @Action
+  public changeSingleAppointment(appointment: SingleAppointment): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      localBackup.daylist.changeAppointment(appointment);
+      this.setBackup(localBackup);
+      // TODO: Save changes in backend
+    }
+  }
+
+  @Action
+  public addAppointmentSeries(): void {
+    if (this.backup) {
+      // TODO: Add Appointment to Masterlist
+    }
+  }
+
   @Mutation
   public setBackup(newBackup: Backup): void {
     this.backup = newBackup;
   }
 
-  get getBackup() : Backup | null {
+  get getBackup(): Backup | null {
     return this.backup;
   }
 }
