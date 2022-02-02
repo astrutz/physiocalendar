@@ -16,6 +16,7 @@
           label="Name des Patienten"
           :value="patient"
           v-model="patientTextfield"
+          clearable
         ></v-text-field>
       </v-card-text>
 
