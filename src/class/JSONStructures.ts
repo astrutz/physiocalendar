@@ -1,20 +1,34 @@
-import AppointmentSeries from './AppointmentSeries';
-import { Weekday } from './Enums';
-import SingleAppointment from './SingleAppointment';
-
 /* eslint-disable semi */
+
+import { Weekday } from './Enums';
+
+export interface JSONAppointmentSeries {
+  therapist : string,
+  patient: string,
+  time: string,
+  hasEnd : boolean,
+  startDate : number,
+  endDate : number,
+}
+
 export interface JSONListWeekDay {
   weekday: Weekday;
-  appointments: AppointmentSeries[];
+  appointments: JSONAppointmentSeries[];
 }
 
 export interface JSONMasterlist {
   elements: JSONListWeekDay[];
 }
 
+export interface JSONSingleAppointment {
+  therapist : string,
+  patient: string,
+  time: string,
+}
+
 export interface JSONListSingleDay {
   date: number;
-  appointments: SingleAppointment[];
+  appointments: JSONSingleAppointment[];
 }
 
 export interface JSONDaylist {

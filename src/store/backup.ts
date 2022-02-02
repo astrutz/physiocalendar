@@ -3,11 +3,12 @@ import {
   VuexModule, Module, Mutation, Action,
 } from 'vuex-module-decorators';
 
-import { JSONBackup } from '@/class/JSONBackup';
+import { JSONBackup } from '@/class/JSONStructures';
 import SingleAppointment from '@/class/SingleAppointment';
 import store from './index';
 import Backup from '../class/Backup';
-import convertToBackup from './convert';
+import convertToBackup from './convertToBackup';
+import convertToJSON from './convertToJSON';
 
 @Module({ name: 'StoreBackup', dynamic: true, store })
 class StoreBackup extends VuexModule {
@@ -26,12 +27,24 @@ class StoreBackup extends VuexModule {
   }
 
   @Action
+  public async saveBackup(): Promise<void> {
+    if (this.backup) {
+      try {
+        const backupJSON = convertToJSON(this.backup);
+        await axios.put('http://localhost:4000/backup', backupJSON);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+
+  @Action
   public addSingleAppointment(appointment: SingleAppointment): void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
       localBackup.daylist.addAppointment(appointment);
       this.setBackup(localBackup);
-      // TODO: Save changes in backend
+      this.saveBackup();
     }
   }
 
@@ -41,17 +54,17 @@ class StoreBackup extends VuexModule {
       const localBackup = { ...this.getBackup };
       localBackup.daylist.changeAppointment(appointment);
       this.setBackup(localBackup);
-      // TODO: Save changes in backend
+      this.saveBackup();
     }
   }
 
   @Action
-  public deleteSingleAppointment(appointment : SingleAppointment): void {
+  public deleteSingleAppointment(appointment: SingleAppointment): void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
       localBackup.daylist.deleteAppointment(appointment);
       this.setBackup(localBackup);
-      // TODO: Save changes in backend
+      this.saveBackup();
     }
   }
 
