@@ -46,6 +46,16 @@ class StoreBackup extends VuexModule {
   }
 
   @Action
+  public deleteSingleAppointment(appointment : SingleAppointment): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      localBackup.daylist.deleteAppointment(appointment);
+      this.setBackup(localBackup);
+      // TODO: Save changes in backend
+    }
+  }
+
+  @Action
   public addAppointmentSeries(): void {
     if (this.backup) {
       // TODO: Add Appointment to Masterlist

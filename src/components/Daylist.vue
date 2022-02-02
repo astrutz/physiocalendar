@@ -30,6 +30,7 @@
             v-if="!item[key].includes(':')"
             @appointmentAdded="addAppointment($event)"
             @appointmentChanged="changeAppointment($event)"
+            @appointmentDeleted="deleteAppointment($event)"
             :patient="item[key]"
             :therapist="key"
             :time="Object.values(item)[0]"
@@ -146,6 +147,15 @@ export default class Daylist extends Vue {
     );
     if (this.localBackup) {
       this.store.changeSingleAppointment(appointment);
+    }
+  }
+
+  deleteAppointment(event: { patient: string, therapist: string, time: string }): void {
+    if (this.localBackup) {
+      const appointment = new SingleAppointment(
+        event.therapist, event.patient, event.time as unknown as Time, Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+      );
+      this.store.deleteSingleAppointment(appointment);
     }
   }
 }

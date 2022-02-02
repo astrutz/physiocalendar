@@ -32,7 +32,9 @@
           color="primary"
           button
           @click="
-            patient !== '' ? changeAppointment(patientTextfield) : addAppointment(patientTextfield);
+            patient !== ''
+              ? changeAppointment(patientTextfield)
+              : addAppointment(patientTextfield);
             dialogIsOpen = false;
           "
         >
@@ -63,7 +65,11 @@ export default class Daylist extends Vue {
   private patientTextfield = this.patient;
 
   changeAppointment(): void {
-    this.$emit('appointmentChanged', { patient: this.patientTextfield, therapist: this.therapist, time: this.time });
+    if (this.patientTextfield !== '') {
+      this.$emit('appointmentChanged', { patient: this.patientTextfield, therapist: this.therapist, time: this.time });
+    } else {
+      this.$emit('appointmentDeleted', { patient: this.patient, therapist: this.therapist, time: this.time });
+    }
   }
 
   addAppointment(): void {

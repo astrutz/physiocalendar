@@ -49,6 +49,17 @@ export default class Daylist {
     }
   }
 
+  deleteAppointment(appointment: SingleAppointment): void {
+    const currentDay = this.findListday(appointment.date);
+    if (currentDay) {
+      const newAppointments = currentDay.appointments.filter(
+        (filterAppointment) => !(filterAppointment.therapist === appointment.therapist
+          && filterAppointment.time === appointment.time),
+      );
+      currentDay.appointments = newAppointments;
+    }
+  }
+
   private findListday(date: string | Date): ListSingleDay | undefined {
     let dateConverted: Date;
     if (typeof date === 'string') {
