@@ -4,7 +4,10 @@
       @weekDayChanged="currentWeekDay = $event"
       v-if="listType === 'masterlist'"
     />
-    <Masterlist v-if="listType === 'masterlist'" />
+    <Masterlist
+      :currentWeekDay="currentWeekDay"
+      v-if="listType === 'masterlist'"
+    />
     <SingleDayPicker
       @currentDayChanged="currentSingleDay = $event"
       v-if="listType === 'daylist'"

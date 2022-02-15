@@ -75,5 +75,3 @@ export default function convertToJSON(backup: Backup): JSONBackup {
   };
   return backupJSON;
 }
-
-// TODO: Implement types like in JSONBackupv instead of types here and "any"

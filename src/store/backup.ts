@@ -75,6 +75,20 @@ class StoreBackup extends VuexModule {
     }
   }
 
+  @Action
+  public changeAppointmentSeries(): void {
+    if (this.backup) {
+      // TODO: Change Appointment in Masterlist
+    }
+  }
+
+  @Action
+  public deleteAppointmentSeries(): void {
+    if (this.backup) {
+      // TODO: Delete Appointment from Masterlist
+    }
+  }
+
   @Mutation
   public setBackup(newBackup: Backup): void {
     this.backup = newBackup;

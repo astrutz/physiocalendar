@@ -10,9 +10,6 @@
     hide-default-footer
     dense
   >
-    <template v-slot:item.timeString="{ item }">
-      <span class="text-subtitle-2" style="color: black">{{ item.time }}</span>
-    </template>
     <template v-for="header in headers" v-slot:[`header.${header.value}`]="{}">
       <span class="text-subtitle-2" style="color: black" :key="header.text">{{
         header.text

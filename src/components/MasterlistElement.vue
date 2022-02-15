@@ -8,7 +8,7 @@
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
-        {{ therapist }} - {{ date }} - {{ time }}
+        {{ therapist }} - {{ day.toLowerCase() }}s - {{ time }}
       </v-card-title>
 
       <v-card-text class="pt-5">
@@ -18,6 +18,33 @@
           v-model="patientTextfield"
           clearable
         ></v-text-field>
+        <v-row class="pl-3">
+          <v-radio-group
+            v-model="seriesType"
+            row
+            class="radio-group-full-width"
+            mandatory
+          >
+            <v-radio label="Enddatum" value="endDate"></v-radio>
+            <v-spacer></v-spacer>
+            <v-radio label="Anzahl Termine" value="counted"></v-radio>
+          </v-radio-group>
+        </v-row>
+        <v-row class="pl-3">
+          <v-text-field
+            label="Enddatum"
+            :value="endDate"
+            v-model="endDateTextfield"
+            clearable
+          ></v-text-field>
+          <v-spacer />
+          <v-text-field
+            label="Anzahl der Termine"
+            type="number"
+            :value="appointmentCount"
+            v-model="appointmentCountTextfield"
+          ></v-text-field>
+        </v-row>
       </v-card-text>
 
       <v-divider></v-divider>
@@ -47,23 +74,38 @@
 </template>
 
 <script lang="ts">
+import { Weekday } from '@/class/Enums';
 import {
   Component, Prop, Vue,
 } from 'vue-property-decorator';
 
 @Component
-export default class DaylistElement extends Vue {
+export default class MasterlistElement extends Vue {
   @Prop() readonly patient!: string;
 
   @Prop() readonly time!: string;
 
-  @Prop() readonly date!: string;
+  @Prop() readonly day!: Weekday;
 
   @Prop() readonly therapist!: string;
+
+  // TODO: Get these over backup somehow
+
+  // @Prop() readonly startDate!: Date;
+
+  // @Prop() readonly endDate!: Date;
+
+  // @Prop() readonly hasEnd!: boolean;
 
   private dialogIsOpen = false;
 
   private patientTextfield = this.patient;
+
+  private seriesType: 'endDate' | 'counted' = 'endDate';
+
+  private appointmentCountTextfield = '';
+
+  private endDateTextfield = '';
 
   changeAppointment(): void {
     if (this.patientTextfield !== '') {
@@ -78,3 +120,9 @@ export default class DaylistElement extends Vue {
   }
 }
 </script>
+
+<style scoped lang="scss">
+.radio-group-full-width {
+  width: 100%;
+}
+</style>
