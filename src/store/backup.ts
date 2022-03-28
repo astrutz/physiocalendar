@@ -1,14 +1,14 @@
-import axios from 'axios';
-import {
-  VuexModule, Module, Mutation, Action,
-} from 'vuex-module-decorators';
-
+import AppointmentSeries from '@/class/AppointmentSeries';
 import { JSONBackup } from '@/class/JSONStructures';
 import SingleAppointment from '@/class/SingleAppointment';
-import store from './index';
+import axios from 'axios';
+import {
+  Action, Module, Mutation, VuexModule,
+} from 'vuex-module-decorators';
 import Backup from '../class/Backup';
 import convertToBackup from './convertToBackup';
 import convertToJSON from './convertToJSON';
+import store from './index';
 
 @Module({ name: 'StoreBackup', dynamic: true, store })
 class StoreBackup extends VuexModule {
@@ -63,29 +63,39 @@ class StoreBackup extends VuexModule {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
       localBackup.daylist.deleteAppointment(appointment);
+      // localBackup.daylist = localBackup.daylist.deleteAppointment(appointment); // TODO: Maybe this fixes the deletion issues - TESTME
       this.setBackup(localBackup);
       this.saveBackup();
     }
   }
 
   @Action
-  public addAppointmentSeries(): void {
-    if (this.backup) {
-      // TODO: Add Appointment to Masterlist
+  public addAppointmentSeries(appointment: AppointmentSeries): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      localBackup.masterlist.addAppointment(appointment);
+      this.setBackup(localBackup);
+      this.saveBackup();
     }
   }
 
   @Action
-  public changeAppointmentSeries(): void {
-    if (this.backup) {
-      // TODO: Change Appointment in Masterlist
+  public changeAppointmentSeries(appointment: AppointmentSeries): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      localBackup.masterlist.changeAppointment(appointment);
+      this.setBackup(localBackup);
+      this.saveBackup();
     }
   }
 
   @Action
-  public deleteAppointmentSeries(): void {
-    if (this.backup) {
-      // TODO: Delete Appointment from Masterlist
+  public deleteAppointmentSeries(appointment: AppointmentSeries): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      localBackup.masterlist.deleteAppointment(appointment);
+      this.setBackup(localBackup);
+      this.saveBackup();
     }
   }
 

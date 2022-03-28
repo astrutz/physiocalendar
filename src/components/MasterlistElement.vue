@@ -19,31 +19,45 @@
           clearable
         ></v-text-field>
         <v-row class="pl-3">
-          <v-radio-group
-            v-model="seriesType"
-            row
-            class="radio-group-full-width"
-            mandatory
-          >
-            <v-radio label="Enddatum" value="endDate"></v-radio>
-            <v-spacer></v-spacer>
-            <v-radio label="Anzahl Termine" value="counted"></v-radio>
-          </v-radio-group>
+          <v-checkbox
+            label="Termin hat ein Ablaufdatum"
+            v-model="hasEnd"
+            :value="hasEnd"
+          ></v-checkbox>
         </v-row>
-        <v-row class="pl-3">
-          <v-text-field
-            label="Enddatum"
-            :value="endDate"
-            v-model="endDateTextfield"
-            clearable
-          ></v-text-field>
-          <v-spacer />
-          <v-text-field
-            label="Anzahl der Termine"
-            type="number"
-            :value="appointmentCount"
-            v-model="appointmentCountTextfield"
-          ></v-text-field>
+        <v-row class="pl-3" v-if="hasEnd">
+          <v-menu
+            v-model="menuIsOpen"
+            :close-on-content-click="false"
+            :nudge-right="40"
+            transition="scale-transition"
+            offset-y
+            min-width="auto"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-text-field
+                v-model="endDateStringFormatted"
+                label="Enddatum"
+                persistent-hint
+                prepend-icon="mdi-calendar"
+                v-bind="attrs"
+                @blur="
+                  endDateString = convertGermanToEnglishReadableString(
+                    endDateStringFormatted
+                  )
+                "
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="endDateString"
+              @input="
+                menuIsOpen = false;
+                endDate = getCombinedDate();
+              "
+              locale="de-de"
+            ></v-date-picker>
+          </v-menu>
         </v-row>
       </v-card-text>
 
@@ -60,9 +74,7 @@
           color="primary"
           button
           @click="
-            patient !== ''
-              ? changeAppointment(patientTextfield)
-              : addAppointment(patientTextfield);
+            patient !== '' ? changeAppointment() : addAppointment();
             dialogIsOpen = false;
           "
         >
@@ -74,9 +86,11 @@
 </template>
 
 <script lang="ts">
+import AppointmentSeries from '@/class/AppointmentSeries';
+import Dateconversions from '@/class/Dateconversions';
 import { Weekday } from '@/class/Enums';
 import {
-  Component, Prop, Vue,
+  Component, Prop, Vue, Watch,
 } from 'vue-property-decorator';
 
 @Component
@@ -85,38 +99,72 @@ export default class MasterlistElement extends Vue {
 
   @Prop() readonly time!: string;
 
-  @Prop() readonly day!: Weekday;
-
   @Prop() readonly therapist!: string;
 
-  // TODO: Get these over backup somehow
+  @Prop() readonly day!: Weekday;
 
-  // @Prop() readonly startDate!: Date;
+  @Prop() readonly appointment!: AppointmentSeries | undefined;
 
-  // @Prop() readonly endDate!: Date;
+  private appointmentPatient = this.appointment?.patient || this.patient;
 
-  // @Prop() readonly hasEnd!: boolean;
+  private appointmentPatientTime = this.appointment?.time.toString() || this.time;
+
+  private appointmentTherapist = this.appointment?.therapist || this.therapist;
+
+  private endDate = this.appointment?.endDate || new Date();
+
+  private endDateString: string = new Date(this.endDate.getTime() - this.endDate.getTimezoneOffset() * 60000).toISOString().substr(0, 10);
+
+  private endDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
+
+  private hasEnd = this.appointment?.hasEnd || false;
 
   private dialogIsOpen = false;
 
-  private patientTextfield = this.patient;
+  private menuIsOpen = false;
 
-  private seriesType: 'endDate' | 'counted' = 'endDate';
+  private patientTextfield = this.appointmentPatient;
 
-  private appointmentCountTextfield = '';
+  @Watch('endDateString')
+  dateChanged(): void {
+    this.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
+  }
 
-  private endDateTextfield = '';
+  getCombinedDate(): Date {
+    const timezoneOffsetInHours = new Date(`${this.endDateString}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
+    return new Date(`${this.endDateString}T15:00:00.000${offsetSuffix}`);
+  }
+
+  convertGermanToEnglishReadableString(): string {
+    return Dateconversions.convertGermanToEnglishReadableString(this.endDateStringFormatted);
+  }
 
   changeAppointment(): void {
-    if (this.patientTextfield !== '') {
-      this.$emit('appointmentChanged', { patient: this.patientTextfield, therapist: this.therapist, time: this.time });
+    console.log(this.patientTextfield);
+    if (this.patientTextfield !== '' && this.patientTextfield !== null) {
+      this.$emit('appointmentChanged', {
+        patient: this.patientTextfield,
+        therapist: this.therapist,
+        time: this.time,
+        hasEnd: this.hasEnd,
+        endDate: this.hasEnd ? this.endDate : null,
+      });
     } else {
-      this.$emit('appointmentDeleted', { patient: this.patient, therapist: this.therapist, time: this.time });
+      this.$emit('appointmentDeleted', {
+        patient: this.patient, therapist: this.therapist, time: this.time, hasEnd: this.hasEnd,
+      });
     }
   }
 
   addAppointment(): void {
-    this.$emit('appointmentAdded', { patient: this.patientTextfield, therapist: this.therapist, time: this.time });
+    this.$emit('appointmentAdded', {
+      patient: this.patientTextfield,
+      therapist: this.therapist,
+      time: this.time,
+      hasEnd: this.hasEnd,
+      endDate: this.hasEnd ? this.endDate : null,
+    });
   }
 }
 </script>

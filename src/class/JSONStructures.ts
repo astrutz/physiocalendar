@@ -8,7 +8,7 @@ export interface JSONAppointmentSeries {
   time: string,
   hasEnd : boolean,
   startDate : number,
-  endDate : number,
+  endDate : number | null,
 }
 
 export interface JSONListWeekDay {

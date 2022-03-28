@@ -31,6 +31,15 @@
             :patient="item[key]"
             :therapist="key"
             :time="Object.values(item)[0]"
+            :appointment="
+              item[key] !== ''
+                ? localBackup.masterlist.searchAppointment(
+                    key,
+                    currentWeekDay,
+                    Object.values(item)[0]
+                  )
+                : undefined
+            "
             :day="currentWeekDay"
           />
           <span v-else>{{ item[key] }}</span>
@@ -42,6 +51,7 @@
 </template>
 
 <script lang="ts">
+import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import { Time, Weekday } from '@/class/Enums';
 import {
@@ -120,11 +130,38 @@ export default class Masterlist extends Vue {
       this.headers.forEach((header) => {
         if (header.text !== '') {
           newRow[header.text] = this
-            .localBackup?.masterlist.searchAppointment(header.text, this.currentWeekDay, row.time as Time) || '';
+            .localBackup?.masterlist.searchAppointmentString(header.text, this.currentWeekDay, row.time as Time) || '';
         }
       });
       return newRow;
     });
+  }
+
+  addAppointment(event: { therapist: string, patient: string, time: string, hasEnd: boolean, endDate: Date }): void {
+    const appointment = new AppointmentSeries(
+      event.therapist, event.patient, event.time as unknown as Time, this.currentWeekDay, event.hasEnd, event.endDate,
+    );
+    if (this.localBackup) {
+      this.store.addAppointmentSeries(appointment);
+    }
+  }
+
+  changeAppointment(event: { therapist: string, patient: string, time: string, hasEnd: boolean, endDate: Date }): void {
+    const appointment = new AppointmentSeries(
+      event.therapist, event.patient, event.time as unknown as Time, this.currentWeekDay, event.hasEnd, event.endDate,
+    );
+    if (this.localBackup) {
+      this.store.changeAppointmentSeries(appointment);
+    }
+  }
+
+  deleteAppointment(event: { patient: string, therapist: string, time: string, hasEnd: boolean, endDate: Date }): void {
+    if (this.localBackup) {
+      const appointment = new AppointmentSeries(
+        event.therapist, event.patient, event.time as unknown as Time, this.currentWeekDay, event.hasEnd, event.endDate,
+      );
+      this.store.deleteAppointmentSeries(appointment);
+    }
   }
 }
 

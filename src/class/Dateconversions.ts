@@ -13,6 +13,11 @@ export default class Dateconversions {
     return `${day}.${month}.${year}`;
   }
 
+  static convertGermanToEnglishReadableString(date : string): string {
+    const [day, month, year] = date.split('.');
+    return `${year}-${month}-${day}`;
+  }
+
   static datesAreEqual(date1 : Date, date2 : Date) : boolean {
     return this.convertDateToReadableString(date1) === this.convertDateToReadableString(date2);
   }

@@ -122,7 +122,7 @@ export default class Daylist extends Vue {
       this.headers.forEach((header) => {
         if (header.text !== '') {
           newRow[header.text] = this
-            .localBackup?.daylist.searchAppointment(header.text, this.currentSingleDay, row.time as Time) || '';
+            .localBackup?.daylist.searchAppointmentString(header.text, this.currentSingleDay, row.time as Time) || '';
         }
       });
       return newRow;

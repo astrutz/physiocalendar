@@ -12,7 +12,7 @@ export default class Daylist {
     this.elements = elements;
   }
 
-  searchAppointment(therapist: string, dateString: string, time: Time): string {
+  searchAppointmentString(therapist: string, dateString: string, time: Time): string {
     const currentDay = this.findListday(dateString);
     if (currentDay !== undefined) {
       const foundAppointment = currentDay.appointments.find(
