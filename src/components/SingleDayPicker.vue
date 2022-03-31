@@ -26,7 +26,9 @@
             getCombinedDate();
           "
           locale="de-de"
+          :first-day-of-week="1"
         ></v-date-picker>
+        <!-- TODO Date Picker: allowed-dates (look it up on Vuetify) -->
       </v-menu>
     </v-col>
     <v-col cols="auto">

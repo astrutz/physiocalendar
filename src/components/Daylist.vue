@@ -44,7 +44,7 @@
 <script lang="ts">
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
-import { Time } from '@/class/Enums';
+import { Time, Weekday } from '@/class/Enums';
 import SingleAppointment from '@/class/SingleAppointment';
 import {
   Component, Prop, Vue, Watch,
@@ -121,8 +121,27 @@ export default class Daylist extends Vue {
       };
       this.headers.forEach((header) => {
         if (header.text !== '') {
-          newRow[header.text] = this
-            .localBackup?.daylist.searchAppointmentString(header.text, this.currentSingleDay, row.time as Time) || '';
+          const singleAppointment = this.localBackup?.daylist.searchAppointmentString(
+            header.text, this.currentSingleDay, row.time as Time,
+          );
+          if (singleAppointment !== undefined && singleAppointment !== '') {
+            newRow[header.text] = singleAppointment;
+          } else {
+            const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
+            let weekday: Weekday;
+            switch (currentSingleDate.getDay()) {
+              case 1: weekday = Weekday.MONDAY; break;
+              case 2: weekday = Weekday.TUESDAY; break;
+              case 3: weekday = Weekday.WEDNESDAY; break;
+              case 4: weekday = Weekday.THURSDAY; break;
+              case 5: weekday = Weekday.FRIDAY; break;
+              default: weekday = Weekday.MONDAY; break; // TODO: Remove weekends
+            }
+            const masterAppointment = this.localBackup?.masterlist.searchAppointmentStringForDaylist(
+              header.text, weekday, row.time as Time, currentSingleDate,
+            );
+            newRow[header.text] = masterAppointment || '';
+          }
         }
       });
       return newRow;
