@@ -46,6 +46,7 @@
 <script lang="ts">
 import Dateconversions from '@/class/Dateconversions';
 import { Component, Watch, Vue } from 'vue-property-decorator';
+import holidaysJSON from '@/data/holidays.json';
 
 @Component
 export default class SingleDayPicker extends Vue {
@@ -55,6 +56,8 @@ export default class SingleDayPicker extends Vue {
 
   private menu = false;
 
+  private holidays = holidaysJSON.days;
+
   @Watch('date')
   dateChanged(): void {
     this.dateFormatted = Dateconversions.convertEnglishToGermanReadableString(this.date);
@@ -62,7 +65,18 @@ export default class SingleDayPicker extends Vue {
   }
 
   dateIsAllowed(dateVal: string | Date): boolean {
-    const day = typeof dateVal === 'string' ? this.getCombinedDate(dateVal).getDay() : dateVal.getDay();
+    if (typeof dateVal === 'string') {
+      if (this.holidays.includes(dateVal)) {
+        return false;
+      }
+      const day = this.getCombinedDate(dateVal).getDay();
+      return day > 0 && day < 6;
+    }
+    const readableString = Dateconversions.convertGermanToEnglishReadableString(Dateconversions.convertDateToReadableString(dateVal));
+    if (this.holidays.includes(readableString)) {
+      return false;
+    }
+    const day = dateVal.getDay();
     return day > 0 && day < 6;
   }
 
