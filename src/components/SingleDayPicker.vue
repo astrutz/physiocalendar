@@ -15,12 +15,17 @@
         min-width="auto"
       >
         <template v-slot:activator="{ on, attrs }">
-          <v-btn color="primary" v-model="dateFormatted" v-bind="attrs" v-on="on">{{
-            dateFormatted
-          }}</v-btn>
+          <v-btn
+            color="primary"
+            v-model="dateFormatted"
+            v-bind="attrs"
+            v-on="on"
+            >{{ dateFormatted }}</v-btn
+          >
         </template>
         <v-date-picker
           v-model="date"
+          :allowed-dates="dateIsAllowed"
           @input="
             menu = false;
             getCombinedDate();
@@ -28,7 +33,6 @@
           locale="de-de"
           :first-day-of-week="1"
         ></v-date-picker>
-        <!-- TODO Date Picker: allowed-dates (look it up on Vuetify) -->
       </v-menu>
     </v-col>
     <v-col cols="auto">
@@ -57,21 +61,33 @@ export default class SingleDayPicker extends Vue {
     this.$emit('currentDayChanged', this.dateFormatted);
   }
 
-  getCombinedDate(): Date {
-    const timezoneOffsetInHours = new Date(`${this.date}T00:00:00.000Z`).getTimezoneOffset() * -1;
+  dateIsAllowed(dateVal: string | Date): boolean {
+    const day = typeof dateVal === 'string' ? this.getCombinedDate(dateVal).getDay() : dateVal.getDay();
+    return day > 0 && day < 6;
+  }
+
+  getCombinedDate(dateString?: string): Date {
+    const date = dateString || this.date;
+    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
     const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
-    return new Date(`${this.date}T00:00:00.000${offsetSuffix}`);
+    return new Date(`${date}T00:00:00.000${offsetSuffix}`);
   }
 
   setPreviousDate(): void {
     const date = this.getCombinedDate();
     date.setDate(date.getDate() - 1);
+    while (!this.dateIsAllowed(date)) {
+      date.setDate(date.getDate() - 1);
+    }
     this.date = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
   }
 
   setNextDate(): void {
     const date = this.getCombinedDate();
     date.setDate(date.getDate() + 1);
+    while (!this.dateIsAllowed(date)) {
+      date.setDate(date.getDate() + 1);
+    }
     this.date = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
   }
 }

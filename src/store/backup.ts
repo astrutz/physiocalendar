@@ -63,7 +63,6 @@ class StoreBackup extends VuexModule {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
       localBackup.daylist.deleteAppointment(appointment);
-      // localBackup.daylist = localBackup.daylist.deleteAppointment(appointment); // TODO: Maybe this fixes the deletion issues - TESTME
       this.setBackup(localBackup);
       this.saveBackup();
     }
