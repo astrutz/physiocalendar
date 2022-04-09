@@ -135,7 +135,7 @@ export default class Daylist extends Vue {
               case 3: weekday = Weekday.WEDNESDAY; break;
               case 4: weekday = Weekday.THURSDAY; break;
               case 5: weekday = Weekday.FRIDAY; break;
-              default: weekday = Weekday.MONDAY; break; // TODO: Remove weekends
+              default: weekday = Weekday.MONDAY; break;
             }
             const masterAppointment = this.localBackup?.masterlist.searchAppointmentStringForDaylist(
               header.text, weekday, row.time as Time, currentSingleDate,
