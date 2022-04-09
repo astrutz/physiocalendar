@@ -6,6 +6,9 @@
       </v-btn>
     </template>
     <v-list>
+      <v-list-item @click="downloadItem()" class="menu-item">
+        Backup runterladen
+      </v-list-item>
       <v-list-item
         v-for="(item, index) in menuItems"
         :key="index"
@@ -15,45 +18,32 @@
         <v-list-item-title>{{ item.title }}</v-list-item-title>
       </v-list-item>
     </v-list>
-    <v-dialog
-      v-model="menuItems[0].dialog"
-      max-width="600"
-    >
-    <Terminfinder @dialogClosed="menuItems[0].dialog = false" />
+    <v-dialog v-model="menuItems[0].dialog" max-width="600">
+      <Import @dialogClosed="menuItems[0].dialog = false" />
     </v-dialog>
-    <v-dialog
-      v-model="menuItems[1].dialog"
-      max-width="600"
-    >
-    <Export @dialogClosed="menuItems[1].dialog = false" />
+    <v-dialog v-model="menuItems[1].dialog" max-width="600">
+      <Terminfinder @dialogClosed="menuItems[1].dialog = false" />
     </v-dialog>
-    <v-dialog
-      v-model="menuItems[2].dialog"
-      max-width="600"
-    >
-    <Import @dialogClosed="menuItems[2].dialog = false" />
-    </v-dialog>
-    <v-dialog
-      v-model="menuItems[3].dialog"
-      max-width="600"
-    >
-    <Settings @dialogClosed="menuItems[3].dialog = false" />
+    <v-dialog v-model="menuItems[2].dialog" max-width="600">
+      <Settings @dialogClosed="menuItems[2].dialog = false" />
     </v-dialog>
   </v-menu>
 </template>
 
 <script lang="ts">
-
 import { Component, Vue } from 'vue-property-decorator';
 import Terminfinder from '@/components/Terminfinder.vue';
-import Export from '@/components/Export.vue';
 import Import from '@/components/Import.vue';
 import Settings from '@/components/Settings.vue';
+
+import { getModule } from 'vuex-module-decorators';
+import FileSaver from 'file-saver';
+import Store from '../store/backup';
+import convertToJSON from '../store/convertToJSON';
 
 @Component({
   components: {
     Terminfinder,
-    Export,
     Import,
     Settings,
   },
@@ -61,11 +51,22 @@ import Settings from '@/components/Settings.vue';
 
 export default class Menu extends Vue {
   private menuItems = [
+    { title: 'Backup einspielen', dialog: false },
     { title: 'Terminfinder', dialog: false },
-    { title: 'Backup speichern', dialog: false },
-    { title: 'Backup laden', dialog: false },
     { title: 'Einstellungen', dialog: false },
   ];
+
+  store = getModule(Store);
+
+  downloadItem(): void {
+    const backup = this.store.getBackup;
+    if (backup) {
+      const backupJSON = convertToJSON(backup);
+      backupJSON.createdDate = new Date().getTime();
+      const blob = new Blob([JSON.stringify(backupJSON, null, 2)], { type: 'text/plain;charset=utf-8' });
+      FileSaver.saveAs(blob, `backup_${backupJSON.createdDate}.json`);
+    }
+  }
 }
 
 </script>
