@@ -27,10 +27,10 @@ class StoreBackup extends VuexModule {
   }
 
   @Action
-  public async saveBackup(): Promise<void> {
+  public async saveBackup(importedBackup? : string): Promise<void> {
     if (this.backup) {
       try {
-        const backupJSON = convertToJSON(this.backup);
+        const backupJSON = importedBackup ? JSON.parse(importedBackup) : convertToJSON(this.backup);
         await axios.put('http://localhost:4000/backup', backupJSON);
       } catch (err) {
         console.error(err);
@@ -99,8 +99,12 @@ class StoreBackup extends VuexModule {
   }
 
   @Mutation
-  public setBackup(newBackup: Backup): void {
-    this.backup = newBackup;
+  public setBackup(newBackup?: Backup): void {
+    if (newBackup) {
+      this.backup = newBackup;
+    } else {
+      this.loadBackup();
+    }
   }
 
   get getBackup(): Backup | null {
