@@ -86,6 +86,16 @@ export default class Masterlist {
     return '';
   }
 
+  searchAppointmentForDaylist(therapist: string, weekday: Weekday, time: Time, date: Date): AppointmentSeries | undefined {
+    const currentDay = this.findListday(weekday);
+    if (currentDay !== undefined) {
+      return currentDay.appointments.find(
+        (appointment) => Masterlist.filterAppointmentForDaylist(therapist, time, appointment as AppointmentSeries, date),
+      ) as AppointmentSeries;
+    }
+    return undefined;
+  }
+
   addAppointment(appointment: AppointmentSeries): void {
     const currentDay = this.findListday(appointment.weekday);
     if (currentDay === undefined) {

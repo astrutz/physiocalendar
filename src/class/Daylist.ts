@@ -12,6 +12,16 @@ export default class Daylist {
     this.elements = elements;
   }
 
+  searchAppointment(therapist: string, dateString: string, time: Time): SingleAppointment | undefined {
+    const currentDay = this.findListday(dateString);
+    if (currentDay !== undefined) {
+      return currentDay.appointments.find(
+        (appointment) => appointment.therapist === therapist && appointment.time === time,
+      ) as SingleAppointment;
+    }
+    return undefined;
+  }
+
   searchAppointmentString(therapist: string, dateString: string, time: Time): string {
     const currentDay = this.findListday(dateString);
     if (currentDay !== undefined) {
