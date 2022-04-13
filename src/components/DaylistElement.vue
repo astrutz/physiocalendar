@@ -66,7 +66,7 @@ export default class DaylistElement extends Vue {
   private patientTextfield = this.patient;
 
   changeAppointment(): void {
-    if (this.patientTextfield !== '') {
+    if (this.patientTextfield !== '' && this.patientTextfield !== null) {
       this.$emit('appointmentChanged', { patient: this.patientTextfield, therapist: this.therapist, time: this.time });
     } else {
       this.$emit('appointmentDeleted', { patient: this.patient, therapist: this.therapist, time: this.time });
