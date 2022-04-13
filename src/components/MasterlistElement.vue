@@ -141,7 +141,6 @@ export default class MasterlistElement extends Vue {
   }
 
   changeAppointment(): void {
-    console.log(this.patientTextfield);
     if (this.patientTextfield !== '' && this.patientTextfield !== null) {
       this.$emit('appointmentChanged', {
         patient: this.patientTextfield,
