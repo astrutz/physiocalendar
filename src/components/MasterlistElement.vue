@@ -65,6 +65,19 @@
             ></v-date-picker>
           </v-menu>
         </v-row>
+        <v-alert v-if="conflicts.length > 0" type="error" class="mt-4"
+          >Dieser Termin kann nicht gespeichert werden, da er mit folgenden
+          Terminen kollidiert:
+          <ul>
+            <li
+              v-for="conflict in conflicts"
+              :key="conflict.date.toLocaleDateString()"
+            >
+              {{ conflict.patient }} - {{ conflict.date.toLocaleDateString() }},
+              {{ conflict.time }}
+            </li>
+          </ul>
+        </v-alert>
       </v-card-text>
 
       <v-divider></v-divider>
@@ -85,6 +98,7 @@
         <v-btn v-if="patient !== ''" color="primary" text> Drucken </v-btn>
         <v-spacer></v-spacer>
         <v-btn
+          :disabled="conflicts.length > 0"
           color="primary"
           button
           @click="
@@ -101,11 +115,15 @@
 
 <script lang="ts">
 import AppointmentSeries from '@/class/AppointmentSeries';
+import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
-import { Weekday } from '@/class/Enums';
+import { Time, Weekday } from '@/class/Enums';
+import SingleAppointment from '@/class/SingleAppointment';
 import {
   Component, Prop, Vue, Watch,
 } from 'vue-property-decorator';
+import { getModule } from 'vuex-module-decorators';
+import Store from '../store/backup';
 
 @Component
 export default class MasterlistElement extends Vue {
@@ -119,11 +137,13 @@ export default class MasterlistElement extends Vue {
 
   @Prop() readonly appointment!: AppointmentSeries;
 
-  private appointmentPatient = this.appointment?.patient || this.patient;
+  store = getModule(Store);
 
-  private appointmentPatientTime = this.appointment?.time.toString() || this.time;
+  private appointmentPatient = this.appointment.patient;
 
-  private appointmentTherapist = this.appointment?.therapist || this.therapist;
+  private appointmentPatientTime = this.appointment.time.toString();
+
+  private appointmentTherapist = this.appointment.therapist;
 
   private endDate = this.appointment?.endDate || new Date();
 
@@ -139,9 +159,61 @@ export default class MasterlistElement extends Vue {
 
   private patientTextfield = this.appointmentPatient;
 
+  private conflicts: SingleAppointment[] = [];
+
+  get localBackup(): Backup | null {
+    return this.store.getBackup;
+  }
+
+  @Watch('dialogIsOpen')
+  dialogIsOpenChanged(): void {
+    this.checkAppointmentConflicts();
+  }
+
+  @Watch('hasEnd')
+  hasEndChanged(): void {
+    this.checkAppointmentConflicts();
+  }
+
   @Watch('endDateString')
   dateChanged(): void {
+    this.checkAppointmentConflicts();
     this.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
+  }
+
+  checkAppointmentConflicts(): void {
+    this.conflicts = [];
+    let weekdayOffset = 1;
+
+    switch (this.day) {
+      case Weekday.MONDAY: weekdayOffset = 1; break;
+      case Weekday.TUESDAY: weekdayOffset = 2; break;
+      case Weekday.WEDNESDAY: weekdayOffset = 3; break;
+      case Weekday.THURSDAY: weekdayOffset = 4; break;
+      case Weekday.FRIDAY: weekdayOffset = 5; break;
+      default: break;
+    }
+
+    const currentDate = new Date();
+    // eslint-disable-next-line no-mixed-operators
+    currentDate.setDate(currentDate.getDate() + ((7 - currentDate.getDay()) % 7 + weekdayOffset) % 7);
+
+    let endDate = new Date();
+    if (this.hasEnd) {
+      endDate = this.endDate;
+    } else {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    }
+
+    while (currentDate < endDate) {
+      const conflictAppointment = this.localBackup?.daylist.searchAppointment(
+        this.therapist, Dateconversions.convertDateToReadableString(currentDate), this.time as unknown as Time,
+      );
+      if (conflictAppointment) {
+        this.conflicts.push(conflictAppointment);
+      }
+      currentDate.setDate(currentDate.getDate() + 7);
+    }
   }
 
   getCombinedDate(): Date {

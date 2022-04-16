@@ -111,6 +111,20 @@
               ></v-date-picker>
             </v-menu>
           </v-row>
+          <v-alert v-if="conflicts.length > 0" type="error" class="mt-4"
+            >Dieser Termin kann nicht gespeichert werden, da er mit folgenden
+            Terminen kollidiert:
+            <ul>
+              <li
+                v-for="conflict in conflicts"
+                :key="conflict.date.toLocaleDateString()"
+              >
+                {{ conflict.patient }} -
+                {{ conflict.date.toLocaleDateString() }},
+                {{ conflict.time }}
+              </li>
+            </ul>
+          </v-alert>
         </v-card-text>
 
         <v-divider></v-divider>
@@ -124,6 +138,7 @@
           <v-btn
             color="primary"
             button
+            :disabled="conflicts.length > 0"
             @click="
               addAppointment({
                 therapist: selectedAppointment.therapist,
@@ -149,6 +164,7 @@ import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import { Time, Weekday } from '@/class/Enums';
+import SingleAppointment from '@/class/SingleAppointment';
 import {
   Component, Prop, Vue, Watch,
 } from 'vue-property-decorator';
@@ -184,6 +200,8 @@ export default class Masterlist extends Vue {
     weekday: this.currentWeekDay,
   };
 
+  private conflicts: SingleAppointment[] = [];
+
   store = getModule(Store);
 
   private headers = [
@@ -208,6 +226,17 @@ export default class Masterlist extends Vue {
   localBackupChanged(): void {
     this.createHeaders();
     this.createRows();
+  }
+
+  @Watch('inputFields.hasEnd')
+  hasEndChanged(): void {
+    this.checkAppointmentConflicts();
+  }
+
+  @Watch('inputFields.endDateString')
+  dateChanged(): void {
+    this.checkAppointmentConflicts();
+    this.inputFields.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.inputFields.endDateString);
   }
 
   mounted(): void {
@@ -252,9 +281,48 @@ export default class Masterlist extends Vue {
   }
 
   openCreateDialog(therapist: string, time: string): void {
+    this.checkAppointmentConflicts();
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.time = time;
     this.createDialog = true;
+  }
+
+  checkAppointmentConflicts(): void {
+    this.conflicts = [];
+    let weekdayOffset = 1;
+
+    switch (this.currentWeekDay) {
+      case Weekday.MONDAY: weekdayOffset = 1; break;
+      case Weekday.TUESDAY: weekdayOffset = 2; break;
+      case Weekday.WEDNESDAY: weekdayOffset = 3; break;
+      case Weekday.THURSDAY: weekdayOffset = 4; break;
+      case Weekday.FRIDAY: weekdayOffset = 5; break;
+      default: break;
+    }
+
+    const currentDate = new Date();
+    // eslint-disable-next-line no-mixed-operators
+    currentDate.setDate(currentDate.getDate() + ((7 - currentDate.getDay()) % 7 + weekdayOffset) % 7);
+
+    let endDate = new Date();
+    if (this.inputFields.hasEnd) {
+      endDate = this.inputFields.endDate;
+    } else {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    }
+
+    while (currentDate < endDate) {
+      const conflictAppointment = this.localBackup?.daylist.searchAppointment(
+        this.selectedAppointment.therapist,
+        Dateconversions.convertDateToReadableString(currentDate),
+        this.selectedAppointment.time as unknown as Time,
+      );
+      if (conflictAppointment) {
+        this.conflicts.push(conflictAppointment);
+      }
+      currentDate.setDate(currentDate.getDate() + 7);
+    }
+    console.log('checking', new Date().toLocaleDateString(), 'to', endDate.toLocaleDateString(), this.conflicts.length, 'conflicts found');
   }
 
   getCombinedDate(): Date {
