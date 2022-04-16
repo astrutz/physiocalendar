@@ -1,9 +1,17 @@
 <template>
-  <v-dialog v-model="dialogIsOpen" width="600">
+  <v-dialog persistent v-model="dialogIsOpen" width="600">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn text @click="dialogIsOpen = true" v-bind="attrs" v-on="on">{{
-        patient
-      }}</v-btn>
+      <button
+        style="width: 100%"
+        type="button"
+        @click="dialogIsOpen = true"
+        v-bind="attrs"
+        v-on="on"
+      >
+        <span :class="appointment.startDate ? 'appointmentSeries' : ''">{{
+          patient
+        }}</span>
+      </button>
     </template>
 
     <v-card>
@@ -13,23 +21,29 @@
 
       <v-card-text class="pt-5">
         <v-text-field
+          :disabled="!!appointment.startDate"
           label="Name des Patienten"
           :value="patient"
           v-model="patientTextfield"
           clearable
         ></v-text-field>
+        <p v-if="!!appointment.startDate && appointment.endDate">Behandlung bis: {{appointment.endDate.toLocaleDateString()}}</p>
+        <v-alert v-if="!!appointment.startDate" type="info"
+          >Dieser Termin wurde aus der Stammliste generiert und kann daher nicht in der Terminliste verändert werden.</v-alert
+        >
       </v-card-text>
 
       <v-divider></v-divider>
 
       <v-card-actions>
-        <v-btn color="error" text @click="dialogIsOpen = false">
+        <v-btn color="error" text @click="patientTextfield = patient; dialogIsOpen = false">
           Abbrechen
         </v-btn>
         <v-spacer></v-spacer>
         <v-btn v-if="patient !== ''" color="primary" text> Drucken </v-btn>
-        <v-spacer></v-spacer>
+        <v-spacer v-if="!appointment.startDate"></v-spacer>
         <v-btn
+          v-if="!appointment.startDate"
           color="primary"
           button
           @click="
@@ -47,6 +61,7 @@
 </template>
 
 <script lang="ts">
+import Appointment from '@/class/Appointment';
 import {
   Component, Prop, Vue,
 } from 'vue-property-decorator';
@@ -60,6 +75,8 @@ export default class DaylistElement extends Vue {
   @Prop() readonly date!: string;
 
   @Prop() readonly therapist!: string;
+
+  @Prop() readonly appointment!: Appointment;
 
   private dialogIsOpen = false;
 
@@ -78,3 +95,9 @@ export default class DaylistElement extends Vue {
   }
 }
 </script>
+
+<style scoped>
+.appointmentSeries {
+  font-style: italic;
+}
+</style>

@@ -1,9 +1,15 @@
 <template>
-  <v-dialog v-model="dialogIsOpen" width="600">
+  <v-dialog persistent v-model="dialogIsOpen" width="600">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn text @click="dialogIsOpen = true" v-bind="attrs" v-on="on">{{
-        patient
-      }}</v-btn>
+      <button
+        style="width: 100%"
+        type="button"
+        @click="dialogIsOpen = true"
+        v-bind="attrs"
+        v-on="on"
+      >
+        {{ patient }}
+      </button>
     </template>
 
     <v-card>
@@ -64,7 +70,15 @@
       <v-divider></v-divider>
 
       <v-card-actions>
-        <v-btn color="error" text @click="dialogIsOpen = false">
+        <v-btn
+          color="error"
+          text
+          @click="
+            hasEnd = appointment.hasEnd || false;
+            patientTextfield = patient;
+            dialogIsOpen = false;
+          "
+        >
           Abbrechen
         </v-btn>
         <v-spacer></v-spacer>
@@ -103,7 +117,7 @@ export default class MasterlistElement extends Vue {
 
   @Prop() readonly day!: Weekday;
 
-  @Prop() readonly appointment!: AppointmentSeries | undefined;
+  @Prop() readonly appointment!: AppointmentSeries;
 
   private appointmentPatient = this.appointment?.patient || this.patient;
 
