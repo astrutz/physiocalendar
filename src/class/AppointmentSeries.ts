@@ -25,4 +25,8 @@ export default class AppointmentSeries extends Appointment {
     this.endDate = endDate || null;
     this.startDate = startDate || new Date();
   }
+
+  getTimeAsString() : string {
+    return Time[this.time];
+  }
 }

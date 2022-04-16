@@ -1,24 +1,32 @@
 import AppointmentRequest from './AppointmentRequest';
-import AppointmentSuggestion from './AppointmentSuggestion';
+import AppointmentSeries from './AppointmentSeries';
+import { Time, Weekday } from './Enums';
+// import AppointmentSuggestion from './AppointmentSuggestion';
 
 export default class AppointmentFinder {
-  patient : string;
+  patient: string;
 
-  therapists : string[];
+  therapists: string[];
 
-  appointmentRequests : AppointmentRequest[];
+  appointmentRequests: AppointmentRequest[];
 
-  appointmentSuggestions : AppointmentSuggestion[];
+  // appointmentSuggestions : AppointmentSuggestion[];
 
   constructor(
     patient: string,
     therapists: string[],
-    appointmentRequests : AppointmentRequest[],
-    appointmentSuggestions: AppointmentSuggestion[],
+    appointmentRequests: AppointmentRequest[],
+    // appointmentSuggestions: AppointmentSuggestion[],
   ) {
     this.patient = patient;
     this.therapists = therapists;
     this.appointmentRequests = appointmentRequests;
-    this.appointmentSuggestions = appointmentSuggestions;
+    // this.appointmentSuggestions = appointmentSuggestions;
+  }
+
+  getSuggestions(): AppointmentSeries[] {
+    console.log(this.patient);
+    // return [];
+    return [new AppointmentSeries('Torben', 'patient', Time['10:00'], Weekday.FRIDAY, false)];
   }
 }

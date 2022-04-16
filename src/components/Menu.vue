@@ -21,9 +21,9 @@
     <v-dialog v-model="menuItems[0].dialog" max-width="600">
       <Import @dialogClosed="menuItems[0].dialog = false" />
     </v-dialog>
-    <v-dialog v-model="menuItems[1].dialog" max-width="600">
+    <v-bottom-sheet v-model="menuItems[1].dialog">
       <Terminfinder @dialogClosed="menuItems[1].dialog = false" />
-    </v-dialog>
+    </v-bottom-sheet>
     <v-dialog v-model="menuItems[2].dialog" max-width="600">
       <Settings @dialogClosed="menuItems[2].dialog = false" />
     </v-dialog>
