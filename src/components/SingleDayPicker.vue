@@ -58,6 +58,12 @@ export default class SingleDayPicker extends Vue {
 
   private holidays = holidaysJSON.days;
 
+  mounted() : void {
+    if (!this.dateIsAllowed(this.date)) {
+      this.setNextDate();
+    }
+  }
+
   @Watch('date')
   dateChanged(): void {
     this.dateFormatted = Dateconversions.convertEnglishToGermanReadableString(this.date);
