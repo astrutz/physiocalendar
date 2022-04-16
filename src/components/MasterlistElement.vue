@@ -182,37 +182,15 @@ export default class MasterlistElement extends Vue {
   }
 
   checkAppointmentConflicts(): void {
-    this.conflicts = [];
-    let weekdayOffset = 1;
-
-    switch (this.day) {
-      case Weekday.MONDAY: weekdayOffset = 1; break;
-      case Weekday.TUESDAY: weekdayOffset = 2; break;
-      case Weekday.WEDNESDAY: weekdayOffset = 3; break;
-      case Weekday.THURSDAY: weekdayOffset = 4; break;
-      case Weekday.FRIDAY: weekdayOffset = 5; break;
-      default: break;
-    }
-
-    const currentDate = new Date();
-    // eslint-disable-next-line no-mixed-operators
-    currentDate.setDate(currentDate.getDate() + ((7 - currentDate.getDay()) % 7 + weekdayOffset) % 7);
-
-    let endDate = new Date();
-    if (this.hasEnd) {
-      endDate = this.endDate;
-    } else {
-      endDate.setFullYear(endDate.getFullYear() + 1);
-    }
-
-    while (currentDate < endDate) {
-      const conflictAppointment = this.localBackup?.daylist.searchAppointment(
-        this.therapist, Dateconversions.convertDateToReadableString(currentDate), this.time as unknown as Time,
+    if (this.localBackup) {
+      Dateconversions.checkAppointmentConflicts(
+        this.localBackup.daylist,
+        this.day,
+        this.hasEnd,
+        this.therapist,
+        this.endDate,
+        this.time as unknown as Time,
       );
-      if (conflictAppointment) {
-        this.conflicts.push(conflictAppointment);
-      }
-      currentDate.setDate(currentDate.getDate() + 7);
     }
   }
 

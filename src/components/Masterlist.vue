@@ -288,41 +288,16 @@ export default class Masterlist extends Vue {
   }
 
   checkAppointmentConflicts(): void {
-    this.conflicts = [];
-    let weekdayOffset = 1;
-
-    switch (this.currentWeekDay) {
-      case Weekday.MONDAY: weekdayOffset = 1; break;
-      case Weekday.TUESDAY: weekdayOffset = 2; break;
-      case Weekday.WEDNESDAY: weekdayOffset = 3; break;
-      case Weekday.THURSDAY: weekdayOffset = 4; break;
-      case Weekday.FRIDAY: weekdayOffset = 5; break;
-      default: break;
-    }
-
-    const currentDate = new Date();
-    // eslint-disable-next-line no-mixed-operators
-    currentDate.setDate(currentDate.getDate() + ((7 - currentDate.getDay()) % 7 + weekdayOffset) % 7);
-
-    let endDate = new Date();
-    if (this.inputFields.hasEnd) {
-      endDate = this.inputFields.endDate;
-    } else {
-      endDate.setFullYear(endDate.getFullYear() + 1);
-    }
-
-    while (currentDate < endDate) {
-      const conflictAppointment = this.localBackup?.daylist.searchAppointment(
+    if (this.localBackup) {
+      Dateconversions.checkAppointmentConflicts(
+        this.localBackup.daylist,
+        this.currentWeekDay,
+        this.inputFields.hasEnd,
         this.selectedAppointment.therapist,
-        Dateconversions.convertDateToReadableString(currentDate),
+        this.inputFields.endDate,
         this.selectedAppointment.time as unknown as Time,
       );
-      if (conflictAppointment) {
-        this.conflicts.push(conflictAppointment);
-      }
-      currentDate.setDate(currentDate.getDate() + 7);
     }
-    console.log('checking', new Date().toLocaleDateString(), 'to', endDate.toLocaleDateString(), this.conflicts.length, 'conflicts found');
   }
 
   getCombinedDate(): Date {
