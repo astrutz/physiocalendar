@@ -86,7 +86,14 @@
       </v-card-text>
 
       <v-card-actions>
-        <v-btn color="error" text @click="$emit('dialogClosed')">
+        <v-btn
+          color="error"
+          text
+          @click="
+            appointmentSearchStarted = false;
+            $emit('dialogClosed');
+          "
+        >
           Abbrechen
         </v-btn>
         <v-spacer></v-spacer>
@@ -104,7 +111,9 @@
               <v-radio
                 v-for="suggestion in appointmentSuggestions"
                 :key="suggestion.therapist"
-                :label="`${suggestion.therapist} ${suggestion.weekday} ${suggestion.getTimeAsString()}`"
+                :label="`${suggestion.therapist} ${
+                  suggestion.weekday
+                } ${suggestion.getTimeAsString()}`"
                 :value="suggestion"
               ></v-radio>
             </v-radio-group>
@@ -113,7 +122,14 @@
         </v-row>
       </v-card-text>
       <v-card-actions>
-        <v-btn color="error" text @click="$emit('dialogClosed')">
+        <v-btn
+          color="error"
+          text
+          @click="
+            appointmentSearchStarted = false;
+            $emit('dialogClosed');
+          "
+        >
           Abbrechen
         </v-btn>
         <v-spacer v-if="selectedAppointmentSuggestion !== 0"></v-spacer>
@@ -136,7 +152,14 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="primary" button @click="$emit('dialogClosed')">
+        <v-btn
+          color="primary"
+          button
+          @click="
+            appointmentSearchStarted = false;
+            $emit('dialogClosed');
+          "
+        >
           Bestätigen
         </v-btn>
       </v-card-actions>
@@ -194,6 +217,7 @@ export default class Terminfinder extends Vue {
 
   takeAppointmentSuggestion(): void {
     console.log(this.selectedAppointmentSuggestion);
+    this.appointmentSearchStarted = false;
     this.$emit('dialogClosed');
   }
 }
