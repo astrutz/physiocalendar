@@ -42,4 +42,39 @@ export default class AppointmentRequest {
       new AppointmentRequest(Weekday.FRIDAY, TimeOfDay.EVENING),
     ];
   }
+
+  static timesOfDayToTimes(): {
+    Morgens: string[];
+    Vormittags: string[];
+    Mittags: string[];
+    Nachmittags: string[];
+    Abends: string[];
+    } {
+    return {
+      [TimeOfDay.MORNING]: [
+        '7:00', '7:20', '7:40',
+        '8:00', '8:20', '8:40',
+        '9:00', '9:20', '9:40',
+      ],
+      [TimeOfDay.FORENOON]: [
+        '10:00', '10:20', '10:40',
+        '11:00', '11:20', '11:40',
+      ],
+      [TimeOfDay.NOON]: [
+        '12:00', '12:20', '12:40',
+        '13:00', '13:20', '13:40',
+        '14:00', '14:20', '14:40',
+      ],
+      [TimeOfDay.AFTERNOON]: [
+        '15:00', '15:20', '15:40',
+        '16:00', '16:20', '16:40',
+        '17:00', '17:20', '17:40',
+      ],
+      [TimeOfDay.EVENING]: [
+        '18:00', '18:20', '18:40',
+        '19:00', '19:20', '19:40',
+        '20:00', '20:20', '20:40',
+      ],
+    };
+  }
 }
