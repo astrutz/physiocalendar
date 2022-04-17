@@ -25,8 +25,7 @@ export default class AppointmentFinder {
   }
 
   getSuggestions(): AppointmentSeries[] {
-    console.log(this.patient);
     // return [];
-    return [new AppointmentSeries('Torben', 'patient', Time['10:00'], Weekday.FRIDAY, false)];
+    return [new AppointmentSeries('Torben', this.patient, '10:00' as unknown as Time, Weekday.FRIDAY, false)];
   }
 }

@@ -1,9 +1,23 @@
 <template>
-  <v-card>
-    <v-card-title class="text-h5 grey lighten-2"> Terminfinder </v-card-title>
+  <v-stepper v-model="currentStep">
+    <v-stepper-header>
+      <v-stepper-step :complete="currentStep > 1" step="1">
+        Patientendaten eintragen
+      </v-stepper-step>
 
-    <div v-if="appointmentSearchStarted === false">
-      <v-card-text class="pt-5">
+      <v-divider></v-divider>
+
+      <v-stepper-step :complete="currentStep > 2" step="2">
+        Verfügbaren Termin auswählen
+      </v-stepper-step>
+
+      <v-divider></v-divider>
+
+      <v-stepper-step step="3"> Auswahl bestätigen </v-stepper-step>
+    </v-stepper-header>
+
+    <v-stepper-items>
+      <v-stepper-content step="1">
         <v-text-field
           label="Name des Patienten"
           v-model="patientTextfield"
@@ -83,88 +97,95 @@
             ></v-checkbox>
           </v-col>
         </v-row>
-      </v-card-text>
 
-      <v-card-actions>
+        <v-btn @click="resetFinder()" color="error" text> Abbrechen </v-btn>
         <v-btn
-          color="error"
-          text
-          @click="
-            appointmentSearchStarted = false;
-            $emit('dialogClosed');
+          class="button-next"
+          :disabled="
+            patientTextfield === '' ||
+            selectedTherapists.length === 0 ||
+            selectedAppointmentRequests.length === 0
           "
-        >
-          Abbrechen
-        </v-btn>
-        <v-spacer></v-spacer>
-        <v-btn color="primary" button @click="findAppointments()">
-          Suchen
-        </v-btn>
-      </v-card-actions>
-    </div>
-    <div v-else-if="appointmentSuggestions.length > 0">
-      <v-card-text>
-        <p class="pl-3">Folgende Termine stehen zur Auswahl:</p>
-        <v-row class="pl-3">
-          <v-col>
-            <v-radio-group v-model="selectedAppointmentSuggestion">
-              <v-radio
-                v-for="suggestion in appointmentSuggestions"
-                :key="suggestion.therapist"
-                :label="`${suggestion.therapist} ${
-                  suggestion.weekday
-                } ${suggestion.getTimeAsString()}`"
-                :value="suggestion"
-              ></v-radio>
-            </v-radio-group>
-            {{ selectedAppointmentSuggestion }}
-          </v-col>
-        </v-row>
-      </v-card-text>
-      <v-card-actions>
-        <v-btn
-          color="error"
-          text
-          @click="
-            appointmentSearchStarted = false;
-            $emit('dialogClosed');
-          "
-        >
-          Abbrechen
-        </v-btn>
-        <v-spacer v-if="selectedAppointmentSuggestion !== 0"></v-spacer>
-        <v-btn
-          v-if="selectedAppointmentSuggestion !== 0"
           color="primary"
-          button
+          @click="
+            findAppointments();
+            currentStep = 2;
+          "
+        >
+          Fortfahren
+        </v-btn>
+      </v-stepper-content>
+
+      <v-stepper-content step="2">
+        <div v-if="appointmentSuggestions.length > 0">
+          <p class="pl-3">Folgende Termine stehen zur Auswahl:</p>
+          <v-row class="pl-3">
+            <v-col>
+              <v-radio-group v-model="selectedAppointmentSuggestion">
+                <v-radio
+                  v-for="suggestion in appointmentSuggestions"
+                  :key="suggestion.therapist"
+                  :label="`${
+                    suggestion.therapist
+                  }, ${suggestion.weekday.toLowerCase()}s um ${
+                    suggestion.time
+                  }`"
+                  :value="suggestion"
+                ></v-radio>
+              </v-radio-group>
+            </v-col>
+          </v-row>
+
+          <v-btn @click="resetFinder()" color="error" text> Abbrechen </v-btn>
+
+          <v-btn
+            :disabled="selectedAppointmentSuggestion === 0"
+            class="button-next"
+            color="primary"
+            @click="currentStep = 3"
+          >
+            Termin auswählen
+          </v-btn>
+        </div>
+        <div v-else>
+          <p>
+            Es wurde kein Termin gefunden. Bitte legen Sie manuell einen Termin
+            über die Stammliste an.
+          </p>
+          <v-btn
+            class="button-next"
+            color="primary"
+            button
+            @click="resetFinder()"
+          >
+            Bestätigen
+          </v-btn>
+        </div>
+      </v-stepper-content>
+
+      <v-stepper-content step="3">
+        <p>Folgender Termin wird in der Stammliste gespeichert:</p>
+        <p v-if="selectedAppointmentSuggestion">
+          <strong>
+            {{ selectedAppointmentSuggestion.therapist }},
+            {{ selectedAppointmentSuggestion.weekday.toLowerCase() }}s um
+            {{ selectedAppointmentSuggestion.time }}
+            <span v-if="selectedAppointmentSuggestion.hasEnd">
+              bis zum {{ selectedAppointmentSuggestion.endDate }}
+            </span>
+          </strong>
+        </p>
+        <v-btn @click="resetFinder()" color="error" text> Abbrechen </v-btn>
+        <v-btn
+          class="button-next"
+          color="primary"
           @click="takeAppointmentSuggestion()"
         >
-          Speichern
+          Termin speichern
         </v-btn>
-      </v-card-actions>
-    </div>
-    <div v-else>
-      <v-card-text>
-        <p class="pl-3">
-          Es wurde kein Termin gefunden. Bitte legen Sie manuell einen Termin
-          über die Stammliste an.
-        </p>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn
-          color="primary"
-          button
-          @click="
-            appointmentSearchStarted = false;
-            $emit('dialogClosed');
-          "
-        >
-          Bestätigen
-        </v-btn>
-      </v-card-actions>
-    </div>
-  </v-card>
+      </v-stepper-content>
+    </v-stepper-items>
+  </v-stepper>
 </template>
 
 <script lang="ts">
@@ -172,6 +193,7 @@
 import AppointmentFinder from '@/class/AppointmentFinder';
 import AppointmentRequest from '@/class/AppointmentRequest';
 import AppointmentSeries from '@/class/AppointmentSeries';
+import Backup from '@/class/Backup';
 import { TimeOfDay } from '@/class/Enums';
 import { Component, Vue } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
@@ -195,15 +217,17 @@ export default class Terminfinder extends Vue {
 
   selectedAppointmentSuggestion: AppointmentSeries | number = 0;
 
-  appointmentSearchStarted = false;
+  currentStep = 1;
 
   store = getModule(Store);
 
+  backup: Backup | null = null;
+
   mounted(): void {
-    const backup = this.store.getBackup;
-    if (backup) {
+    this.backup = this.store.getBackup;
+    if (this.backup) {
       const today = new Date();
-      this.therapists = backup.therapists.filter(
+      this.therapists = this.backup.therapists.filter(
         (therapist) => therapist.activeSince < today && therapist.activeUntil > today,
       ).map((therapist) => therapist.name);
     }
@@ -212,14 +236,29 @@ export default class Terminfinder extends Vue {
   findAppointments(): void {
     const appointmentFinder = new AppointmentFinder(this.patientTextfield, this.selectedTherapists, this.selectedAppointmentRequests);
     this.appointmentSuggestions = appointmentFinder.getSuggestions();
-    this.appointmentSearchStarted = true;
+  }
+
+  resetFinder(): void {
+    this.currentStep = 1;
+    this.patientTextfield = '';
+    this.selectedTherapists = [];
+    this.selectedAppointmentRequests = [];
+    this.selectedAppointmentSuggestion = 0;
+    this.$emit('dialogClosed');
   }
 
   takeAppointmentSuggestion(): void {
-    console.log(this.selectedAppointmentSuggestion);
-    this.appointmentSearchStarted = false;
-    this.$emit('dialogClosed');
+    if (typeof this.selectedAppointmentSuggestion !== 'number' && this.backup) {
+      this.store.addAppointmentSeries(this.selectedAppointmentSuggestion);
+    }
+    this.resetFinder();
   }
 }
 
 </script>
+
+<style scoped>
+.button-next {
+  float: right;
+}
+</style>
