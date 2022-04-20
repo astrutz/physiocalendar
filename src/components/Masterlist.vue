@@ -230,12 +230,12 @@ export default class Masterlist extends Vue {
 
   @Watch('inputFields.hasEnd')
   hasEndChanged(): void {
-    this.checkAppointmentConflicts();
+    this.getAppointmentConflicts();
   }
 
   @Watch('inputFields.endDateString')
   dateChanged(): void {
-    this.checkAppointmentConflicts();
+    this.getAppointmentConflicts();
     this.inputFields.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.inputFields.endDateString);
   }
 
@@ -281,16 +281,15 @@ export default class Masterlist extends Vue {
   }
 
   openCreateDialog(therapist: string, time: string): void {
-    this.checkAppointmentConflicts();
+    this.getAppointmentConflicts();
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.time = time;
     this.createDialog = true;
   }
 
-  checkAppointmentConflicts(): void {
+  getAppointmentConflicts(): void {
     if (this.localBackup) {
-      Dateconversions.checkAppointmentConflicts(
-        this.localBackup.daylist,
+      this.localBackup.daylist.getAppointmentConflicts(
         this.currentWeekDay,
         this.inputFields.hasEnd,
         this.selectedAppointment.therapist,

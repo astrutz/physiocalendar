@@ -167,24 +167,23 @@ export default class MasterlistElement extends Vue {
 
   @Watch('dialogIsOpen')
   dialogIsOpenChanged(): void {
-    this.checkAppointmentConflicts();
+    this.getAppointmentConflicts();
   }
 
   @Watch('hasEnd')
   hasEndChanged(): void {
-    this.checkAppointmentConflicts();
+    this.getAppointmentConflicts();
   }
 
   @Watch('endDateString')
   dateChanged(): void {
-    this.checkAppointmentConflicts();
+    this.getAppointmentConflicts();
     this.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
   }
 
-  checkAppointmentConflicts(): void {
+  getAppointmentConflicts(): void {
     if (this.localBackup) {
-      Dateconversions.checkAppointmentConflicts(
-        this.localBackup.daylist,
+      this.localBackup.daylist.getAppointmentConflicts(
         this.day,
         this.hasEnd,
         this.therapist,

@@ -319,7 +319,7 @@ export default class Terminfinder extends Vue {
   findAppointments(): void {
     if (this.backup) {
       const appointmentFinder = new AppointmentFinder(
-        this.patientTextfield, this.selectedTherapists, this.selectedAppointmentRequests, this.backup.masterlist,
+        this.patientTextfield, this.selectedTherapists, this.selectedAppointmentRequests, this.backup.masterlist, this.backup.daylist,
       );
       this.appointmentSuggestions = appointmentFinder.getSuggestions();
     }

@@ -1,6 +1,6 @@
 // eslint-disable-next-line import/no-cycle
 import Dateconversions from './Dateconversions';
-import { Time } from './Enums';
+import { Time, Weekday } from './Enums';
 import ListSingleDay from './ListSingleDay';
 import SingleAppointment from './SingleAppointment';
 
@@ -32,6 +32,51 @@ export default class Daylist {
       return foundAppointment?.patient || '';
     }
     return '';
+  }
+
+  getAppointmentConflicts(
+    weekday: Weekday,
+    hasEnd: boolean,
+    therapist: string,
+    endDate: Date | null,
+    time: Time,
+  ): SingleAppointment[] {
+    const conflicts: SingleAppointment[] = [];
+    let weekdayOffset = 1;
+
+    switch (weekday) {
+      case Weekday.MONDAY: weekdayOffset = 1; break;
+      case Weekday.TUESDAY: weekdayOffset = 2; break;
+      case Weekday.WEDNESDAY: weekdayOffset = 3; break;
+      case Weekday.THURSDAY: weekdayOffset = 4; break;
+      case Weekday.FRIDAY: weekdayOffset = 5; break;
+      default: break;
+    }
+
+    const currentSearchDate = new Date();
+    // eslint-disable-next-line no-mixed-operators
+    currentSearchDate.setDate(currentSearchDate.getDate() + ((7 - currentSearchDate.getDay()) % 7 + weekdayOffset) % 7);
+
+    let currentEndDate = new Date();
+    if (hasEnd && endDate) {
+      currentEndDate = endDate;
+    } else {
+      currentEndDate.setFullYear(currentEndDate.getFullYear() + 1);
+    }
+
+    while (currentSearchDate < currentEndDate) {
+      const conflictAppointment = this.searchAppointment(
+        therapist,
+        Dateconversions.convertDateToReadableString(currentSearchDate),
+        time,
+      );
+      if (conflictAppointment) {
+        conflicts.push(conflictAppointment);
+      }
+      currentSearchDate.setDate(currentSearchDate.getDate() + 7);
+    }
+    // console.log('check', new Date().toLocaleDateString(), '-', currentEndDate.toLocaleDateString(), conflicts.length, 'conflicts found');
+    return conflicts;
   }
 
   addAppointment(appointment: SingleAppointment): void {

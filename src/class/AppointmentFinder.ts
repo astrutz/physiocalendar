@@ -1,5 +1,6 @@
 import AppointmentRequest from './AppointmentRequest';
 import AppointmentSeries from './AppointmentSeries';
+import Daylist from './Daylist';
 import { Time, Weekday } from './Enums';
 import Masterlist from './Masterlist';
 
@@ -10,7 +11,9 @@ export default class AppointmentFinder {
 
   appointmentRequests: AppointmentRequest[];
 
-  masterList: Masterlist;
+  masterlist: Masterlist;
+
+  daylist: Daylist;
 
   static timeMapping = AppointmentRequest.timesOfDayToTimes();
 
@@ -23,12 +26,14 @@ export default class AppointmentFinder {
     patient: string,
     therapists: string[],
     appointmentRequests: AppointmentRequest[],
-    masterList: Masterlist,
+    masterlist: Masterlist,
+    daylist: Daylist,
   ) {
     this.patient = patient;
     this.therapists = therapists;
     this.appointmentRequests = appointmentRequests;
-    this.masterList = masterList;
+    this.masterlist = masterlist;
+    this.daylist = daylist;
   }
 
   getSuggestions(): AppointmentSeries[] {
@@ -50,10 +55,20 @@ export default class AppointmentFinder {
       if (foundCounter === AppointmentFinder.MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST) {
         return false;
       }
-      const foundAppointment = this.masterList.searchAppointment(therapist, weekday, time as unknown as Time);
+      const foundAppointment = this.masterlist.searchAppointment(therapist, weekday, time as unknown as Time);
       if (foundAppointment === undefined) {
-        foundCounter += 1;
-        foundAppointments.push(new AppointmentSeries(therapist, this.patient, time as unknown as Time, weekday, false));
+        // TODO: take endDate when available
+        const conflicts = this.daylist.getAppointmentConflicts(
+          weekday,
+          false,
+          therapist,
+          null,
+          time as unknown as Time,
+        );
+        if (conflicts.length === 0) {
+          foundCounter += 1;
+          foundAppointments.push(new AppointmentSeries(therapist, this.patient, time as unknown as Time, weekday, false));
+        }
       }
       return true;
     });
