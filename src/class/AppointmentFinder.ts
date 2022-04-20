@@ -13,18 +13,21 @@ export default class AppointmentFinder {
 
   hasEnd: boolean;
 
-  endDate : Date | null;
+  endDate: Date | null;
 
   masterlist: Masterlist;
 
   daylist: Daylist;
+
+  MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST;
+
+  static MAX_APPOINTMENTS_TOTAL = 30;
 
   static timeMapping = AppointmentRequest.timesOfDayToTimes();
 
   // TODO: Is this enough or too much? Maybe generate automatically, depending on therapists and times of day
   // Example: 30 Slots max. should be shown on Finder - 5 Requests on 2 therapists selected means, that this number should be 30 / 5 / 2 = 3
   // Alternative: Use pagination - but shouldn't be used, since we don't need so many appointments
-  static MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST = 3;
 
   constructor(
     patient: string,
@@ -42,6 +45,10 @@ export default class AppointmentFinder {
     this.endDate = endDate;
     this.masterlist = masterlist;
     this.daylist = daylist;
+    const appointmentPerPersonPerSlot = Math.ceil(
+      AppointmentFinder.MAX_APPOINTMENTS_TOTAL / appointmentRequests.length / this.therapists.length,
+    );
+    this.MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST = appointmentPerPersonPerSlot;
   }
 
   getSuggestions(): AppointmentSeries[] {
@@ -53,14 +60,14 @@ export default class AppointmentFinder {
         );
       });
     });
-    return suggestions;
+    return suggestions.slice(0, AppointmentFinder.MAX_APPOINTMENTS_TOTAL);
   }
 
   private getAppointmentForTherapistinRequest(therapist: string, times: string[], weekday: Weekday): AppointmentSeries[] {
     let foundCounter = 0;
     const foundAppointments: AppointmentSeries[] = [];
     times.every((time) => {
-      if (foundCounter === AppointmentFinder.MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST) {
+      if (foundCounter === this.MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST) {
         return false;
       }
       const foundAppointment = this.masterlist.searchAppointment(therapist, weekday, time as unknown as Time);
