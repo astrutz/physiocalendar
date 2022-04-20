@@ -11,6 +11,10 @@ export default class AppointmentFinder {
 
   appointmentRequests: AppointmentRequest[];
 
+  hasEnd: boolean;
+
+  endDate : Date | null;
+
   masterlist: Masterlist;
 
   daylist: Daylist;
@@ -26,12 +30,16 @@ export default class AppointmentFinder {
     patient: string,
     therapists: string[],
     appointmentRequests: AppointmentRequest[],
+    hasEnd: boolean,
+    endDate: Date | null,
     masterlist: Masterlist,
     daylist: Daylist,
   ) {
     this.patient = patient;
     this.therapists = therapists;
     this.appointmentRequests = appointmentRequests;
+    this.hasEnd = hasEnd;
+    this.endDate = endDate;
     this.masterlist = masterlist;
     this.daylist = daylist;
   }
@@ -48,7 +56,7 @@ export default class AppointmentFinder {
     return suggestions;
   }
 
-  getAppointmentForTherapistinRequest(therapist: string, times: string[], weekday: Weekday): AppointmentSeries[] {
+  private getAppointmentForTherapistinRequest(therapist: string, times: string[], weekday: Weekday): AppointmentSeries[] {
     let foundCounter = 0;
     const foundAppointments: AppointmentSeries[] = [];
     times.every((time) => {
@@ -57,12 +65,11 @@ export default class AppointmentFinder {
       }
       const foundAppointment = this.masterlist.searchAppointment(therapist, weekday, time as unknown as Time);
       if (foundAppointment === undefined) {
-        // TODO: take endDate when available
         const conflicts = this.daylist.getAppointmentConflicts(
           weekday,
-          false,
+          this.hasEnd,
           therapist,
-          null,
+          this.endDate,
           time as unknown as Time,
         );
         if (conflicts.length === 0) {

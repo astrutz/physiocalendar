@@ -32,6 +32,51 @@
             multiple
           ></v-select>
         </v-row>
+        <v-row class="pl-3">
+          <v-checkbox
+            label="Termin hat ein Ablaufdatum"
+            v-model="hasEnd"
+          ></v-checkbox>
+        </v-row>
+        <v-row class="pl-3" v-if="hasEnd">
+          <v-menu
+            v-model="menuIsOpen"
+            :close-on-content-click="false"
+            :nudge-right="40"
+            transition="scale-transition"
+            offset-y
+            min-width="auto"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-text-field
+                v-model="endDateStringFormatted"
+                label="Enddatum"
+                persistent-hint
+                prepend-icon="mdi-calendar"
+                v-bind="attrs"
+                @blur="
+                  endDateString = convertGermanToEnglishReadableString(
+                    endDateStringFormatted
+                  )
+                "
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="endDateString"
+              :allowed-dates="
+                (dateVal) => {
+                  return new Date(dateVal) > new Date();
+                }
+              "
+              @input="
+                menuIsOpen = false;
+                endDate = getCombinedDate();
+              "
+              locale="de-de"
+            ></v-date-picker>
+          </v-menu>
+        </v-row>
         <v-row class="pl-3 mt-6">
           <h3 style="color: black">Mögliche Termine</h3>
         </v-row>
@@ -277,8 +322,9 @@ import AppointmentFinder from '@/class/AppointmentFinder';
 import AppointmentRequest from '@/class/AppointmentRequest';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
+import Dateconversions from '@/class/Dateconversions';
 import { TimeOfDay } from '@/class/Enums';
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue, Watch } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
 import Store from '../store/backup';
 
@@ -289,6 +335,18 @@ export default class Terminfinder extends Vue {
   therapists: string[] = [];
 
   selectedTherapists: string[] = [];
+
+  hasEnd = false;
+
+  menuIsOpen = false;
+
+  endDate = new Date();
+
+  endDateString = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10);
+
+  endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(
+    new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
+  );
 
   appointmentRequests = AppointmentRequest.generateAll();
 
@@ -306,6 +364,11 @@ export default class Terminfinder extends Vue {
 
   backup: Backup | null = null;
 
+  @Watch('endDateString')
+  dateChanged(): void {
+    this.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
+  }
+
   mounted(): void {
     this.backup = this.store.getBackup;
     if (this.backup) {
@@ -316,10 +379,26 @@ export default class Terminfinder extends Vue {
     }
   }
 
+  getCombinedDate(): Date {
+    const timezoneOffsetInHours = new Date(`${this.endDateString}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
+    return new Date(`${this.endDateString}T15:00:00.000${offsetSuffix}`);
+  }
+
+  convertGermanToEnglishReadableString(): string {
+    return Dateconversions.convertGermanToEnglishReadableString(this.endDateStringFormatted);
+  }
+
   findAppointments(): void {
     if (this.backup) {
       const appointmentFinder = new AppointmentFinder(
-        this.patientTextfield, this.selectedTherapists, this.selectedAppointmentRequests, this.backup.masterlist, this.backup.daylist,
+        this.patientTextfield,
+        this.selectedTherapists,
+        this.selectedAppointmentRequests,
+        this.hasEnd,
+        this.hasEnd ? this.endDate : null,
+        this.backup.masterlist,
+        this.backup.daylist,
       );
       this.appointmentSuggestions = appointmentFinder.getSuggestions();
     }
@@ -331,6 +410,9 @@ export default class Terminfinder extends Vue {
     this.selectedTherapists = [];
     this.selectedAppointmentRequests = [];
     this.selectedAppointmentSuggestion = 0;
+    this.hasEnd = false;
+    this.endDate = new Date();
+    this.endDateString = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10);
     this.$emit('dialogClosed');
   }
 

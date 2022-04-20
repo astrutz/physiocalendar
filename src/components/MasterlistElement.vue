@@ -57,6 +57,11 @@
             </template>
             <v-date-picker
               v-model="endDateString"
+              :allowed-dates="
+                (dateVal) => {
+                  return new Date(dateVal) > new Date();
+                }
+              "
               @input="
                 menuIsOpen = false;
                 endDate = getCombinedDate();

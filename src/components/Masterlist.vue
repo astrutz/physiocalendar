@@ -103,6 +103,11 @@
               </template>
               <v-date-picker
                 v-model="inputFields.endDateString"
+                :allowed-dates="
+                  (dateVal) => {
+                    return new Date(dateVal) > new Date();
+                  }
+                "
                 @input="
                   inputFields.menuIsOpen = false;
                   inputFields.endDate = getCombinedDate();
