@@ -100,7 +100,14 @@
           Abbrechen
         </v-btn>
         <v-spacer></v-spacer>
-        <v-btn v-if="patient !== ''" color="primary" text> Drucken </v-btn>
+        <v-btn
+          v-if="patient !== ''"
+          color="primary"
+          @click="printAppointment()"
+          text
+        >
+          Drucken
+        </v-btn>
         <v-spacer></v-spacer>
         <v-btn
           :disabled="conflicts.length > 0"
@@ -123,6 +130,7 @@ import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import { Time, Weekday } from '@/class/Enums';
+import Printer from '@/class/Printer';
 import SingleAppointment from '@/class/SingleAppointment';
 import {
   Component, Prop, Vue, Watch,
@@ -232,6 +240,13 @@ export default class MasterlistElement extends Vue {
       hasEnd: this.hasEnd,
       endDate: this.hasEnd ? this.endDate : null,
     });
+  }
+
+  printAppointment(): void {
+    const printer = new Printer(
+      this.patient, this.therapist, this.time as unknown as Time, this.day,
+    );
+    printer.printAppointmentSeries();
   }
 }
 </script>

@@ -418,8 +418,7 @@ export default class Terminfinder extends Vue {
 
   takeAppointmentSuggestion(): void {
     if (typeof this.selectedAppointmentSuggestion !== 'number' && this.backup) {
-      // this.store.addAppointmentSeries(this.selectedAppointmentSuggestion); TODO
-      console.log('completed', this.selectedAppointmentSuggestion);
+      this.store.addAppointmentSeries(this.selectedAppointmentSuggestion);
     }
     this.resetFinder();
   }

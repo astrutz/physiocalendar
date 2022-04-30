@@ -27,20 +27,37 @@
           v-model="patientTextfield"
           clearable
         ></v-text-field>
-        <p v-if="!!appointment.startDate && appointment.endDate">Behandlung bis: {{appointment.endDate.toLocaleDateString()}}</p>
+        <p v-if="!!appointment.startDate && appointment.endDate">
+          Behandlung bis: {{ appointment.endDate.toLocaleDateString() }}
+        </p>
         <v-alert v-if="!!appointment.startDate" type="info"
-          >Dieser Termin wurde aus der Stammliste generiert und kann daher nicht in der Terminliste verändert werden.</v-alert
+          >Dieser Termin wurde aus der Stammliste generiert und kann daher nicht
+          in der Terminliste verändert werden.</v-alert
         >
       </v-card-text>
 
       <v-divider></v-divider>
 
       <v-card-actions>
-        <v-btn color="error" text @click="patientTextfield = patient; dialogIsOpen = false">
+        <v-btn
+          color="error"
+          text
+          @click="
+            patientTextfield = patient;
+            dialogIsOpen = false;
+          "
+        >
           Abbrechen
         </v-btn>
         <v-spacer></v-spacer>
-        <v-btn v-if="patient !== ''" color="primary" text> Drucken </v-btn>
+        <v-btn
+          v-if="patient !== ''"
+          color="primary"
+          @click="printAppointment()"
+          text
+        >
+          Drucken
+        </v-btn>
         <v-spacer v-if="!appointment.startDate"></v-spacer>
         <v-btn
           v-if="!appointment.startDate"
@@ -62,9 +79,12 @@
 
 <script lang="ts">
 import Appointment from '@/class/Appointment';
+import Printer from '@/class/Printer';
 import {
   Component, Prop, Vue,
 } from 'vue-property-decorator';
+import { Time } from '@/class/Enums';
+import Dateconversions from '@/class/Dateconversions';
 
 @Component
 export default class DaylistElement extends Vue {
@@ -92,6 +112,13 @@ export default class DaylistElement extends Vue {
 
   addAppointment(): void {
     this.$emit('appointmentAdded', { patient: this.patientTextfield, therapist: this.therapist, time: this.time });
+  }
+
+  printAppointment(): void {
+    const printer = new Printer(
+      this.patient, this.therapist, this.time as unknown as Time, Dateconversions.convertReadableStringToDate(this.date),
+    );
+    printer.printSingleAppointment();
   }
 }
 </script>
