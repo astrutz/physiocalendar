@@ -48,3 +48,9 @@ export default class CalendarList extends Vue {
   currentWeekDay = Weekday.MONDAY;
 }
 </script>
+
+<style>
+.container {
+  max-width: 90%;
+}
+</style>
