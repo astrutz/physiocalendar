@@ -1,5 +1,5 @@
 module.exports = {
-  assetsDir: process.env.NODE_ENV === 'production' ? 'Users/SAMSUNG/Desktop/Physiokalender/physiocalendar-frontend/dist/' : '/',
+  publicPath: process.env.NODE_ENV === 'production' ? './' : '/',
   transpileDependencies: [
     'vuetify',
   ],
