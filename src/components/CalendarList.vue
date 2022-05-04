@@ -51,6 +51,6 @@ export default class CalendarList extends Vue {
 
 <style>
 .container {
-  max-width: 90%;
+  max-width: 97%;
 }
 </style>
