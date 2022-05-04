@@ -40,7 +40,6 @@
                 class="create-appointment"
                 @click="openCreateDialog(header.value, row.time)"
               ></div>
-              <!-- TODO: Masterlist Element with only one global dialog -->
               <MasterlistElement
                 v-else-if="row[header.value] && row[header.value].patient"
                 @appointmentAdded="addAppointment($event)"

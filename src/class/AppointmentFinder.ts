@@ -25,10 +25,6 @@ export default class AppointmentFinder {
 
   static timeMapping = AppointmentRequest.timesOfDayToTimes();
 
-  // TODO: Is this enough or too much? Maybe generate automatically, depending on therapists and times of day
-  // Example: 30 Slots max. should be shown on Finder - 5 Requests on 2 therapists selected means, that this number should be 30 / 5 / 2 = 3
-  // Alternative: Use pagination - but shouldn't be used, since we don't need so many appointments
-
   constructor(
     patient: string,
     therapists: string[],
