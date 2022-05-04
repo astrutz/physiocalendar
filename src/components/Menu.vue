@@ -53,7 +53,7 @@ export default class Menu extends Vue {
   private menuItems = [
     { title: 'Backup einspielen', dialog: false },
     { title: 'Terminfinder', dialog: false },
-    { title: 'Einstellungen', dialog: false },
+    { title: 'Therapeuten verwalten', dialog: false },
   ];
 
   store = getModule(Store);

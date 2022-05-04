@@ -37,6 +37,7 @@ export interface JSONDaylist {
 
 export interface JSONTherapist {
   name: string;
+  id: string;
   activeSince: number;
   activeUntil: number;
 }

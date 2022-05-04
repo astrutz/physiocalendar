@@ -45,7 +45,7 @@ function getTherapists(therapistsJSON: JSONTherapist[]): Therapist[] {
     const activeSinceDate = jsonElement.activeSince === -1 ? new Date(315532800000) : new Date(jsonElement.activeSince);
     // 3471292800000 is "01.01.2080"
     const activeUntilDate = jsonElement.activeUntil === -1 ? new Date(3471292800000) : new Date(jsonElement.activeUntil);
-    return new Therapist(jsonElement.name, activeSinceDate, activeUntilDate);
+    return new Therapist(jsonElement.name, jsonElement.id, activeSinceDate, activeUntilDate);
   });
   return therapists;
 }

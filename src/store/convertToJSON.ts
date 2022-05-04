@@ -61,7 +61,9 @@ function convertTherapists(therapists: Therapist[]): JSONTherapist[] {
     (therapist) => {
       const activeSince = therapist.activeSince.getTime() === 315532800000 ? -1 : therapist.activeSince.getTime();
       const activeUntil = therapist.activeUntil.getTime() === 3471292800000 ? -1 : therapist.activeUntil.getTime();
-      return { name: therapist.name, activeSince, activeUntil };
+      return {
+        name: therapist.name, id: therapist.id, activeSince, activeUntil,
+      };
     },
   );
 }

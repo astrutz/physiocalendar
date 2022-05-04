@@ -1,6 +1,7 @@
 import AppointmentSeries from '@/class/AppointmentSeries';
 import { JSONBackup } from '@/class/JSONStructures';
 import SingleAppointment from '@/class/SingleAppointment';
+import Therapist from '@/class/Therapist';
 import axios from 'axios';
 import {
   Action, Module, Mutation, VuexModule,
@@ -27,7 +28,7 @@ class StoreBackup extends VuexModule {
   }
 
   @Action
-  public async saveBackup(importedBackup? : string): Promise<void> {
+  public async saveBackup(importedBackup?: string): Promise<void> {
     if (this.backup) {
       try {
         const backupJSON = importedBackup ? JSON.parse(importedBackup) : convertToJSON(this.backup);
@@ -93,6 +94,26 @@ class StoreBackup extends VuexModule {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
       localBackup.masterlist.deleteAppointment(appointment);
+      this.setBackup(localBackup);
+      this.saveBackup();
+    }
+  }
+
+  @Action
+  public addTherapist({ name, id }: { name: string, id: string }): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      localBackup.therapists.push(new Therapist(name, id, new Date(), new Date(3471292800000)));
+      this.setBackup(localBackup);
+      this.saveBackup();
+    }
+  }
+
+  @Action
+  public removeTherapist(id: string): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      localBackup.therapists = localBackup.therapists.filter((therapist) => therapist.id !== id);
       this.setBackup(localBackup);
       this.saveBackup();
     }
