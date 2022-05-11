@@ -122,9 +122,3 @@ export default class DaylistElement extends Vue {
   }
 }
 </script>
-
-<style scoped>
-.appointmentSeries {
-  font-style: italic;
-}
-</style>

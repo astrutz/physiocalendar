@@ -134,7 +134,7 @@
         <v-divider></v-divider>
 
         <v-card-actions>
-          <v-btn color="error" text @click="createDialog = false">
+          <v-btn color="error" text @click="resetInputs(); createDialog = false">
             Abbrechen
           </v-btn>
           <v-spacer></v-spacer>

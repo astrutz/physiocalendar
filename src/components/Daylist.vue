@@ -21,6 +21,10 @@
               :class="{
                 'text-center': true,
                 'hour-begin': rowIndex % 3 === 0,
+                'cell-filled':
+                  row[header.value] &&
+                  row[header.value].patient &&
+                  row[header.value].startDate,
               }"
               @click="
                 row[header.value] === ''
@@ -74,7 +78,7 @@
         <v-divider></v-divider>
 
         <v-card-actions>
-          <v-btn color="error" text @click="createDialog = false">
+          <v-btn color="error" text @click="resetInputs(); createDialog = false">
             Abbrechen
           </v-btn>
           <v-spacer></v-spacer>
@@ -307,6 +311,10 @@ td {
 td:hover {
   cursor: pointer;
   background-color: #b4b6d196 !important;
+}
+
+.cell-filled {
+  background-color: lightgreen;
 }
 
 tr:hover {

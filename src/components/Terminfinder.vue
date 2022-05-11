@@ -188,7 +188,7 @@
                   v-for="suggestion in appointmentSuggestions.filter(
                     (req, i) => i % 5 === 0
                   )"
-                  :key="suggestion.therapist"
+                  :key="`${suggestion.therapist}-${suggestion.weekday}-${suggestion.time}`"
                   :label="`${
                     suggestion.therapist
                   }, ${suggestion.weekday.toLowerCase()}s um ${
