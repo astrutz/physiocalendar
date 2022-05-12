@@ -21,6 +21,10 @@
               :class="{
                 'text-center': true,
                 'hour-begin': rowIndex % 3 === 0,
+                'cell-bwo':
+                  row[header.value] &&
+                  row[header.value].patient &&
+                  row[header.value].isBWO,
               }"
               @click="
                 row[header.value] === ''
@@ -134,7 +138,14 @@
         <v-divider></v-divider>
 
         <v-card-actions>
-          <v-btn color="error" text @click="resetInputs(); createDialog = false">
+          <v-btn
+            color="error"
+            text
+            @click="
+              resetInputs();
+              createDialog = false;
+            "
+          >
             Abbrechen
           </v-btn>
           <v-spacer></v-spacer>
@@ -332,9 +343,16 @@ export default class Masterlist extends Vue {
     };
   }
 
-  addAppointment(event: { therapist: string, patient: string, time: string, hasEnd: boolean, endDate: Date }): void {
+  addAppointment(event: { therapist: string, patient: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean }): void {
     const appointment = new AppointmentSeries(
-      event.therapist, event.patient, event.time as unknown as Time, this.currentWeekDay, event.hasEnd, event.endDate,
+      event.therapist,
+      event.patient,
+      event.time as unknown as Time,
+      this.currentWeekDay,
+      event.hasEnd,
+      event.endDate,
+      undefined,
+      event.isBWO,
     );
     if (this.localBackup) {
       this.store.addAppointmentSeries(appointment);
@@ -342,19 +360,33 @@ export default class Masterlist extends Vue {
     this.resetInputs();
   }
 
-  changeAppointment(event: { therapist: string, patient: string, time: string, hasEnd: boolean, endDate: Date }): void {
+  changeAppointment(event: { therapist: string, patient: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean }): void {
     const appointment = new AppointmentSeries(
-      event.therapist, event.patient, event.time as unknown as Time, this.currentWeekDay, event.hasEnd, event.endDate,
+      event.therapist,
+      event.patient,
+      event.time as unknown as Time,
+      this.currentWeekDay,
+      event.hasEnd,
+      event.endDate,
+      undefined,
+      event.isBWO,
     );
     if (this.localBackup) {
       this.store.changeAppointmentSeries(appointment);
     }
   }
 
-  deleteAppointment(event: { patient: string, therapist: string, time: string, hasEnd: boolean, endDate: Date }): void {
+  deleteAppointment(event: { patient: string, therapist: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean }): void {
     if (this.localBackup) {
       const appointment = new AppointmentSeries(
-        event.therapist, event.patient, event.time as unknown as Time, this.currentWeekDay, event.hasEnd, event.endDate,
+        event.therapist,
+        event.patient,
+        event.time as unknown as Time,
+        this.currentWeekDay,
+        event.hasEnd,
+        event.endDate,
+        undefined,
+        event.isBWO,
       );
       this.store.deleteAppointmentSeries(appointment);
     }
@@ -416,6 +448,10 @@ tr td:first-child {
 tr td:first-child:hover {
   background-color: white !important;
   cursor: default;
+}
+
+.cell-bwo {
+  background-color: yellow;
 }
 
 .hour-begin {

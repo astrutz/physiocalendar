@@ -18,7 +18,7 @@ function getListWeekDays(listWeekDaysJSON: JSONMasterlist): ListWeekDay[] {
       (jsonAppointment) => new AppointmentSeries(
         jsonAppointment.therapist, jsonAppointment.patient, jsonAppointment.time as unknown as Time, weekday,
         jsonAppointment.hasEnd, jsonAppointment.endDate === null ? undefined : new Date(jsonAppointment.endDate),
-        new Date(jsonAppointment.startDate),
+        new Date(jsonAppointment.startDate), jsonAppointment.isBWO || false,
       ),
     );
     return new ListWeekDay(appointments, weekday);

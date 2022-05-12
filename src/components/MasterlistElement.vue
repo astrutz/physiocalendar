@@ -24,11 +24,17 @@
           v-model="patientTextfield"
           clearable
         ></v-text-field>
-        <v-row class="pl-3">
+        <v-row class="pl-3 pr-3">
           <v-checkbox
             label="Termin hat ein Ablaufdatum"
             v-model="hasEnd"
             :value="hasEnd"
+          ></v-checkbox>
+          <v-spacer />
+          <v-checkbox
+            label="Patient ist aus BWO"
+            v-model="isBWO"
+            :value="isBWO"
           ></v-checkbox>
         </v-row>
         <v-row class="pl-3" v-if="hasEnd">
@@ -166,6 +172,8 @@ export default class MasterlistElement extends Vue {
 
   private hasEnd = this.appointment?.hasEnd || false;
 
+  private isBWO = this.appointment?.isBWO || false;
+
   private dialogIsOpen = false;
 
   private menuIsOpen = false;
@@ -224,10 +232,11 @@ export default class MasterlistElement extends Vue {
         time: this.time,
         hasEnd: this.hasEnd,
         endDate: this.hasEnd ? this.endDate : null,
+        isBWO: this.isBWO,
       });
     } else {
       this.$emit('appointmentDeleted', {
-        patient: this.patient, therapist: this.therapist, time: this.time, hasEnd: this.hasEnd,
+        patient: this.patient, therapist: this.therapist, time: this.time, hasEnd: this.hasEnd, isBWO: this.isBWO,
       });
     }
   }
@@ -239,6 +248,7 @@ export default class MasterlistElement extends Vue {
       time: this.time,
       hasEnd: this.hasEnd,
       endDate: this.hasEnd ? this.endDate : null,
+      isBWO: this.isBWO,
     });
   }
 

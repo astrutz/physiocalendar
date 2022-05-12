@@ -25,6 +25,10 @@
                   row[header.value] &&
                   row[header.value].patient &&
                   row[header.value].startDate,
+                'cell-bwo':
+                  row[header.value] &&
+                  row[header.value].patient &&
+                  row[header.value].isBWO,
               }"
               @click="
                 row[header.value] === ''
@@ -315,6 +319,10 @@ td:hover {
 
 .cell-filled {
   background-color: lightgreen;
+}
+
+.cell-bwo {
+  background-color: yellow;
 }
 
 tr:hover {

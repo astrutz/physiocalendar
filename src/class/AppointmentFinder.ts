@@ -77,6 +77,7 @@ export default class AppointmentFinder {
         );
         if (conflicts.length === 0) {
           foundCounter += 1;
+          // TODO: Use isBWO
           foundAppointments.push(new AppointmentSeries(therapist, this.patient, time as unknown as Time, weekday, false));
         }
       }

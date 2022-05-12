@@ -9,6 +9,7 @@ export interface JSONAppointmentSeries {
   hasEnd : boolean,
   startDate : number,
   endDate : number | null,
+  isBWO : boolean
 }
 
 export interface JSONListWeekDay {

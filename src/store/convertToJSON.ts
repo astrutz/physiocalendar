@@ -19,6 +19,7 @@ function convertAppointmentSeries(appointments: AppointmentSeries[]): JSONAppoin
         hasEnd: appointment.hasEnd,
         startDate: appointment.startDate.getTime(),
         endDate: appointment.endDate ? appointment.endDate.getTime() : null,
+        isBWO: appointment.isBWO || false,
       }
     ),
   );
