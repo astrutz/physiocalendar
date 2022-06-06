@@ -65,7 +65,7 @@ export default class Import extends Vue {
         await this.store.loadBackup();
         this.$emit('dialogClosed');
       };
-      reader.readAsBinaryString(this.backupFile);
+      reader.readAsText(this.backupFile, 'utf-8');
     }
   }
 }
