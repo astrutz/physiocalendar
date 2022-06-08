@@ -119,6 +119,19 @@ class StoreBackup extends VuexModule {
     }
   }
 
+  @Action
+  public renameTherapist({ name, id }: { name: string, id: string }): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      const foundTherapist = localBackup.therapists.find((therapist) => therapist.id === id);
+      if (foundTherapist) {
+        localBackup.therapists[localBackup.therapists.indexOf(foundTherapist)].name = name;
+        this.setBackup(localBackup);
+        this.saveBackup();
+      }
+    }
+  }
+
   @Mutation
   public setBackup(newBackup?: Backup): void {
     if (newBackup) {

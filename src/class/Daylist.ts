@@ -13,21 +13,21 @@ export default class Daylist {
     this.elements = elements;
   }
 
-  searchAppointment(therapist: string, dateString: string, time: Time): SingleAppointment | undefined {
+  searchAppointment(therapistID: string, dateString: string, time: Time): SingleAppointment | undefined {
     const currentDay = this.findListday(dateString);
     if (currentDay !== undefined) {
       return currentDay.appointments.find(
-        (appointment) => appointment.therapist === therapist && appointment.time === time,
+        (appointment) => appointment.therapistID === therapistID && appointment.time === time,
       ) as SingleAppointment;
     }
     return undefined;
   }
 
-  searchAppointmentString(therapist: string, dateString: string, time: Time): string {
+  searchAppointmentString(therapistID: string, dateString: string, time: Time): string {
     const currentDay = this.findListday(dateString);
     if (currentDay !== undefined) {
       const foundAppointment = currentDay.appointments.find(
-        (appointment) => appointment.therapist === therapist && appointment.time === time,
+        (appointment) => appointment.therapistID === therapistID && appointment.time === time,
       );
       return foundAppointment?.patient || '';
     }
@@ -37,7 +37,7 @@ export default class Daylist {
   getAppointmentConflicts(
     weekday: Weekday,
     hasEnd: boolean,
-    therapist: string,
+    therapistID: string,
     endDate: Date | null,
     time: Time,
   ): SingleAppointment[] {
@@ -66,7 +66,7 @@ export default class Daylist {
 
     while (currentSearchDate < currentEndDate) {
       const conflictAppointment = this.searchAppointment(
-        therapist,
+        therapistID,
         Dateconversions.convertDateToReadableString(currentSearchDate),
         time,
       );
@@ -91,13 +91,13 @@ export default class Daylist {
   changeAppointment(appointment: SingleAppointment): void {
     const currentDay = this.findListday(appointment.date);
     const appointmentToBeChanged = currentDay?.appointments.find(
-      (searchedAppointment) => searchedAppointment.therapist === appointment.therapist
+      (searchedAppointment) => searchedAppointment.therapistID === appointment.therapistID
         && searchedAppointment.time === appointment.time,
     );
     if (currentDay && appointmentToBeChanged) {
       appointmentToBeChanged.patient = appointment.patient;
       const newAppointments = currentDay.appointments.filter(
-        (filterAppointment) => !(filterAppointment.therapist === appointment.therapist
+        (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
           && filterAppointment.time === appointment.time),
       );
       newAppointments.push(appointment);
@@ -109,7 +109,7 @@ export default class Daylist {
     const currentDay = this.findListday(appointment.date);
     if (currentDay) {
       const newAppointments = currentDay.appointments.filter(
-        (filterAppointment) => !(filterAppointment.therapist === appointment.therapist
+        (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
           && filterAppointment.time === appointment.time),
       );
       currentDay.appointments = newAppointments;

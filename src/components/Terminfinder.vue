@@ -334,6 +334,8 @@ export default class Terminfinder extends Vue {
 
   therapists: string[] = [];
 
+  therapistIDs: string[] = [];
+
   selectedTherapists: string[] = [];
 
   hasEnd = false;
@@ -376,6 +378,9 @@ export default class Terminfinder extends Vue {
       this.therapists = this.backup.therapists.filter(
         (therapist) => therapist.activeSince < today && therapist.activeUntil > today,
       ).map((therapist) => therapist.name);
+      this.therapistIDs = this.backup.therapists.filter(
+        (therapist) => therapist.activeSince < today && therapist.activeUntil > today,
+      ).map((therapist) => therapist.id);
     }
   }
 
@@ -391,9 +396,18 @@ export default class Terminfinder extends Vue {
 
   findAppointments(): void {
     if (this.backup) {
+      const selectedTherapistIDs : string[] = [];
+      // TODO: Test me carefully
+      this.selectedTherapists.forEach((selectedTherapist) => {
+        const index = this.therapists.indexOf(selectedTherapist);
+        if (index > -1) {
+          selectedTherapistIDs.push(this.therapistIDs[index]);
+        }
+      });
       const appointmentFinder = new AppointmentFinder(
         this.patientTextfield,
         this.selectedTherapists,
+        selectedTherapistIDs,
         this.selectedAppointmentRequests,
         this.hasEnd,
         this.hasEnd ? this.endDate : null,

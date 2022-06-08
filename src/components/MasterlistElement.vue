@@ -152,6 +152,8 @@ export default class MasterlistElement extends Vue {
 
   @Prop() readonly therapist!: string;
 
+  @Prop() readonly therapistID!: string;
+
   @Prop() readonly day!: Weekday;
 
   @Prop() readonly appointment!: AppointmentSeries;
@@ -207,7 +209,7 @@ export default class MasterlistElement extends Vue {
       this.localBackup.daylist.getAppointmentConflicts(
         this.day,
         this.hasEnd,
-        this.therapist,
+        this.therapistID,
         this.endDate,
         this.time as unknown as Time,
       );
@@ -229,6 +231,7 @@ export default class MasterlistElement extends Vue {
       this.$emit('appointmentChanged', {
         patient: this.patientTextfield,
         therapist: this.therapist,
+        therapistID: this.therapistID,
         time: this.time,
         hasEnd: this.hasEnd,
         endDate: this.hasEnd ? this.endDate : null,
@@ -236,7 +239,12 @@ export default class MasterlistElement extends Vue {
       });
     } else {
       this.$emit('appointmentDeleted', {
-        patient: this.patient, therapist: this.therapist, time: this.time, hasEnd: this.hasEnd, isBWO: this.isBWO,
+        patient: this.patient,
+        therapist: this.therapist,
+        therapistID: this.therapistID,
+        time: this.time,
+        hasEnd: this.hasEnd,
+        isBWO: this.isBWO,
       });
     }
   }
@@ -245,6 +253,7 @@ export default class MasterlistElement extends Vue {
     this.$emit('appointmentAdded', {
       patient: this.patientTextfield,
       therapist: this.therapist,
+      therapistID: this.therapistID,
       time: this.time,
       hasEnd: this.hasEnd,
       endDate: this.hasEnd ? this.endDate : null,

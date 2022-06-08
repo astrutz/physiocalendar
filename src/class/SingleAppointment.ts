@@ -6,11 +6,12 @@ export default class SingleAppointment extends Appointment {
 
   constructor(
     therapist : string,
+    therapistID : string,
     patient: string,
     time: Time,
     date: Date,
   ) {
-    super(therapist, patient, time);
+    super(therapist, therapistID, patient, time);
     this.date = date;
   }
 }

@@ -96,6 +96,8 @@ export default class DaylistElement extends Vue {
 
   @Prop() readonly therapist!: string;
 
+  @Prop() readonly therapistID!: string;
+
   @Prop() readonly appointment!: Appointment;
 
   private dialogIsOpen = false;
@@ -104,14 +106,20 @@ export default class DaylistElement extends Vue {
 
   changeAppointment(): void {
     if (this.patientTextfield !== '' && this.patientTextfield !== null) {
-      this.$emit('appointmentChanged', { patient: this.patientTextfield, therapist: this.therapist, time: this.time });
+      this.$emit('appointmentChanged', {
+        patient: this.patientTextfield, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
+      });
     } else {
-      this.$emit('appointmentDeleted', { patient: this.patient, therapist: this.therapist, time: this.time });
+      this.$emit('appointmentDeleted', {
+        patient: this.patient, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
+      });
     }
   }
 
   addAppointment(): void {
-    this.$emit('appointmentAdded', { patient: this.patientTextfield, therapist: this.therapist, time: this.time });
+    this.$emit('appointmentAdded', {
+      patient: this.patientTextfield, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
+    });
   }
 
   printAppointment(): void {

@@ -11,7 +11,7 @@
         )"
         :key="therapist.id"
       >
-        <v-text-field :value="therapist.name" dense readonly />
+        <v-text-field :value="therapist.name" dense @change="renameTherapist(therapist.id, $event)" />
         <v-btn icon color="primary" @click="removeTherapist(therapist.id)">
           <v-icon>mdi-delete</v-icon>
         </v-btn>
@@ -62,7 +62,7 @@ export default class Settings extends Vue {
   therapists: {
     name: string,
     id: string,
-    state: 'unchanged' | 'removed' | 'added' | 'added-removed'
+    state: 'unchanged' | 'removed' | 'added' | 'added-removed' | 'renamed'
   }[] = [];
 
   therapistTextfield = '';
@@ -101,12 +101,22 @@ export default class Settings extends Vue {
     this.therapistTextfield = '';
   }
 
+  renameTherapist(therapistID: string, newName: string): void {
+    const therapistFound = this.therapists.find((therapist) => therapist.id === therapistID);
+    if (therapistFound) {
+      this.therapists[this.therapists.indexOf(therapistFound)].name = newName;
+      this.therapists[this.therapists.indexOf(therapistFound)].state = 'renamed';
+    }
+  }
+
   commitNewTherapists(): void {
     this.therapists.forEach((therapist) => {
       if (therapist.state === 'added') {
         this.store.addTherapist({ name: therapist.name, id: therapist.id });
       } else if (therapist.state === 'removed') {
         this.store.removeTherapist(therapist.id);
+      } else if (therapist.state === 'renamed') {
+        this.store.renameTherapist({ id: therapist.id, name: therapist.name });
       }
     });
     this.$emit('dialogClosed');

@@ -28,7 +28,7 @@
               }"
               @click="
                 row[header.value] === ''
-                  ? openCreateDialog(header.value, row.time)
+                  ? openCreateDialog(header.value, header.id, row.time)
                   : {}
               "
             >
@@ -42,7 +42,7 @@
               <div
                 v-else-if="row[header.value] === ''"
                 class="create-appointment"
-                @click="openCreateDialog(header.value, row.time)"
+                @click="openCreateDialog(header.value, header.id, row.time)"
               ></div>
               <MasterlistElement
                 v-else-if="row[header.value] && row[header.value].patient"
@@ -51,6 +51,7 @@
                 @appointmentDeleted="deleteAppointment($event)"
                 :patient="row[header.value].patient"
                 :therapist="row[header.value].therapist"
+                :therapistID="row[header.value].therapistID"
                 :time="row.time"
                 :appointment="row[header.value]"
                 :day="currentWeekDay"
@@ -157,6 +158,7 @@
             @click="
               addAppointment({
                 therapist: selectedAppointment.therapist,
+                therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
                 time: selectedAppointment.time,
                 hasEnd: inputFields.hasEnd,
@@ -211,6 +213,7 @@ export default class Masterlist extends Vue {
 
   selectedAppointment = {
     therapist: '',
+    therapistID: '',
     time: '7:00',
     weekday: this.currentWeekDay,
   };
@@ -220,7 +223,7 @@ export default class Masterlist extends Vue {
   store = getModule(Store);
 
   private headers = [
-    { text: '', value: 'time' },
+    { text: '', value: 'time', id: '' },
   ];
 
   private rows: {
@@ -264,8 +267,8 @@ export default class Masterlist extends Vue {
       const today = new Date();
       const therapistHeaders = this.localBackup.therapists.filter(
         (therapist) => therapist.activeSince < today && therapist.activeUntil > today,
-      ).map((therapist) => ({ text: therapist.name, value: therapist.name }));
-      this.headers = [{ text: '', value: 'time' }].concat(therapistHeaders);
+      ).map((therapist) => ({ text: therapist.name, value: therapist.name, id: therapist.id }));
+      this.headers = [{ text: '', value: 'time', id: '' }].concat(therapistHeaders);
     }
   }
 
@@ -288,18 +291,19 @@ export default class Masterlist extends Vue {
       this.headers.forEach((header) => {
         if (header.text !== '') {
           newRow[header.text] = this
-            .localBackup?.masterlist.searchAppointment(header.text, this.currentWeekDay, row.time as Time) || '';
+            .localBackup?.masterlist.searchAppointment(header.id, this.currentWeekDay, row.time as Time) || '';
         }
       });
       return newRow;
     });
   }
 
-  openCreateDialog(therapist: string, time: string): void {
-    this.getAppointmentConflicts();
+  openCreateDialog(therapist: string, therapistID: string, time: string): void {
     this.selectedAppointment.therapist = therapist;
+    this.selectedAppointment.therapistID = therapistID;
     this.selectedAppointment.time = time;
     this.createDialog = true;
+    this.getAppointmentConflicts();
   }
 
   getAppointmentConflicts(): void {
@@ -307,7 +311,7 @@ export default class Masterlist extends Vue {
       this.localBackup.daylist.getAppointmentConflicts(
         this.currentWeekDay,
         this.inputFields.hasEnd,
-        this.selectedAppointment.therapist,
+        this.selectedAppointment.therapistID,
         this.inputFields.endDate,
         this.selectedAppointment.time as unknown as Time,
       );
@@ -338,14 +342,18 @@ export default class Masterlist extends Vue {
 
     this.selectedAppointment = {
       therapist: '',
+      therapistID: '',
       time: '7:00',
       weekday: this.currentWeekDay,
     };
   }
 
-  addAppointment(event: { therapist: string, patient: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean }): void {
+  addAppointment(
+    event: { therapist: string, therapistID: string, patient: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean },
+  ): void {
     const appointment = new AppointmentSeries(
       event.therapist,
+      event.therapistID,
       event.patient,
       event.time as unknown as Time,
       this.currentWeekDay,
@@ -360,9 +368,12 @@ export default class Masterlist extends Vue {
     this.resetInputs();
   }
 
-  changeAppointment(event: { therapist: string, patient: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean }): void {
+  changeAppointment(
+    event: { therapist: string, therapistID: string, patient: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean },
+  ): void {
     const appointment = new AppointmentSeries(
       event.therapist,
+      event.therapistID,
       event.patient,
       event.time as unknown as Time,
       this.currentWeekDay,
@@ -376,10 +387,13 @@ export default class Masterlist extends Vue {
     }
   }
 
-  deleteAppointment(event: { patient: string, therapist: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean }): void {
+  deleteAppointment(
+    event: { patient: string, therapist: string, therapistID: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean },
+  ): void {
     if (this.localBackup) {
       const appointment = new AppointmentSeries(
         event.therapist,
+        event.therapistID,
         event.patient,
         event.time as unknown as Time,
         this.currentWeekDay,

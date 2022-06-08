@@ -9,6 +9,8 @@ export default class AppointmentFinder {
 
   therapists: string[];
 
+  therapistIDs: string[];
+
   appointmentRequests: AppointmentRequest[];
 
   hasEnd: boolean;
@@ -28,6 +30,7 @@ export default class AppointmentFinder {
   constructor(
     patient: string,
     therapists: string[],
+    therapistIDs: string[],
     appointmentRequests: AppointmentRequest[],
     hasEnd: boolean,
     endDate: Date | null,
@@ -36,6 +39,7 @@ export default class AppointmentFinder {
   ) {
     this.patient = patient;
     this.therapists = therapists;
+    this.therapistIDs = therapistIDs;
     this.appointmentRequests = appointmentRequests;
     this.hasEnd = hasEnd;
     this.endDate = endDate;
@@ -49,36 +53,39 @@ export default class AppointmentFinder {
 
   getSuggestions(): AppointmentSeries[] {
     let suggestions: AppointmentSeries[] = [];
-    this.therapists.forEach((therapist) => {
+    this.therapists.forEach((therapistIDs, i) => {
       this.appointmentRequests.forEach((request) => {
         suggestions = suggestions.concat(
-          this.getAppointmentForTherapistinRequest(therapist, AppointmentFinder.timeMapping[request.timeOfDay], request.weekday),
+          this.getAppointmentForTherapistinRequest(
+            this.therapists[i], therapistIDs, AppointmentFinder.timeMapping[request.timeOfDay], request.weekday,
+          ),
         );
       });
     });
     return suggestions.slice(0, AppointmentFinder.MAX_APPOINTMENTS_TOTAL);
   }
 
-  private getAppointmentForTherapistinRequest(therapist: string, times: string[], weekday: Weekday): AppointmentSeries[] {
+  private getAppointmentForTherapistinRequest(
+    therapist: string, therapistID: string, times: string[], weekday: Weekday,
+  ): AppointmentSeries[] {
     let foundCounter = 0;
     const foundAppointments: AppointmentSeries[] = [];
     times.every((time) => {
       if (foundCounter === this.MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST) {
         return false;
       }
-      const foundAppointment = this.masterlist.searchAppointment(therapist, weekday, time as unknown as Time);
+      const foundAppointment = this.masterlist.searchAppointment(therapistID, weekday, time as unknown as Time);
       if (foundAppointment === undefined) {
         const conflicts = this.daylist.getAppointmentConflicts(
           weekday,
           this.hasEnd,
-          therapist,
+          therapistID,
           this.endDate,
           time as unknown as Time,
         );
         if (conflicts.length === 0) {
           foundCounter += 1;
-          // TODO: Use isBWO
-          foundAppointments.push(new AppointmentSeries(therapist, this.patient, time as unknown as Time, weekday, false));
+          foundAppointments.push(new AppointmentSeries(therapist, therapistID, this.patient, time as unknown as Time, weekday, false));
         }
       }
       return true;

@@ -32,7 +32,7 @@
               }"
               @click="
                 row[header.value] === ''
-                  ? openCreateDialog(header.value, row.time)
+                  ? openCreateDialog(header.value, header.id, row.time)
                   : {}
               "
             >
@@ -46,7 +46,7 @@
               <div
                 v-else-if="row[header.value] === ''"
                 class="create-appointment"
-                @click="openCreateDialog(header.value, row.time)"
+                @click="openCreateDialog(header.value, header.id, row.time)"
               ></div>
               <DaylistElement
                 v-else-if="row[header.value] && row[header.value].patient"
@@ -55,6 +55,7 @@
                 @appointmentDeleted="deleteAppointment($event)"
                 :patient="row[header.value].patient"
                 :therapist="row[header.value].therapist"
+                :therapistID="row[header.value].therapistID"
                 :time="row.time"
                 :appointment="row[header.value]"
                 :date="currentSingleDay"
@@ -82,7 +83,14 @@
         <v-divider></v-divider>
 
         <v-card-actions>
-          <v-btn color="error" text @click="resetInputs(); createDialog = false">
+          <v-btn
+            color="error"
+            text
+            @click="
+              resetInputs();
+              createDialog = false;
+            "
+          >
             Abbrechen
           </v-btn>
           <v-spacer></v-spacer>
@@ -93,6 +101,7 @@
             @click="
               addAppointment({
                 therapist: selectedAppointment.therapist,
+                therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
                 time: selectedAppointment.time,
               });
@@ -138,6 +147,7 @@ export default class Daylist extends Vue {
 
   selectedAppointment = {
     therapist: '',
+    therapistID: '',
     time: '7:00',
     day: this.currentSingleDay,
   };
@@ -145,7 +155,7 @@ export default class Daylist extends Vue {
   store = getModule(Store);
 
   private headers = [
-    { text: '', value: 'time' },
+    { text: '', value: 'time', id: '' },
   ];
 
   private rows: {
@@ -178,8 +188,10 @@ export default class Daylist extends Vue {
       const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
       const therapistHeaders = this.localBackup.therapists.filter(
         (therapist) => therapist.activeSince < currentSingleDate && therapist.activeUntil > currentSingleDate,
-      ).map((therapist) => ({ text: therapist.name, value: therapist.name, align: 'center' }));
-      this.headers = [{ text: '', value: 'time' }].concat(therapistHeaders);
+      ).map((therapist) => ({
+        text: therapist.name, value: therapist.name, id: therapist.id, align: 'center',
+      }));
+      this.headers = [{ text: '', value: 'time', id: '' }].concat(therapistHeaders);
     }
   }
 
@@ -202,7 +214,7 @@ export default class Daylist extends Vue {
       this.headers.forEach((header) => {
         if (header.text !== '') {
           const singleAppointment = this.localBackup?.daylist.searchAppointment(
-            header.text, this.currentSingleDay, row.time as Time,
+            header.id, this.currentSingleDay, row.time as Time,
           );
           if (singleAppointment !== undefined) {
             newRow[header.text] = singleAppointment;
@@ -228,8 +240,9 @@ export default class Daylist extends Vue {
     });
   }
 
-  openCreateDialog(therapist: string, time: string): void {
+  openCreateDialog(therapist: string, therapistID: string, time: string): void {
     this.selectedAppointment.therapist = therapist;
+    this.selectedAppointment.therapistID = therapistID;
     this.selectedAppointment.time = time;
     this.createDialog = true;
   }
@@ -241,14 +254,21 @@ export default class Daylist extends Vue {
 
     this.selectedAppointment = {
       therapist: '',
+      therapistID: '',
       time: '7:00',
       day: this.currentSingleDay,
     };
   }
 
-  addAppointment(event: { therapist: string, patient: string, time: string }): void {
+  addAppointment(
+    event: { therapist: string, therapistID: string, patient: string, time: string },
+  ): void {
     const appointment = new SingleAppointment(
-      event.therapist, event.patient, event.time as unknown as Time, Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+      event.therapist,
+      event.therapistID,
+      event.patient,
+      event.time as unknown as Time,
+      Dateconversions.convertReadableStringToDate(this.currentSingleDay),
     );
     if (this.localBackup) {
       this.store.addSingleAppointment(appointment);
@@ -256,19 +276,31 @@ export default class Daylist extends Vue {
     this.resetInputs();
   }
 
-  changeAppointment(event: { therapist: string, patient: string, time: string }): void {
+  changeAppointment(
+    event: { therapist: string, therapistID: string, patient: string, time: string },
+  ): void {
     const appointment = new SingleAppointment(
-      event.therapist, event.patient, event.time as unknown as Time, Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+      event.therapist,
+      event.therapistID,
+      event.patient,
+      event.time as unknown as Time,
+      Dateconversions.convertReadableStringToDate(this.currentSingleDay),
     );
     if (this.localBackup) {
       this.store.changeSingleAppointment(appointment);
     }
   }
 
-  deleteAppointment(event: { patient: string, therapist: string, time: string }): void {
+  deleteAppointment(
+    event: { patient: string, therapist: string, therapistID: string, time: string },
+  ): void {
     if (this.localBackup) {
       const appointment = new SingleAppointment(
-        event.therapist, event.patient, event.time as unknown as Time, Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+        event.therapist,
+        event.therapistID,
+        event.patient,
+        event.time as unknown as Time,
+        Dateconversions.convertReadableStringToDate(this.currentSingleDay),
       );
       this.store.deleteSingleAppointment(appointment);
     }
