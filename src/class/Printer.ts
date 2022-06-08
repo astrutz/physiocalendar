@@ -67,35 +67,54 @@ export default class Printer {
   }
 
   private print(pdfContent: string, isSeries: boolean): void {
-    const doc = new PrintPDF({ format: 'a5' });
+    const doc = new PrintPDF({ orientation: 'landscape' });
+
+    const textOptions : { align : 'center' } = { align: 'center' };
 
     doc.setDrawColor('#2a2f79');
+
+    // Left outline box
     doc.line(5, 5, 143, 5);
     doc.line(5, 205, 5, 5);
     doc.line(143, 5, 143, 205);
     doc.line(5, 205, 143, 205);
 
+    // Right outline box
+    doc.line(153, 5, 291, 5);
+    doc.line(153, 205, 153, 5);
+    doc.line(291, 5, 291, 205);
+    doc.line(153, 205, 291, 205);
+
+    // Header for appointments
     const nextAppointment = isSeries ? 'IHRE NÄCHSTEN BEHANDLUNGSTERMINE' : 'IHR NÄCHSTER BEHANDLUNGSTERMIN';
     doc.setTextColor('#2a2f79');
-    doc.text(nextAppointment, 74, 20, { align: 'center' });
+    doc.text(nextAppointment, 74, 20, textOptions);
+    doc.text(nextAppointment, 222, 20, textOptions);
 
+    // Praxis information
     doc.setFontSize(12);
-    const praxisHeader = 'Praxis Meyer\nAm Hans-Teich 16\n51674 Wiehl\nTelefon und Fax: 02262/797919';
-    doc.text(praxisHeader, 74, 40, { align: 'center' });
+    const praxisHeader = 'Praxis Meyer\nAm Hans-Teich 16\n51674 Wiehl\nTelefon: 02262/797919';
+    doc.text(praxisHeader, 74, 40, textOptions);
+    doc.text(praxisHeader, 222, 40, textOptions);
 
+    // Name of patient
     doc.setFontSize(14);
     doc.setTextColor('#000000');
-    doc.text(`Name: ${this.patient}`, 74, 75, { align: 'center' });
+    doc.text(`Name: ${this.patient}`, 74, 75, textOptions);
+    doc.text(`Name: ${this.patient}`, 222, 75, textOptions);
 
+    // Appointments
     doc.setTextColor('#000000');
-    doc.text(pdfContent, 74, 85, { align: 'center' });
+    doc.text(pdfContent, 74, 85, textOptions);
+    doc.text(pdfContent, 222, 85, textOptions);
 
+    // Legal disclaimer
     // eslint-disable-next-line max-len
     const disclaimer = 'Bitte beachten Sie:\nFür unsere Patienten bemühen wir uns stets unsere Terminorganisation so effizient wie möglich zu gestalten. Eine Absage sollte daher nur in dringenden Fällen, spätestens jedoch 24 Stunden vor der Behandlung, erfolgen. Nicht rechtzeitig abgesagte Termine müssen wir Ihnen leider privat in Rechnung stellen.';
     doc.setTextColor('#2a2f79');
     doc.setFontSize(10);
-    doc.splitTextToSize(disclaimer, 74);
-    doc.text(doc.splitTextToSize(disclaimer, 120), 74, 175, { align: 'center' });
+    doc.text(doc.splitTextToSize(disclaimer, 120), 74, 175, textOptions);
+    doc.text(doc.splitTextToSize(disclaimer, 120), 222, 175, textOptions);
 
     doc.autoPrint();
     doc.output('dataurlnewwindow');

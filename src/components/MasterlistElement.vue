@@ -25,7 +25,6 @@
           clearable
         ></v-text-field>
         <v-row class="pl-3 pr-3">
-          <v-spacer />
           <v-checkbox
             label="Patient ist aus BWO"
             v-model="isBWO"

@@ -70,7 +70,6 @@ export default class Daylist {
       }
       currentSearchDate.setDate(currentSearchDate.getDate() + 7);
     }
-    // console.log('check', new Date().toLocaleDateString(), '-', endDate.toLocaleDateString(), conflicts.length, 'conflicts found');
     return conflicts;
   }
 
