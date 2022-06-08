@@ -17,9 +17,7 @@ function convertAppointmentSeries(appointments: AppointmentSeries[]): JSONAppoin
         therapistID: appointment.therapistID,
         patient: appointment.patient,
         time: appointment.time.toString(),
-        hasEnd: appointment.hasEnd,
         startDate: appointment.startDate.getTime(),
-        endDate: appointment.endDate ? appointment.endDate.getTime() : null,
         isBWO: appointment.isBWO || false,
       }
     ),

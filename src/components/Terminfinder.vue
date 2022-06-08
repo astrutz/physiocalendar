@@ -35,10 +35,10 @@
         <v-row class="pl-3">
           <v-checkbox
             label="Termin hat ein Ablaufdatum"
-            v-model="hasEnd"
+            v-model="hasStart"
           ></v-checkbox>
         </v-row>
-        <v-row class="pl-3" v-if="hasEnd">
+        <v-row class="pl-3" v-if="hasStart">
           <v-menu
             v-model="menuIsOpen"
             :close-on-content-click="false"
@@ -397,7 +397,6 @@ export default class Terminfinder extends Vue {
   findAppointments(): void {
     if (this.backup) {
       const selectedTherapistIDs : string[] = [];
-      // TODO: Test me carefully
       this.selectedTherapists.forEach((selectedTherapist) => {
         const index = this.therapists.indexOf(selectedTherapist);
         if (index > -1) {

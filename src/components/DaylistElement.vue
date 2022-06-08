@@ -27,9 +27,6 @@
           v-model="patientTextfield"
           clearable
         ></v-text-field>
-        <p v-if="!!appointment.startDate && appointment.endDate">
-          Behandlung bis: {{ appointment.endDate.toLocaleDateString() }}
-        </p>
         <v-alert v-if="!!appointment.startDate" type="info"
           >Dieser Termin wurde aus der Stammliste generiert und kann daher nicht
           in der Terminliste verändert werden.</v-alert

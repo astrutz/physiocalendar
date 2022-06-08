@@ -230,7 +230,7 @@ export default class Daylist extends Vue {
               default: weekday = Weekday.MONDAY; break;
             }
             const masterAppointment = this.localBackup?.masterlist.searchAppointmentForDaylist(
-              header.text, weekday, row.time as Time, currentSingleDate,
+              header.id, weekday, row.time as Time, currentSingleDate,
             );
             newRow[header.text] = masterAppointment || '';
           }

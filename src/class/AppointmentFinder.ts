@@ -78,14 +78,15 @@ export default class AppointmentFinder {
       if (foundAppointment === undefined) {
         const conflicts = this.daylist.getAppointmentConflicts(
           weekday,
-          this.hasEnd,
           therapistID,
-          this.endDate,
           time as unknown as Time,
+          new Date(), // TODO: Fix me when changing appointment finder
         );
         if (conflicts.length === 0) {
           foundCounter += 1;
-          foundAppointments.push(new AppointmentSeries(therapist, therapistID, this.patient, time as unknown as Time, weekday, false));
+          foundAppointments.push(
+            new AppointmentSeries(therapist, therapistID, this.patient, time as unknown as Time, weekday, undefined, false),
+          );
         }
       }
       return true;

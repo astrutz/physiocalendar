@@ -76,11 +76,12 @@
           ></v-text-field>
           <v-row class="pl-3">
             <v-checkbox
-              label="Termin hat ein Ablaufdatum"
-              v-model="inputFields.hasEnd"
+              label="Patient ist aus BWO"
+              v-model="inputFields.isBWO"
+              :value="inputFields.isBWO"
             ></v-checkbox>
           </v-row>
-          <v-row class="pl-3" v-if="inputFields.hasEnd">
+          <v-row class="pl-3">
             <v-menu
               v-model="inputFields.menuIsOpen"
               :close-on-content-click="false"
@@ -91,22 +92,22 @@
             >
               <template v-slot:activator="{ on, attrs }">
                 <v-text-field
-                  v-model="inputFields.endDateStringFormatted"
-                  label="Enddatum"
+                  v-model="inputFields.startDateStringFormatted"
+                  label="Startdatum"
                   persistent-hint
                   prepend-icon="mdi-calendar"
                   v-bind="attrs"
                   @blur="
-                    inputFields.endDateString =
+                    inputFields.startDateString =
                       convertGermanToEnglishReadableString(
-                        inputFields.endDateStringFormatted
+                        inputFields.startDateStringFormatted
                       )
                   "
                   v-on="on"
                 ></v-text-field>
               </template>
               <v-date-picker
-                v-model="inputFields.endDateString"
+                v-model="inputFields.startDateString"
                 :allowed-dates="
                   (dateVal) => {
                     return new Date(dateVal) > new Date();
@@ -114,7 +115,7 @@
                 "
                 @input="
                   inputFields.menuIsOpen = false;
-                  inputFields.endDate = getCombinedDate();
+                  inputFields.startDate = getCombinedDate();
                 "
                 locale="de-de"
               ></v-date-picker>
@@ -161,8 +162,8 @@
                 therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
                 time: selectedAppointment.time,
-                hasEnd: inputFields.hasEnd,
-                endDate: inputFields.hasEnd ? inputFields.endDate : null,
+                isBWO: inputFields.isBWO,
+                startDate: inputFields.startDate
               });
               createDialog = false;
             "
@@ -202,11 +203,11 @@ export default class Masterlist extends Vue {
 
   inputFields = {
     patientTextfield: '',
-    hasEnd: false,
     menuIsOpen: false,
-    endDate: new Date(),
-    endDateString: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
-    endDateStringFormatted: Dateconversions.convertEnglishToGermanReadableString(
+    startDate: new Date(),
+    isBWO: false,
+    startDateString: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
+    startDateStringFormatted: Dateconversions.convertEnglishToGermanReadableString(
       new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
     ),
   }
@@ -246,15 +247,10 @@ export default class Masterlist extends Vue {
     this.createRows();
   }
 
-  @Watch('inputFields.hasEnd')
-  hasEndChanged(): void {
-    this.getAppointmentConflicts();
-  }
-
-  @Watch('inputFields.endDateString')
+  @Watch('inputFields.startDateString')
   dateChanged(): void {
     this.getAppointmentConflicts();
-    this.inputFields.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.inputFields.endDateString);
+    this.inputFields.startDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.inputFields.startDateString);
   }
 
   mounted(): void {
@@ -308,34 +304,33 @@ export default class Masterlist extends Vue {
 
   getAppointmentConflicts(): void {
     if (this.localBackup) {
-      this.localBackup.daylist.getAppointmentConflicts(
+      this.conflicts = this.localBackup.daylist.getAppointmentConflicts(
         this.currentWeekDay,
-        this.inputFields.hasEnd,
         this.selectedAppointment.therapistID,
-        this.inputFields.endDate,
         this.selectedAppointment.time as unknown as Time,
+        this.inputFields.startDate,
       );
     }
   }
 
   getCombinedDate(): Date {
-    const timezoneOffsetInHours = new Date(`${this.inputFields.endDateString}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const timezoneOffsetInHours = new Date(`${this.inputFields.startDateString}T00:00:00.000Z`).getTimezoneOffset() * -1;
     const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
-    return new Date(`${this.inputFields.endDateString}T15:00:00.000${offsetSuffix}`);
+    return new Date(`${this.inputFields.startDateString}T15:00:00.000${offsetSuffix}`);
   }
 
   convertGermanToEnglishReadableString(): string {
-    return Dateconversions.convertGermanToEnglishReadableString(this.inputFields.endDateStringFormatted);
+    return Dateconversions.convertGermanToEnglishReadableString(this.inputFields.startDateStringFormatted);
   }
 
   resetInputs(): void {
     this.inputFields = {
       patientTextfield: '',
-      hasEnd: false,
       menuIsOpen: false,
-      endDate: new Date(),
-      endDateString: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
-      endDateStringFormatted: Dateconversions.convertEnglishToGermanReadableString(
+      isBWO: false,
+      startDate: new Date(),
+      startDateString: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
+      startDateStringFormatted: Dateconversions.convertEnglishToGermanReadableString(
         new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
       ),
     };
@@ -346,10 +341,12 @@ export default class Masterlist extends Vue {
       time: '7:00',
       weekday: this.currentWeekDay,
     };
+
+    this.conflicts = [];
   }
 
   addAppointment(
-    event: { therapist: string, therapistID: string, patient: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean },
+    event: { therapist: string, therapistID: string, patient: string, time: string, startDate: Date, isBWO: boolean },
   ): void {
     const appointment = new AppointmentSeries(
       event.therapist,
@@ -357,9 +354,7 @@ export default class Masterlist extends Vue {
       event.patient,
       event.time as unknown as Time,
       this.currentWeekDay,
-      event.hasEnd,
-      event.endDate,
-      undefined,
+      event.startDate,
       event.isBWO,
     );
     if (this.localBackup) {
@@ -369,7 +364,7 @@ export default class Masterlist extends Vue {
   }
 
   changeAppointment(
-    event: { therapist: string, therapistID: string, patient: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean },
+    event: { therapist: string, therapistID: string, patient: string, time: string, startDate: Date, isBWO: boolean },
   ): void {
     const appointment = new AppointmentSeries(
       event.therapist,
@@ -377,9 +372,7 @@ export default class Masterlist extends Vue {
       event.patient,
       event.time as unknown as Time,
       this.currentWeekDay,
-      event.hasEnd,
-      event.endDate,
-      undefined,
+      event.startDate,
       event.isBWO,
     );
     if (this.localBackup) {
@@ -388,7 +381,7 @@ export default class Masterlist extends Vue {
   }
 
   deleteAppointment(
-    event: { patient: string, therapist: string, therapistID: string, time: string, hasEnd: boolean, endDate: Date, isBWO: boolean },
+    event: { patient: string, therapist: string, therapistID: string, time: string, startDate: Date, isBWO: boolean },
   ): void {
     if (this.localBackup) {
       const appointment = new AppointmentSeries(
@@ -397,9 +390,7 @@ export default class Masterlist extends Vue {
         event.patient,
         event.time as unknown as Time,
         this.currentWeekDay,
-        event.hasEnd,
-        event.endDate,
-        undefined,
+        event.startDate,
         event.isBWO,
       );
       this.store.deleteAppointmentSeries(appointment);

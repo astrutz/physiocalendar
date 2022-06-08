@@ -36,10 +36,9 @@ export default class Daylist {
 
   getAppointmentConflicts(
     weekday: Weekday,
-    hasEnd: boolean,
     therapistID: string,
-    endDate: Date | null,
     time: Time,
+    startDate: Date,
   ): SingleAppointment[] {
     const conflicts: SingleAppointment[] = [];
     let weekdayOffset = 1;
@@ -53,18 +52,14 @@ export default class Daylist {
       default: break;
     }
 
-    const currentSearchDate = new Date();
+    const currentSearchDate = startDate;
     // eslint-disable-next-line no-mixed-operators
     currentSearchDate.setDate(currentSearchDate.getDate() + ((7 - currentSearchDate.getDay()) % 7 + weekdayOffset) % 7);
 
-    let currentEndDate = new Date();
-    if (hasEnd && endDate) {
-      currentEndDate = endDate;
-    } else {
-      currentEndDate.setFullYear(currentEndDate.getFullYear() + 1);
-    }
+    const endDate = new Date();
+    endDate.setFullYear(endDate.getFullYear() + 1);
 
-    while (currentSearchDate < currentEndDate) {
+    while (currentSearchDate < endDate) {
       const conflictAppointment = this.searchAppointment(
         therapistID,
         Dateconversions.convertDateToReadableString(currentSearchDate),
@@ -75,7 +70,7 @@ export default class Daylist {
       }
       currentSearchDate.setDate(currentSearchDate.getDate() + 7);
     }
-    // console.log('check', new Date().toLocaleDateString(), '-', currentEndDate.toLocaleDateString(), conflicts.length, 'conflicts found');
+    // console.log('check', new Date().toLocaleDateString(), '-', endDate.toLocaleDateString(), conflicts.length, 'conflicts found');
     return conflicts;
   }
 

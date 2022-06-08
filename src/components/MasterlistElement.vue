@@ -25,11 +25,6 @@
           clearable
         ></v-text-field>
         <v-row class="pl-3 pr-3">
-          <v-checkbox
-            label="Termin hat ein Ablaufdatum"
-            v-model="hasEnd"
-            :value="hasEnd"
-          ></v-checkbox>
           <v-spacer />
           <v-checkbox
             label="Patient ist aus BWO"
@@ -37,7 +32,7 @@
             :value="isBWO"
           ></v-checkbox>
         </v-row>
-        <v-row class="pl-3" v-if="hasEnd">
+        <v-row class="pl-3">
           <v-menu
             v-model="menuIsOpen"
             :close-on-content-click="false"
@@ -48,21 +43,21 @@
           >
             <template v-slot:activator="{ on, attrs }">
               <v-text-field
-                v-model="endDateStringFormatted"
-                label="Enddatum"
+                v-model="startDateStringFormatted"
+                label="Startdatum"
                 persistent-hint
                 prepend-icon="mdi-calendar"
                 v-bind="attrs"
                 @blur="
-                  endDateString = convertGermanToEnglishReadableString(
-                    endDateStringFormatted
+                  startDateString = convertGermanToEnglishReadableString(
+                    startDateStringFormatted
                   )
                 "
                 v-on="on"
               ></v-text-field>
             </template>
             <v-date-picker
-              v-model="endDateString"
+              v-model="startDateString"
               :allowed-dates="
                 (dateVal) => {
                   return new Date(dateVal) > new Date();
@@ -70,7 +65,7 @@
               "
               @input="
                 menuIsOpen = false;
-                endDate = getCombinedDate();
+                startDate = getCombinedDate();
               "
               locale="de-de"
             ></v-date-picker>
@@ -98,7 +93,6 @@
           color="error"
           text
           @click="
-            hasEnd = appointment.hasEnd || false;
             patientTextfield = patient;
             dialogIsOpen = false;
           "
@@ -166,13 +160,13 @@ export default class MasterlistElement extends Vue {
 
   private appointmentTherapist = this.appointment.therapist;
 
-  private endDate = this.appointment?.endDate || new Date();
+  private startDate = this.appointment?.startDate;
 
-  private endDateString: string = new Date(this.endDate.getTime() - this.endDate.getTimezoneOffset() * 60000).toISOString().substr(0, 10);
+  private startDateString: string = new Date(
+    this.startDate.getTime() - this.startDate.getTimezoneOffset() * 60000,
+  ).toISOString().substr(0, 10);
 
-  private endDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
-
-  private hasEnd = this.appointment?.hasEnd || false;
+  private startDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
 
   private isBWO = this.appointment?.isBWO || false;
 
@@ -193,37 +187,31 @@ export default class MasterlistElement extends Vue {
     this.getAppointmentConflicts();
   }
 
-  @Watch('hasEnd')
-  hasEndChanged(): void {
-    this.getAppointmentConflicts();
-  }
-
-  @Watch('endDateString')
+  @Watch('startDateString')
   dateChanged(): void {
     this.getAppointmentConflicts();
-    this.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
+    this.startDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
   }
 
   getAppointmentConflicts(): void {
     if (this.localBackup) {
-      this.localBackup.daylist.getAppointmentConflicts(
+      this.conflicts = this.localBackup.daylist.getAppointmentConflicts(
         this.day,
-        this.hasEnd,
         this.therapistID,
-        this.endDate,
         this.time as unknown as Time,
+        this.startDate,
       );
     }
   }
 
   getCombinedDate(): Date {
-    const timezoneOffsetInHours = new Date(`${this.endDateString}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const timezoneOffsetInHours = new Date(`${this.startDateString}T00:00:00.000Z`).getTimezoneOffset() * -1;
     const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
-    return new Date(`${this.endDateString}T15:00:00.000${offsetSuffix}`);
+    return new Date(`${this.startDateString}T15:00:00.000${offsetSuffix}`);
   }
 
   convertGermanToEnglishReadableString(): string {
-    return Dateconversions.convertGermanToEnglishReadableString(this.endDateStringFormatted);
+    return Dateconversions.convertGermanToEnglishReadableString(this.startDateStringFormatted);
   }
 
   changeAppointment(): void {
@@ -233,8 +221,7 @@ export default class MasterlistElement extends Vue {
         therapist: this.therapist,
         therapistID: this.therapistID,
         time: this.time,
-        hasEnd: this.hasEnd,
-        endDate: this.hasEnd ? this.endDate : null,
+        startDate: this.startDate,
         isBWO: this.isBWO,
       });
     } else {
@@ -243,7 +230,7 @@ export default class MasterlistElement extends Vue {
         therapist: this.therapist,
         therapistID: this.therapistID,
         time: this.time,
-        hasEnd: this.hasEnd,
+        startDate: this.startDate,
         isBWO: this.isBWO,
       });
     }
@@ -255,8 +242,7 @@ export default class MasterlistElement extends Vue {
       therapist: this.therapist,
       therapistID: this.therapistID,
       time: this.time,
-      hasEnd: this.hasEnd,
-      endDate: this.hasEnd ? this.endDate : null,
+      startDate: this.startDate,
       isBWO: this.isBWO,
     });
   }

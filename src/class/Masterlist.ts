@@ -16,19 +16,7 @@ export default class Masterlist {
     therapistID: string, time: Time, appointment: AppointmentSeries,
   ): AppointmentSeries | undefined {
     if (appointment.therapistID === therapistID && appointment.time === time) {
-      if (appointment.hasEnd === false || appointment.endDate === null) {
-        return appointment;
-      }
-      const readableStartDate = Dateconversions.convertDateToReadableString(appointment.startDate);
-      const readableEndDate = Dateconversions.convertDateToReadableString(appointment.endDate);
-      const readableNow = Dateconversions.convertDateToReadableString(new Date());
-      if (
-        (appointment.startDate <= new Date()
-          || readableStartDate === readableNow) && (appointment.endDate >= new Date()
-            || readableEndDate === readableNow)
-      ) {
-        return appointment;
-      }
+      return appointment;
     }
     return undefined;
   }
@@ -37,16 +25,10 @@ export default class Masterlist {
     therapistID: string, time: Time, appointment: AppointmentSeries, date: Date,
   ): AppointmentSeries | undefined {
     if (appointment.therapistID === therapistID && appointment.time === time) {
-      if (appointment.hasEnd === false || appointment.endDate === null) {
-        return appointment;
-      }
       const readableStartDate = Dateconversions.convertDateToReadableString(appointment.startDate);
-      const readableEndDate = Dateconversions.convertDateToReadableString(appointment.endDate);
       const readableTargetDate = Dateconversions.convertDateToReadableString(date);
       if (
-        (appointment.startDate <= date
-          || readableStartDate === readableTargetDate) && (appointment.endDate >= date
-            || readableEndDate === readableTargetDate)
+        (appointment.startDate <= date || readableStartDate === readableTargetDate)
       ) {
         return appointment;
       }

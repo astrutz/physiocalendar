@@ -7,9 +7,7 @@ export interface JSONAppointmentSeries {
   therapistID : string,
   patient: string,
   time: string,
-  hasEnd : boolean,
   startDate : number,
-  endDate : number | null,
   isBWO : boolean
 }
 
