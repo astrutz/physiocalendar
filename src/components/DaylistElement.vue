@@ -27,10 +27,28 @@
           v-model="patientTextfield"
           clearable
         ></v-text-field>
-        <v-alert v-if="!!appointment.startDate" type="info"
+        <v-alert v-if="!!appointment.startDate" type="warning"
           >Dieser Termin wurde aus der Stammliste generiert und kann daher nicht
           in der Terminliste verändert werden.</v-alert
         >
+
+        <v-alert
+          v-if="appointmentsForPatient.length > 0 && !appointment.startDate"
+          type="info"
+        >
+          Unter diesem Namen wurden weitere Termine gefunden:
+          <div
+            v-for="appointment in appointmentsForPatient"
+            :key="`${appointment.therapistID}-${appointment.time}`"
+          >
+            {{
+              appointment.weekday
+                ? appointment.weekday + "s"
+                : convertDate(appointment.date)
+            }}, {{ appointment.time }} bei
+            {{ appointment.therapist }}
+          </div>
+        </v-alert>
       </v-card-text>
 
       <v-divider></v-divider>
@@ -82,6 +100,10 @@ import {
 } from 'vue-property-decorator';
 import { Time } from '@/class/Enums';
 import Dateconversions from '@/class/Dateconversions';
+import { getModule } from 'vuex-module-decorators';
+import Backup from '@/class/Backup';
+import SingleAppointment from '@/class/SingleAppointment';
+import Store from '../store/backup';
 
 @Component
 export default class DaylistElement extends Vue {
@@ -97,9 +119,34 @@ export default class DaylistElement extends Vue {
 
   @Prop() readonly appointment!: Appointment;
 
+  store = getModule(Store);
+
   private dialogIsOpen = false;
 
   private patientTextfield = this.patient;
+
+  appointmentsForPatient: Appointment[] = [];
+
+  get localBackup(): Backup | null {
+    return this.store.getBackup;
+  }
+
+  mounted(): void {
+    if (this.localBackup) {
+      this.appointmentsForPatient = this.localBackup.daylist.getSingleAppointmentsByPatient(this.patient);
+      this.appointmentsForPatient = this.appointmentsForPatient.concat(
+        this.localBackup.masterlist.getAppointmentSeriesByPatient(this.patient),
+      );
+      this.appointmentsForPatient = this.appointmentsForPatient.filter((appointment) => {
+        if (this.appointment instanceof SingleAppointment && appointment instanceof SingleAppointment) {
+          return !(appointment.time === this.appointment.time
+            && this.appointment.date === appointment.date
+            && this.appointment.therapistID === appointment.therapistID);
+        }
+        return true;
+      });
+    }
+  }
 
   changeAppointment(): void {
     if (this.patientTextfield !== '' && this.patientTextfield !== null) {
@@ -121,9 +168,17 @@ export default class DaylistElement extends Vue {
 
   printAppointment(): void {
     const printer = new Printer(
-      this.patient, this.therapist, this.time as unknown as Time, Dateconversions.convertReadableStringToDate(this.date),
+      this.patient,
+      this.therapist,
+      this.time as unknown as Time,
+      Dateconversions.convertReadableStringToDate(this.date),
     );
-    printer.printSingleAppointment();
+    printer.printSingleAppointment(this.appointmentsForPatient);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  convertDate(date: Date): string {
+    return Dateconversions.convertDateToReadableString(date);
   }
 }
 </script>

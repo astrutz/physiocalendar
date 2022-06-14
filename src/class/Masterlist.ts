@@ -1,3 +1,4 @@
+import Appointment from './Appointment';
 import AppointmentSeries from './AppointmentSeries';
 import Dateconversions from './Dateconversions';
 import { Time, Weekday } from './Enums';
@@ -76,6 +77,44 @@ export default class Masterlist {
       ) as AppointmentSeries;
     }
     return undefined;
+  }
+
+  getAppointmentSeriesByPatient(patient: string): AppointmentSeries[] {
+    let appointments: Appointment[] = [];
+    const monday = this.findListday(Weekday.MONDAY);
+    if (monday) {
+      appointments = appointments.concat(monday.appointments.filter((appointment) => appointment.patient === patient));
+    }
+    const tuesday = this.findListday(Weekday.TUESDAY);
+    if (tuesday) {
+      appointments = appointments.concat(tuesday.appointments.filter((appointment) => appointment.patient === patient));
+    }
+    const wednesday = this.findListday(Weekday.WEDNESDAY);
+    if (wednesday) {
+      appointments = appointments.concat(wednesday.appointments.filter((appointment) => appointment.patient === patient));
+    }
+    const thursday = this.findListday(Weekday.THURSDAY);
+    if (thursday) {
+      appointments = appointments.concat(thursday.appointments.filter((appointment) => appointment.patient === patient));
+    }
+    const friday = this.findListday(Weekday.FRIDAY);
+    if (friday) {
+      appointments = appointments.concat(friday.appointments.filter((appointment) => appointment.patient === patient));
+    }
+    return Masterlist.removeDuplicates(appointments as AppointmentSeries[]);
+  }
+
+  private static removeDuplicates(appointmentList: AppointmentSeries[]): AppointmentSeries[] {
+    const newAppointments: AppointmentSeries[] = [];
+    appointmentList.forEach((appointmentToBeChecked) => {
+      if (!newAppointments.find(
+        (appointment) => (appointment.weekday === appointmentToBeChecked.weekday && appointment.time === appointmentToBeChecked.time
+          && appointment.therapistID === appointmentToBeChecked.therapistID),
+      )) {
+        newAppointments.push(appointmentToBeChecked);
+      }
+    });
+    return newAppointments;
   }
 
   addAppointment(appointment: AppointmentSeries): void {

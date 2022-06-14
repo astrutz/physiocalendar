@@ -1,4 +1,5 @@
 // eslint-disable-next-line import/no-cycle
+import Appointment from './Appointment';
 import Dateconversions from './Dateconversions';
 import { Time, Weekday } from './Enums';
 import ListSingleDay from './ListSingleDay';
@@ -32,6 +33,35 @@ export default class Daylist {
       return foundAppointment?.patient || '';
     }
     return '';
+  }
+
+  getSingleAppointmentsByPatient(patient: string): SingleAppointment[] {
+    const currentSearchDate = new Date();
+    const endDate = new Date();
+    let appointments: Appointment[] = [];
+    endDate.setFullYear(currentSearchDate.getFullYear() + 1);
+    while (currentSearchDate < endDate) {
+      const currentListDay = this.findListday(currentSearchDate);
+      if (currentListDay) {
+        appointments = appointments.concat(currentListDay.appointments.filter((appointment) => appointment.patient === patient));
+      }
+      currentSearchDate.setDate(currentSearchDate.getDate() + 1);
+    }
+    return Daylist.removeDuplicates(appointments as SingleAppointment[]);
+  }
+
+  private static removeDuplicates(appointmentList: SingleAppointment[]): SingleAppointment[] {
+    const newAppointments: SingleAppointment[] = [];
+    appointmentList.forEach((appointmentToBeChecked) => {
+      if (!newAppointments.find(
+        (appointment) => (appointment.date === appointmentToBeChecked.date
+          && appointment.time === appointmentToBeChecked.time
+          && appointment.therapistID === appointmentToBeChecked.therapistID),
+      )) {
+        newAppointments.push(appointmentToBeChecked);
+      }
+    });
+    return newAppointments;
   }
 
   getAppointmentConflicts(

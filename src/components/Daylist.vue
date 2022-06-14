@@ -76,10 +76,22 @@
           <v-text-field
             label="Name des Patienten"
             v-model="inputFields.patientTextfield"
+            @input="searchAppointmentsForPatient($event)"
             clearable
           ></v-text-field>
-        </v-card-text>
 
+        <v-alert v-if="appointmentsForPatient.length > 0" type="info">
+          Unter diesem Namen wurden weitere Termine gefunden:
+          <div
+            v-for="appointment in appointmentsForPatient"
+            :key="`${appointment.therapistID}-${appointment.time}`"
+          >
+            {{ appointment.weekday ? appointment.weekday + 's' : convertDate(appointment.date) }}, {{ appointment.time }} bei
+            {{ appointment.therapist }}
+          </div>
+        </v-alert>
+
+        </v-card-text>
         <v-divider></v-divider>
 
         <v-card-actions>
@@ -118,6 +130,7 @@
 </template>
 
 <script lang="ts">
+import Appointment from '@/class/Appointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
@@ -153,6 +166,8 @@ export default class Daylist extends Vue {
   };
 
   store = getModule(Store);
+
+  appointmentsForPatient: Appointment[] = [];
 
   private headers = [
     { text: '', value: 'time', id: '' },
@@ -258,6 +273,16 @@ export default class Daylist extends Vue {
       time: '7:00',
       day: this.currentSingleDay,
     };
+
+    this.appointmentsForPatient = [];
+  }
+
+  searchAppointmentsForPatient(patient: string): void {
+    if (this.localBackup) {
+      let appointments : Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
+      appointments = appointments.concat(this.localBackup.masterlist.getAppointmentSeriesByPatient(patient));
+      this.appointmentsForPatient = appointments;
+    }
   }
 
   addAppointment(
@@ -304,6 +329,11 @@ export default class Daylist extends Vue {
       );
       this.store.deleteSingleAppointment(appointment);
     }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  convertDate(date: Date): string {
+    return Dateconversions.convertDateToReadableString(date);
   }
 }
 
