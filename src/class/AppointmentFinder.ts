@@ -1,8 +1,9 @@
 import AppointmentRequest from './AppointmentRequest';
-import AppointmentSeries from './AppointmentSeries';
+import Dateconversions from './Dateconversions';
 import Daylist from './Daylist';
-import { Time, Weekday } from './Enums';
+import { nextTime, Time, Weekday } from './Enums';
 import Masterlist from './Masterlist';
+import SingleAppointment from './SingleAppointment';
 
 export default class AppointmentFinder {
   patient: string;
@@ -11,19 +12,21 @@ export default class AppointmentFinder {
 
   therapistIDs: string[];
 
+  appointmentsNeeded: number;
+
+  appointmentLength: number;
+
   appointmentRequests: AppointmentRequest[];
-
-  hasEnd: boolean;
-
-  endDate: Date | null;
-
-  masterlist: Masterlist;
 
   daylist: Daylist;
 
+  masterlist: Masterlist;
+
   MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST;
 
-  static MAX_APPOINTMENTS_TOTAL = 30;
+  MAX_APPOINTMENTS_TOTAL: number;
+
+  static APPOINTMENTS_PER_WEEK = 3;
 
   static timeMapping = AppointmentRequest.timesOfDayToTimes();
 
@@ -31,67 +34,99 @@ export default class AppointmentFinder {
     patient: string,
     therapists: string[],
     therapistIDs: string[],
+    appointmentsNeeded: number,
+    appointmentLength: number,
     appointmentRequests: AppointmentRequest[],
-    hasEnd: boolean,
-    endDate: Date | null,
-    masterlist: Masterlist,
     daylist: Daylist,
+    masterlist: Masterlist,
   ) {
     this.patient = patient;
     this.therapists = therapists;
     this.therapistIDs = therapistIDs;
+    this.appointmentsNeeded = parseInt(appointmentsNeeded.toString(), 10);
+    this.appointmentLength = appointmentLength;
     this.appointmentRequests = appointmentRequests;
-    this.hasEnd = hasEnd;
-    this.endDate = endDate;
-    this.masterlist = masterlist;
     this.daylist = daylist;
+    this.masterlist = masterlist;
+    this.MAX_APPOINTMENTS_TOTAL = appointmentsNeeded > 10 ? Math.min(appointmentsNeeded * 3, 120) : 30;
     const appointmentPerPersonPerSlot = Math.ceil(
-      AppointmentFinder.MAX_APPOINTMENTS_TOTAL / appointmentRequests.length / this.therapists.length,
+      this.MAX_APPOINTMENTS_TOTAL / appointmentRequests.length / this.therapists.length,
     );
     this.MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST = appointmentPerPersonPerSlot;
   }
 
-  getSuggestions(): AppointmentSeries[] {
-    let suggestions: AppointmentSeries[] = [];
-    this.therapists.forEach((therapistIDs, i) => {
+  getSuggestionsV2(): SingleAppointment[] {
+    let suggestions: SingleAppointment[] = [];
+    const currentSearchDate = new Date();
+    for (let i = 0; i <= this.appointmentsNeeded + 2; i += 1) {
+      suggestions = suggestions.concat(this.getSuggestionForWeek(currentSearchDate));
+      currentSearchDate.setDate(currentSearchDate.getDate() + 7);
+    }
+    return suggestions;
+  }
+
+  private getSuggestionForWeek(startDate: Date): SingleAppointment[] {
+    let suggestions: SingleAppointment[] = [];
+    this.therapists.forEach((therapist, i) => {
       this.appointmentRequests.forEach((request) => {
         suggestions = suggestions.concat(
-          this.getAppointmentForTherapistinRequest(
-            this.therapists[i], therapistIDs, AppointmentFinder.timeMapping[request.timeOfDay], request.weekday,
+          this.getAppointmentForTherapistinRequestV2(
+            therapist, this.therapistIDs[i], AppointmentFinder.timeMapping[request.timeOfDay], request.weekday, startDate,
           ),
         );
       });
     });
-    return suggestions.slice(0, AppointmentFinder.MAX_APPOINTMENTS_TOTAL);
+    const suggestionsReduced = suggestions.slice(0, this.MAX_APPOINTMENTS_TOTAL);
+    suggestionsReduced.sort((suggestionA, suggestionB) => suggestionA.date.getTime() - suggestionB.date.getTime());
+    return suggestionsReduced;
   }
 
-  private getAppointmentForTherapistinRequest(
-    therapist: string, therapistID: string, times: string[], weekday: Weekday,
-  ): AppointmentSeries[] {
+  private getAppointmentForTherapistinRequestV2(
+    therapist: string, therapistID: string, times: string[], weekday: Weekday, startDate: Date,
+  ): SingleAppointment[] {
     let foundCounter = 0;
-    const foundAppointments: AppointmentSeries[] = [];
+    const foundAppointments: SingleAppointment[] = [];
+    const searchingDate = AppointmentFinder.getNextDateForWeekday(weekday, startDate);
     times.every((time) => {
-      if (foundCounter === this.MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST) {
+      if (foundCounter === AppointmentFinder.APPOINTMENTS_PER_WEEK) {
         return false;
       }
-      const foundAppointment = this.masterlist.searchAppointment(therapistID, weekday, time as unknown as Time);
+      const foundAppointment = this.daylist.searchAppointment(
+        therapistID, Dateconversions.convertDateToReadableString(searchingDate), time as unknown as Time, this.appointmentLength === 40,
+      );
       if (foundAppointment === undefined) {
-        const conflicts = this.daylist.getAppointmentConflicts(
-          weekday,
-          therapistID,
-          time as unknown as Time,
-          new Date(), // TODO: Fix me when changing appointment finder
+        const hasConflict = this.masterlist.getAppointmentConflict(
+          searchingDate, therapistID, time as unknown as Time,
         );
-        if (conflicts.length === 0) {
+        const nextHasConflict = this.appointmentLength === 40 ? this.masterlist.getAppointmentConflict(
+          searchingDate, therapistID, nextTime(time as unknown as Time),
+        ) : false;
+        if (!hasConflict && !nextHasConflict) {
           foundCounter += 1;
-          // TODO: Use isBWO
           foundAppointments.push(
-            new AppointmentSeries(therapist, therapistID, this.patient, time as unknown as Time, weekday, undefined, false),
+            new SingleAppointment(therapist, therapistID, this.patient, time as unknown as Time, new Date(searchingDate.getTime())),
           );
         }
       }
       return true;
     });
     return foundAppointments;
+  }
+
+  private static getNextDateForWeekday(weekday: Weekday, startDate = new Date()) {
+    let weekdayOffset = 1;
+
+    switch (weekday) {
+      case Weekday.MONDAY: weekdayOffset = 1; break;
+      case Weekday.TUESDAY: weekdayOffset = 2; break;
+      case Weekday.WEDNESDAY: weekdayOffset = 3; break;
+      case Weekday.THURSDAY: weekdayOffset = 4; break;
+      case Weekday.FRIDAY: weekdayOffset = 5; break;
+      default: break;
+    }
+
+    // eslint-disable-next-line no-mixed-operators
+    startDate.setDate(startDate.getDate() + ((7 - startDate.getDay()) % 7 + weekdayOffset) % 7);
+    return startDate;
   }
 }

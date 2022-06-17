@@ -79,6 +79,26 @@ export default class Masterlist {
     return undefined;
   }
 
+  getAppointmentConflict(
+    date: Date,
+    therapistID: string,
+    time: Time,
+  ): AppointmentSeries | undefined {
+    const dateWeekday = date.getDay();
+    let weekday : Weekday = Weekday.FRIDAY;
+
+    switch (dateWeekday) {
+      case 1: weekday = Weekday.MONDAY; break;
+      case 2: weekday = Weekday.TUESDAY; break;
+      case 3: weekday = Weekday.WEDNESDAY; break;
+      case 4: weekday = Weekday.THURSDAY; break;
+      case 5: weekday = Weekday.FRIDAY; break;
+      default: break;
+    }
+
+    return this.searchAppointmentForDaylist(therapistID, weekday, time, date);
+  }
+
   getAppointmentSeriesByPatient(patient: string): AppointmentSeries[] {
     let appointments: Appointment[] = [];
     const monday = this.findListday(Weekday.MONDAY);

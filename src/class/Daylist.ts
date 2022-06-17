@@ -1,7 +1,7 @@
 // eslint-disable-next-line import/no-cycle
 import Appointment from './Appointment';
 import Dateconversions from './Dateconversions';
-import { Time, Weekday } from './Enums';
+import { nextTime, Time, Weekday } from './Enums';
 import ListSingleDay from './ListSingleDay';
 import SingleAppointment from './SingleAppointment';
 
@@ -14,12 +14,19 @@ export default class Daylist {
     this.elements = elements;
   }
 
-  searchAppointment(therapistID: string, dateString: string, time: Time): SingleAppointment | undefined {
+  searchAppointment(therapistID: string, dateString: string, time: Time, isLongAppointment = false): SingleAppointment | undefined {
     const currentDay = this.findListday(dateString);
     if (currentDay !== undefined) {
-      return currentDay.appointments.find(
-        (appointment) => appointment.therapistID === therapistID && appointment.time === time,
-      ) as SingleAppointment;
+      return currentDay.appointments.find((appointment) => {
+        if (isLongAppointment) {
+          if (time === Time['20:40']) {
+            return false;
+          }
+          const nextAppointment = this.searchAppointment(therapistID, dateString, nextTime(time), false);
+          return (appointment.therapistID === therapistID && appointment.time === time) || nextAppointment;
+        }
+        return appointment.therapistID === therapistID && appointment.time === time;
+      }) as SingleAppointment;
     }
     return undefined;
   }

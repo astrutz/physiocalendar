@@ -30,52 +30,46 @@
             placeholder="Therapeuten auswählen"
             clearable
             multiple
-          ></v-select>
+          >
+            <template v-slot:label>
+              <div>{{ label }}</div>
+            </template>
+            <template v-slot:prepend-item>
+              <v-list-item ripple @click="toggleAll">
+                <v-list-item-action>
+                  <v-icon
+                    :color="
+                      selectedTherapists.length > 0 ? 'indigo darken-4' : ''
+                    "
+                    >{{ icon }}</v-icon
+                  >
+                </v-list-item-action>
+                <v-list-item-content>
+                  <v-list-item-title>Alle auswählen</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+              <v-divider class="mt-2"></v-divider>
+            </template>
+          </v-select>
         </v-row>
         <v-row class="pl-3">
-          <v-checkbox
-            label="Termin hat ein Ablaufdatum"
-            v-model="hasStart"
-          ></v-checkbox>
-        </v-row>
-        <v-row class="pl-3" v-if="hasStart">
-          <v-menu
-            v-model="menuIsOpen"
-            :close-on-content-click="false"
-            :nudge-right="40"
-            transition="scale-transition"
-            offset-y
-            min-width="auto"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                v-model="endDateStringFormatted"
-                label="Enddatum"
-                persistent-hint
-                prepend-icon="mdi-calendar"
-                v-bind="attrs"
-                @blur="
-                  endDateString = convertGermanToEnglishReadableString(
-                    endDateStringFormatted
-                  )
-                "
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker
-              v-model="endDateString"
-              :allowed-dates="
-                (dateVal) => {
-                  return new Date(dateVal) > new Date();
-                }
-              "
-              @input="
-                menuIsOpen = false;
-                endDate = getCombinedDate();
-              "
-              locale="de-de"
-            ></v-date-picker>
-          </v-menu>
+          <v-col>
+            <v-text-field
+              label="Anzahl der Termine"
+              v-model="appointmentCount"
+              clearable
+              type="number"
+            ></v-text-field>
+          </v-col>
+          <v-col>
+            <v-radio-group v-model="appointmentLength">
+              <v-row>
+                <v-col v-for="n in [20, 40]" :key="n">
+                  <v-radio :label="`${n} Minuten`" :value="n"></v-radio>
+                </v-col>
+              </v-row>
+            </v-radio-group>
+          </v-col>
         </v-row>
         <v-row class="pl-3 mt-6">
           <h3 style="color: black">Mögliche Termine</h3>
@@ -166,7 +160,8 @@
           :disabled="
             patientTextfield === '' ||
             selectedTherapists.length === 0 ||
-            selectedAppointmentRequests.length === 0
+            selectedAppointmentRequests.length === 0 ||
+            appointmentCount === 0
           "
           color="primary"
           @click="
@@ -182,103 +177,45 @@
         <div v-if="appointmentSuggestions.length > 0">
           <p class="pl-3">Folgende Termine stehen zur Auswahl:</p>
           <v-row class="pl-3">
-            <v-col cols="2">
-              <v-radio-group v-model="selectedAppointmentSuggestion">
-                <v-radio
-                  v-for="suggestion in appointmentSuggestions.filter(
-                    (req, i) => i % 5 === 0
-                  )"
-                  :key="`${suggestion.therapist}-${suggestion.weekday}-${suggestion.time}`"
-                  :label="`${
-                    suggestion.therapist
-                  }, ${suggestion.weekday.toLowerCase()}s um ${
-                    suggestion.time
-                  }`"
-                  :value="suggestion"
-                ></v-radio>
-              </v-radio-group>
-            </v-col>
-            <v-col cols="2">
-              <v-radio-group v-model="selectedAppointmentSuggestion">
-                <v-radio
-                  v-for="suggestion in appointmentSuggestions.filter(
-                    (req, i) => i % 5 === 1
-                  )"
-                  :key="suggestion.therapist"
-                  :label="`${
-                    suggestion.therapist
-                  }, ${suggestion.weekday.toLowerCase()}s um ${
-                    suggestion.time
-                  }`"
-                  :value="suggestion"
-                ></v-radio>
-              </v-radio-group>
-            </v-col>
-            <v-col cols="2">
-              <v-radio-group v-model="selectedAppointmentSuggestion">
-                <v-radio
-                  v-for="suggestion in appointmentSuggestions.filter(
-                    (req, i) => i % 5 === 2
-                  )"
-                  :key="suggestion.therapist"
-                  :label="`${
-                    suggestion.therapist
-                  }, ${suggestion.weekday.toLowerCase()}s um ${
-                    suggestion.time
-                  }`"
-                  :value="suggestion"
-                ></v-radio>
-              </v-radio-group>
-            </v-col>
-            <v-col cols="2">
-              <v-radio-group v-model="selectedAppointmentSuggestion">
-                <v-radio
-                  v-for="suggestion in appointmentSuggestions.filter(
-                    (req, i) => i % 5 === 3
-                  )"
-                  :key="suggestion.therapist"
-                  :label="`${
-                    suggestion.therapist
-                  }, ${suggestion.weekday.toLowerCase()}s um ${
-                    suggestion.time
-                  }`"
-                  :value="suggestion"
-                ></v-radio>
-              </v-radio-group>
-            </v-col>
-            <v-col cols="2">
-              <v-radio-group v-model="selectedAppointmentSuggestion">
-                <v-radio
-                  v-for="suggestion in appointmentSuggestions.filter(
-                    (req, i) => i % 5 === 4
-                  )"
-                  :key="suggestion.therapist"
-                  :label="`${
-                    suggestion.therapist
-                  }, ${suggestion.weekday.toLowerCase()}s um ${
-                    suggestion.time
-                  }`"
-                  :value="suggestion"
-                ></v-radio>
-              </v-radio-group>
+            <v-col
+              v-for="suggestion in appointmentSuggestions"
+              :key="`${suggestion.therapist}-${suggestion.date}-${suggestion.time}-${Math.random()}`"
+              cols="2"
+              style="padding: 0"
+            >
+              <v-checkbox
+                :label="`${suggestion.therapist}, ${convertSuggestionDate(
+                  suggestion.date
+                )} um ${suggestion.time}`"
+                :value="suggestion"
+                v-model="selectedAppointmentSuggestions"
+                :multiple="true"
+              ></v-checkbox>
             </v-col>
           </v-row>
-
+          <v-row class="pl-3 mb-4">
+            <strong
+              >{{ selectedAppointmentSuggestions.length }} von
+              {{ appointmentCount }} Terminen ausgewählt</strong
+            >
+          </v-row>
           <v-btn @click="resetFinder()" color="error" text> Abbrechen </v-btn>
-
           <v-btn
-            :disabled="selectedAppointmentSuggestion === 0"
+            :disabled="
+              selectedAppointmentSuggestions.length !==
+              parseInt(appointmentCount)
+            "
             class="button-next"
             color="primary"
             @click="currentStep = 3"
           >
-            Termin auswählen
+            Termine auswählen
           </v-btn>
         </div>
         <div v-else>
           <p>
             Es wurde kein Termin gefunden. Bitte legen Sie manuell einen Termin
-            über die Stammliste an.
+            über die Terminliste an.
           </p>
           <v-btn
             class="button-next"
@@ -292,15 +229,15 @@
       </v-stepper-content>
 
       <v-stepper-content step="3">
-        <p>Folgender Termin wird in der Stammliste gespeichert:</p>
-        <p v-if="selectedAppointmentSuggestion">
+        <p>Folgende Termine werden in der Terminliste gespeichert:</p>
+        <p
+          v-for="(suggestion, index) in selectedAppointmentSuggestions"
+          :key="`${suggestion}-${index}`"
+        >
           <strong>
-            {{ selectedAppointmentSuggestion.therapist }},
-            {{ selectedAppointmentSuggestion.weekday.toLowerCase() }}s um
-            {{ selectedAppointmentSuggestion.time }}
-            <span v-if="selectedAppointmentSuggestion.hasEnd">
-              bis zum {{ selectedAppointmentSuggestion.endDate }}
-            </span>
+            {{ suggestion.therapist }},
+            {{ convertSuggestionDate(suggestion.date) }} um
+            {{ suggestion.time }} ({{ appointmentLength }} Minuten)
           </strong>
         </p>
         <v-btn @click="resetFinder()" color="error" text> Abbrechen </v-btn>
@@ -320,11 +257,11 @@
 
 import AppointmentFinder from '@/class/AppointmentFinder';
 import AppointmentRequest from '@/class/AppointmentRequest';
-import AppointmentSeries from '@/class/AppointmentSeries';
+import SingleAppointment from '@/class/SingleAppointment';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
-import { TimeOfDay } from '@/class/Enums';
-import { Component, Vue, Watch } from 'vue-property-decorator';
+import { nextTime, TimeOfDay } from '@/class/Enums';
+import { Component, Vue } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
 import Store from '../store/backup';
 
@@ -338,17 +275,11 @@ export default class Terminfinder extends Vue {
 
   selectedTherapists: string[] = [];
 
-  hasEnd = false;
+  appointmentCount = 0;
+
+  appointmentLength = 20;
 
   menuIsOpen = false;
-
-  endDate = new Date();
-
-  endDateString = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10);
-
-  endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(
-    new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
-  );
 
   appointmentRequests = AppointmentRequest.generateAll();
 
@@ -356,20 +287,15 @@ export default class Terminfinder extends Vue {
 
   selectedAppointmentRequests: AppointmentRequest[] = [];
 
-  appointmentSuggestions: AppointmentSeries[] = [];
+  appointmentSuggestions: SingleAppointment[] = [];
 
-  selectedAppointmentSuggestion: AppointmentSeries | number = 0;
+  selectedAppointmentSuggestions: SingleAppointment[] = [];
 
   currentStep = 1;
 
   store = getModule(Store);
 
   backup: Backup | null = null;
-
-  @Watch('endDateString')
-  dateChanged(): void {
-    this.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
-  }
 
   mounted(): void {
     this.backup = this.store.getBackup;
@@ -384,19 +310,38 @@ export default class Terminfinder extends Vue {
     }
   }
 
-  getCombinedDate(): Date {
-    const timezoneOffsetInHours = new Date(`${this.endDateString}T00:00:00.000Z`).getTimezoneOffset() * -1;
-    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
-    return new Date(`${this.endDateString}T15:00:00.000${offsetSuffix}`);
+  get label(): string {
+    if (this.selectedTherapists.length === this.therapists.length) {
+      return 'Alle Therapeuten ausgewählt';
+    }
+    if (this.selectedTherapists.length === 0) {
+      return 'Therapeuten auswählen';
+    }
+    return `${this.selectedTherapists.length} Therapeuten ausgewählt`;
   }
 
-  convertGermanToEnglishReadableString(): string {
-    return Dateconversions.convertGermanToEnglishReadableString(this.endDateStringFormatted);
+  get icon(): string {
+    if (this.selectedTherapists.length === this.therapists.length) return 'mdi-close-box';
+    if (this.selectedTherapists.length > 0) return 'mdi-minus-box';
+    return 'mdi-checkbox-blank-outline';
+  }
+
+  toggleAll(): void {
+    if (this.selectedTherapists.length === this.therapists.length) {
+      this.selectedTherapists = [];
+    } else {
+      this.selectedTherapists = this.therapists.slice();
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  convertSuggestionDate(date: Date): string {
+    return Dateconversions.convertDateToReadableString(date);
   }
 
   findAppointments(): void {
     if (this.backup) {
-      const selectedTherapistIDs : string[] = [];
+      const selectedTherapistIDs: string[] = [];
       this.selectedTherapists.forEach((selectedTherapist) => {
         const index = this.therapists.indexOf(selectedTherapist);
         if (index > -1) {
@@ -407,13 +352,13 @@ export default class Terminfinder extends Vue {
         this.patientTextfield,
         this.selectedTherapists,
         selectedTherapistIDs,
+        this.appointmentCount,
+        this.appointmentLength,
         this.selectedAppointmentRequests,
-        this.hasEnd,
-        this.hasEnd ? this.endDate : null,
-        this.backup.masterlist,
         this.backup.daylist,
+        this.backup.masterlist,
       );
-      this.appointmentSuggestions = appointmentFinder.getSuggestions();
+      this.appointmentSuggestions = appointmentFinder.getSuggestionsV2();
     }
   }
 
@@ -422,16 +367,22 @@ export default class Terminfinder extends Vue {
     this.patientTextfield = '';
     this.selectedTherapists = [];
     this.selectedAppointmentRequests = [];
-    this.selectedAppointmentSuggestion = 0;
-    this.hasEnd = false;
-    this.endDate = new Date();
-    this.endDateString = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10);
+    this.selectedAppointmentSuggestions = [];
+    this.appointmentCount = 0;
     this.$emit('dialogClosed');
   }
 
   takeAppointmentSuggestion(): void {
-    if (typeof this.selectedAppointmentSuggestion !== 'number' && this.backup) {
-      this.store.addAppointmentSeries(this.selectedAppointmentSuggestion);
+    if (this.backup) {
+      this.selectedAppointmentSuggestions.forEach((suggestion) => {
+        this.store.addSingleAppointment(suggestion);
+        if (this.appointmentLength === 40) {
+          const nextBlocker = { ...suggestion };
+          nextBlocker.time = nextTime(suggestion.time);
+          nextBlocker.patient = '/';
+          this.store.addSingleAppointment(nextBlocker);
+        }
+      });
     }
     this.resetFinder();
   }
