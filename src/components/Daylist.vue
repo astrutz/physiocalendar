@@ -9,7 +9,8 @@
               :key="header.value"
               class="text-center text-subtitle-2"
             >
-              {{ header.text }}
+              <span v-if="header.text === ''">{{ header.text }}</span>
+              <DaylistHeader v-else :therapist="header.text" />
             </th>
           </tr>
         </thead>
@@ -80,17 +81,20 @@
             clearable
           ></v-text-field>
 
-        <v-alert v-if="appointmentsForPatient.length > 0" type="info">
-          Unter diesem Namen wurden weitere Termine gefunden:
-          <div
-            v-for="appointment in appointmentsForPatient"
-            :key="`${appointment.therapistID}-${appointment.time}`"
-          >
-            {{ appointment.weekday ? appointment.weekday + 's' : convertDate(appointment.date) }}, {{ appointment.time }} bei
-            {{ appointment.therapist }}
-          </div>
-        </v-alert>
-
+          <v-alert v-if="appointmentsForPatient.length > 0" type="info">
+            Unter diesem Namen wurden weitere Termine gefunden:
+            <div
+              v-for="appointment in appointmentsForPatient"
+              :key="`${appointment.therapistID}-${appointment.time}`"
+            >
+              {{
+                appointment.weekday
+                  ? appointment.weekday + "s"
+                  : convertDate(appointment.date)
+              }}, {{ appointment.time }} bei
+              {{ appointment.therapist }}
+            </div>
+          </v-alert>
         </v-card-text>
         <v-divider></v-divider>
 
@@ -142,10 +146,12 @@ import {
 import { getModule } from 'vuex-module-decorators';
 import Store from '../store/backup';
 import DaylistElement from './DaylistElement.vue';
+import DaylistHeader from './DaylistHeader.vue';
 
 @Component({
   components: {
     DaylistElement,
+    DaylistHeader,
   },
 })
 
@@ -279,7 +285,7 @@ export default class Daylist extends Vue {
 
   searchAppointmentsForPatient(patient: string): void {
     if (this.localBackup) {
-      let appointments : Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
+      let appointments: Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
       appointments = appointments.concat(this.localBackup.masterlist.getAppointmentSeriesByPatient(patient));
       this.appointmentsForPatient = appointments;
     }
@@ -400,6 +406,16 @@ tr td:first-child {
 tr td:first-child:hover {
   background-color: white !important;
   cursor: default;
+}
+
+tr th:first-child:hover {
+    background-color: white !important;
+  cursor: default;
+}
+
+th:hover {
+  cursor: pointer;
+  background-color: #9e9eaa96;
 }
 
 .hour-begin {
