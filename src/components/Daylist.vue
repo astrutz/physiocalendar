@@ -1,6 +1,9 @@
 <template>
   <div v-if="localBackup !== null">
-    <v-simple-table style="margin-top: 16px" dense>
+    <v-simple-table
+      style="margin-top: 16px"
+      dense
+    >
       <template v-slot:default>
         <thead>
           <tr>
@@ -10,12 +13,21 @@
               class="text-center text-subtitle-2"
             >
               <span v-if="header.text === ''">{{ header.text }}</span>
-              <DaylistHeader v-else :therapist="header.text" />
+              <DaylistHeader
+                v-else
+                :therapist="header.text"
+                :absences="[{start: '7:00', end: '11:00'},{start: '7:00', end: '11:00'},{start: '7:00', end: '11:00'}]"
+                :date="currentSingleDay"
+              />
+              <!-- TODO: Add times from data -->
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, rowIndex) in rows" :key="row.name">
+          <tr
+            v-for="(row, rowIndex) in rows"
+            :key="row.name"
+          >
             <td
               v-for="header in headers"
               :key="header.value"
@@ -37,13 +49,10 @@
                   : {}
               "
             >
-              <span
-                v-if="
+              <span v-if="
                   typeof row[header.value] === 'string' &&
                   row[header.value].includes(':')
-                "
-                >{{ row[header.value] }}</span
-              >
+                ">{{ row[header.value] }}</span>
               <div
                 v-else-if="row[header.value] === ''"
                 class="create-appointment"
@@ -66,7 +75,10 @@
         </tbody>
       </template>
     </v-simple-table>
-    <v-dialog v-model="createDialog" width="600">
+    <v-dialog
+      v-model="createDialog"
+      width="600"
+    >
       <v-card>
         <v-card-title class="text-h5 grey lighten-2">
           {{ selectedAppointment.therapist }} - {{ currentSingleDay }} -
@@ -81,7 +93,10 @@
             clearable
           ></v-text-field>
 
-          <v-alert v-if="appointmentsForPatient.length > 0" type="info">
+          <v-alert
+            v-if="appointmentsForPatient.length > 0"
+            type="info"
+          >
             Unter diesem Namen wurden weitere Termine gefunden:
             <div
               v-for="appointment in appointmentsForPatient"
@@ -135,6 +150,7 @@
 
 <script lang="ts">
 import Appointment from '@/class/Appointment';
+import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
@@ -337,6 +353,15 @@ export default class Daylist extends Vue {
     }
   }
 
+  saveAbsences(event: [{ start: string, end: string }]): void {
+    if (this.localBackup) {
+      event.forEach((abs) => {
+        const absence = new Absence(abs.start as unknown as Time, abs.end as unknown as Time);
+        this.store.setAbsences();
+      });
+    }
+  }
+
   // eslint-disable-next-line class-methods-use-this
   convertDate(date: Date): string {
     return Dateconversions.convertDateToReadableString(date);
@@ -409,7 +434,7 @@ tr td:first-child:hover {
 }
 
 tr th:first-child:hover {
-    background-color: white !important;
+  background-color: white !important;
   cursor: default;
 }
 
