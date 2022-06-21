@@ -1,6 +1,7 @@
 import Backup from '@/class/Backup';
 import Daylist from '@/class/Daylist';
 import {
+  JSONAbsence,
   JSONBackup, JSONDaylist, JSONMasterlist, JSONTherapist,
 } from '@/class/JSONStructures';
 import { Time, Weekday } from '@/class/Enums';
@@ -10,6 +11,7 @@ import Masterlist from '@/class/Masterlist';
 import Therapist from '@/class/Therapist';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import SingleAppointment from '@/class/SingleAppointment';
+import Absence from '@/class/Absence';
 
 function getListWeekDays(listWeekDaysJSON: JSONMasterlist): ListWeekDay[] {
   const listWeekDays = listWeekDaysJSON.elements.map((jsonElement) => {
@@ -49,11 +51,25 @@ function getTherapists(therapistsJSON: JSONTherapist[]): Therapist[] {
   return therapists;
 }
 
+function getAbsences(absencesJSON: JSONAbsence[]) : Absence[] {
+  const absences = absencesJSON.map((jsonElement) => {
+    let day : Weekday | string;
+    try {
+      day = jsonElement.day as Weekday;
+    } catch (err) {
+      day = jsonElement.day;
+    }
+    return new Absence(day, jsonElement.start as unknown as Time, jsonElement.end as unknown as Time);
+  });
+  return absences;
+}
+
 export default function convertToBackup(responseData: JSONBackup): Backup {
   const createdDate = new Date(responseData.createdDate);
   const masterList = new Masterlist(getListWeekDays(responseData.masterlist));
   const dayList = new Daylist(getListSingleDays(responseData.daylist));
   const therapists = getTherapists(responseData.therapists);
+  const absences = getAbsences(responseData.absences);
 
-  return new Backup(masterList, dayList, createdDate, therapists);
+  return new Backup(masterList, dayList, createdDate, therapists, absences);
 }

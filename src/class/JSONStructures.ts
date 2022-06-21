@@ -43,9 +43,16 @@ export interface JSONTherapist {
   activeUntil: number;
 }
 
+export interface JSONAbsence {
+  day: Weekday | string;
+  start: string;
+  end: string;
+}
+
 export interface JSONBackup {
   createdDate: number;
   masterlist: JSONMasterlist;
   daylist: JSONDaylist;
   therapists: JSONTherapist[];
+  absences: JSONAbsence[]
 }

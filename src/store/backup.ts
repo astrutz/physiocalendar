@@ -1,4 +1,6 @@
+import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
+import { Weekday } from '@/class/Enums';
 import { JSONBackup } from '@/class/JSONStructures';
 import SingleAppointment from '@/class/SingleAppointment';
 import Therapist from '@/class/Therapist';
@@ -103,7 +105,7 @@ class StoreBackup extends VuexModule {
   public addTherapist({ name, id }: { name: string, id: string }): void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
-      localBackup.therapists.push(new Therapist(name, id, new Date(), new Date(3471292800000)));
+      localBackup.therapists.push(new Therapist(name, id, new Date(), new Date(3471292800000), []));
       this.setBackup(localBackup);
       this.saveBackup();
     }
@@ -131,6 +133,38 @@ class StoreBackup extends VuexModule {
       }
     }
   }
+
+  // --------------------------------------------
+
+  // TODO: Set absences into therapist array and then search there for every one with day
+  @Action
+  public clearAbsencesForTherapistForDay(therapistID : string, day: string | Weekday) : void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      const foundTherapist = localBackup.therapists.find((therapist) => therapist.id === therapistID);
+      if (foundTherapist) {
+        // TODO: Change his absences
+        localBackup.therapists[localBackup.therapists.indexOf(foundTherapist)].name = name;
+      } else {
+
+      }
+    }
+  }
+
+  @Action
+  public setAbsence(absence : Absence) : void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      const foundAbsence = localBackup.absences.find((abs) => abs.day === absence.day && abs.therapist);
+      if (foundAbsence) {
+        // TODO: Change them
+      } else {
+        localBackup.absences.push(absence);
+      }
+    }
+  }
+
+  // --------------------------------------------
 
   @Mutation
   public setBackup(newBackup?: Backup): void {

@@ -356,8 +356,8 @@ export default class Daylist extends Vue {
   saveAbsences(event: [{ start: string, end: string }]): void {
     if (this.localBackup) {
       event.forEach((abs) => {
-        const absence = new Absence(abs.start as unknown as Time, abs.end as unknown as Time);
-        this.store.setAbsences();
+        const absence = new Absence(this.currentSingleDay, abs.start as unknown as Time, abs.end as unknown as Time);
+        this.store.setAbsence(absence);
       });
     }
   }

@@ -1,7 +1,9 @@
+import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import Daylist from '@/class/Daylist';
 import {
+  JSONAbsence,
   JSONAppointmentSeries,
   JSONBackup, JSONDaylist, JSONListSingleDay, JSONListWeekDay, JSONMasterlist, JSONSingleAppointment, JSONTherapist,
 } from '@/class/JSONStructures';
@@ -69,12 +71,23 @@ function convertTherapists(therapists: Therapist[]): JSONTherapist[] {
   );
 }
 
+function convertAbsences(absences : Absence[]) : JSONAbsence[] {
+  return absences.map(
+    (absence) => ({
+      day: absence.day,
+      start: absence.start.toString(),
+      end: absence.end.toString(),
+    }),
+  );
+}
+
 export default function convertToJSON(backup: Backup): JSONBackup {
   const backupJSON = {
     createdDate: backup.createdDate.getTime(),
     masterlist: convertMasterlist(backup.masterlist),
     daylist: convertDaylist(backup.daylist),
     therapists: convertTherapists(backup.therapists),
+    absences: convertAbsences(backup.absences),
   };
   return backupJSON;
 }
