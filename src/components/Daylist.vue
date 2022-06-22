@@ -10,7 +10,17 @@
               class="text-center text-subtitle-2"
             >
               <span v-if="header.text === ''">{{ header.text }}</span>
-              <DaylistHeader v-else :therapist="header.text" />
+              <DaylistHeader
+                v-else
+                :therapist="header.text"
+                :therapistID="header.id"
+                :head="header"
+                :absences="header.absences.filter((abs) => abs.day.includes('.'))"
+                :masterlistAbsences="header.absences.filter((abs) => !abs.day.includes('.'))"
+                :date="currentSingleDay"
+                :key="headerHash"
+                @absencesChanged="saveAbsences($event)"
+              />
             </th>
           </tr>
         </thead>
@@ -30,6 +40,8 @@
                   row[header.value] &&
                   row[header.value].patient &&
                   row[header.value].isBWO,
+                'cell-absence':
+                  header.text !== '' && hasAbsenceInTime(header.id, rowIndex),
               }"
               @click="
                 row[header.value] === ''
@@ -134,11 +146,13 @@
 </template>
 
 <script lang="ts">
+import { v4 as uuidv4 } from 'uuid';
 import Appointment from '@/class/Appointment';
+import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
-import { Time, Weekday } from '@/class/Enums';
+import { Time } from '@/class/Enums';
 import SingleAppointment from '@/class/SingleAppointment';
 import {
   Component, Prop, Vue, Watch,
@@ -175,12 +189,16 @@ export default class Daylist extends Vue {
 
   appointmentsForPatient: Appointment[] = [];
 
-  private headers = [
-    { text: '', value: 'time', id: '' },
+  headerHash = uuidv4();
+
+  private headers: { text: string, value: string, id: string, absences: Absence[], align: string }[] = [
+    {
+      text: '', value: 'time', id: '', absences: [], align: '',
+    },
   ];
 
   private rows: {
-    [key: string]: string | Time | SingleAppointment | AppointmentSeries
+    [key: string]: string | Time | SingleAppointment | AppointmentSeries | Absence[]
   }[] = [{ timeString: '' }];
 
   get localBackup(): Backup | null {
@@ -191,28 +209,40 @@ export default class Daylist extends Vue {
   currentSingleDayChanged(): void {
     this.createHeaders();
     this.createRows();
+    this.headerHash = uuidv4();
   }
 
   @Watch('localBackup')
   localBackupChanged(): void {
     this.createHeaders();
     this.createRows();
+    this.headerHash = uuidv4();
   }
 
   mounted(): void {
     this.createHeaders();
     this.createRows();
+    this.headerHash = uuidv4();
   }
 
   createHeaders(): void {
     if (this.localBackup !== null) {
+      this.headers = [];
       const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
       const therapistHeaders = this.localBackup.therapists.filter(
         (therapist) => therapist.activeSince < currentSingleDate && therapist.activeUntil > currentSingleDate,
       ).map((therapist) => ({
-        text: therapist.name, value: therapist.name, id: therapist.id, align: 'center',
+        text: therapist.name,
+        value: therapist.name,
+        id: therapist.id,
+        absences: therapist.absences.filter(
+          (abs) => abs.day === this.currentSingleDay || abs.day === Dateconversions.getWeekdayForDate(currentSingleDate),
+        ),
+        align: 'center',
       }));
-      this.headers = [{ text: '', value: 'time', id: '' }].concat(therapistHeaders);
+      this.headers = [{
+        text: '', value: 'time', id: '', absences: [new Absence('a', Time['7:00'], Time['7:00'])], align: '',
+      }].concat(therapistHeaders);
     }
   }
 
@@ -241,15 +271,7 @@ export default class Daylist extends Vue {
             newRow[header.text] = singleAppointment;
           } else {
             const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
-            let weekday: Weekday;
-            switch (currentSingleDate.getDay()) {
-              case 1: weekday = Weekday.MONDAY; break;
-              case 2: weekday = Weekday.TUESDAY; break;
-              case 3: weekday = Weekday.WEDNESDAY; break;
-              case 4: weekday = Weekday.THURSDAY; break;
-              case 5: weekday = Weekday.FRIDAY; break;
-              default: weekday = Weekday.MONDAY; break;
-            }
+            const weekday = Dateconversions.getWeekdayForDate(currentSingleDate);
             const masterAppointment = this.localBackup?.masterlist.searchAppointmentForDaylist(
               header.id, weekday, row.time as Time, currentSingleDate,
             );
@@ -337,6 +359,28 @@ export default class Daylist extends Vue {
     }
   }
 
+  hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
+    const therapist = this.headers.find((header) => header.id === therapistID);
+    let hasAbsence = false;
+    if (therapist) {
+      therapist.absences.forEach((abs) => {
+        if (parseInt(Time[abs.start], 10) <= rowIndex && parseInt(Time[abs.end], 10) >= rowIndex + 1) {
+          hasAbsence = true;
+        }
+      });
+    }
+    return hasAbsence;
+  }
+
+  saveAbsences(event: { absences: [{ start: string, end: string }], therapistID: string }): void {
+    if (this.localBackup) {
+      const absences = event.absences.map(
+        (abs) => new Absence(this.currentSingleDay, abs.start as unknown as Time, abs.end as unknown as Time),
+      );
+      this.store.setAbsencesForTherapistForDay({ absences, therapistID: event.therapistID.slice(), day: this.currentSingleDay });
+    }
+  }
+
   // eslint-disable-next-line class-methods-use-this
   convertDate(date: Date): string {
     return Dateconversions.convertDateToReadableString(date);
@@ -393,6 +437,15 @@ td:hover {
   background-color: yellow;
 }
 
+.cell-absence {
+  background-color: #6c7272;
+}
+
+.cell-absence:hover {
+  background-color: #6c7272 !important;
+  cursor: default;
+}
+
 tr:hover {
   background-color: white !important;
 }
@@ -409,7 +462,7 @@ tr td:first-child:hover {
 }
 
 tr th:first-child:hover {
-    background-color: white !important;
+  background-color: white !important;
   cursor: default;
 }
 

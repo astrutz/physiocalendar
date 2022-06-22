@@ -1,6 +1,7 @@
 import Backup from '@/class/Backup';
 import Daylist from '@/class/Daylist';
 import {
+  JSONAbsence,
   JSONBackup, JSONDaylist, JSONMasterlist, JSONTherapist,
 } from '@/class/JSONStructures';
 import { Time, Weekday } from '@/class/Enums';
@@ -10,6 +11,7 @@ import Masterlist from '@/class/Masterlist';
 import Therapist from '@/class/Therapist';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import SingleAppointment from '@/class/SingleAppointment';
+import Absence from '@/class/Absence';
 
 function getListWeekDays(listWeekDaysJSON: JSONMasterlist): ListWeekDay[] {
   const listWeekDays = listWeekDaysJSON.elements.map((jsonElement) => {
@@ -38,13 +40,26 @@ function getListSingleDays(listSingleDaysJSON: JSONDaylist): ListSingleDay[] {
   return listSingleDays;
 }
 
+function getAbsencesForTherapist(absencesJSON: JSONAbsence[]) : Absence[] {
+  const absences = absencesJSON.map((jsonElement) => {
+    let day : Weekday | string;
+    if (jsonElement.day.includes('.')) {
+      day = jsonElement.day;
+    } else {
+      day = jsonElement.day as Weekday;
+    }
+    return new Absence(day, jsonElement.start as unknown as Time, jsonElement.end as unknown as Time);
+  });
+  return absences;
+}
+
 function getTherapists(therapistsJSON: JSONTherapist[]): Therapist[] {
   const therapists = therapistsJSON.map((jsonElement) => {
     // 315532800000 is "01.01.1980"
     const activeSinceDate = jsonElement.activeSince === -1 ? new Date(315532800000) : new Date(jsonElement.activeSince);
     // 3471292800000 is "01.01.2080"
     const activeUntilDate = jsonElement.activeUntil === -1 ? new Date(3471292800000) : new Date(jsonElement.activeUntil);
-    return new Therapist(jsonElement.name, jsonElement.id, activeSinceDate, activeUntilDate);
+    return new Therapist(jsonElement.name, jsonElement.id, activeSinceDate, activeUntilDate, getAbsencesForTherapist(jsonElement.absences));
   });
   return therapists;
 }

@@ -4,6 +4,7 @@ import Daylist from './Daylist';
 import { nextTime, Time, Weekday } from './Enums';
 import Masterlist from './Masterlist';
 import SingleAppointment from './SingleAppointment';
+import Therapist from './Therapist';
 
 export default class AppointmentFinder {
   patient: string;
@@ -22,6 +23,8 @@ export default class AppointmentFinder {
 
   masterlist: Masterlist;
 
+  allTherapists: Therapist[];
+
   MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST;
 
   MAX_APPOINTMENTS_TOTAL: number;
@@ -39,6 +42,7 @@ export default class AppointmentFinder {
     appointmentRequests: AppointmentRequest[],
     daylist: Daylist,
     masterlist: Masterlist,
+    allTherapists: Therapist[],
   ) {
     this.patient = patient;
     this.therapists = therapists;
@@ -48,6 +52,7 @@ export default class AppointmentFinder {
     this.appointmentRequests = appointmentRequests;
     this.daylist = daylist;
     this.masterlist = masterlist;
+    this.allTherapists = allTherapists;
     this.MAX_APPOINTMENTS_TOTAL = appointmentsNeeded > 10 ? Math.min(appointmentsNeeded * 3, 120) : 30;
     const appointmentPerPersonPerSlot = Math.ceil(
       this.MAX_APPOINTMENTS_TOTAL / appointmentRequests.length / this.therapists.length,
@@ -55,7 +60,7 @@ export default class AppointmentFinder {
     this.MAX_APPOINTMENTS_PER_TIMEOFDAY_PER_THERAPIST = appointmentPerPersonPerSlot;
   }
 
-  getSuggestionsV2(): SingleAppointment[] {
+  getSuggestions(): SingleAppointment[] {
     let suggestions: SingleAppointment[] = [];
     const currentSearchDate = new Date();
     for (let i = 0; i <= this.appointmentsNeeded + 2; i += 1) {
@@ -70,7 +75,7 @@ export default class AppointmentFinder {
     this.therapists.forEach((therapist, i) => {
       this.appointmentRequests.forEach((request) => {
         suggestions = suggestions.concat(
-          this.getAppointmentForTherapistinRequestV2(
+          this.getAppointmentForTherapistinRequest(
             therapist, this.therapistIDs[i], AppointmentFinder.timeMapping[request.timeOfDay], request.weekday, startDate,
           ),
         );
@@ -81,7 +86,7 @@ export default class AppointmentFinder {
     return suggestionsReduced;
   }
 
-  private getAppointmentForTherapistinRequestV2(
+  private getAppointmentForTherapistinRequest(
     therapist: string, therapistID: string, times: string[], weekday: Weekday, startDate: Date,
   ): SingleAppointment[] {
     let foundCounter = 0;
@@ -90,6 +95,17 @@ export default class AppointmentFinder {
     times.every((time) => {
       if (foundCounter === AppointmentFinder.APPOINTMENTS_PER_WEEK) {
         return false;
+      }
+      const therapistAbsences = this.allTherapists.find((thera) => thera.id === therapistID)?.absences;
+      if (therapistAbsences) {
+        const foundAbsences = therapistAbsences.find(
+          (abs) => (Time[abs.start] <= Time[time as unknown as Time]
+          && Time[abs.end] > Time[time as unknown as Time]
+          && (abs.day === weekday || abs.day === Dateconversions.convertDateToReadableString(searchingDate))),
+        );
+        if (foundAbsences) {
+          return true;
+        }
       }
       const foundAppointment = this.daylist.searchAppointment(
         therapistID, Dateconversions.convertDateToReadableString(searchingDate), time as unknown as Time, this.appointmentLength === 40,

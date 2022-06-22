@@ -36,11 +36,18 @@ export interface JSONDaylist {
   elements: JSONListSingleDay[];
 }
 
+export interface JSONAbsence {
+  day: Weekday | string;
+  start: string;
+  end: string;
+}
+
 export interface JSONTherapist {
   name: string;
   id: string;
   activeSince: number;
   activeUntil: number;
+  absences: JSONAbsence[];
 }
 
 export interface JSONBackup {

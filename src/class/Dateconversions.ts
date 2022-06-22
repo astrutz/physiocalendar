@@ -1,5 +1,7 @@
 // eslint-disable-next-line import/no-cycle
 
+import { Weekday } from './Enums';
+
 export default class Dateconversions {
   static convertReadableStringToDate(readableDate: string): Date {
     const [day, month, year] = readableDate.split('.');
@@ -22,5 +24,16 @@ export default class Dateconversions {
 
   static datesAreEqual(date1: Date, date2: Date): boolean {
     return this.convertDateToReadableString(date1) === this.convertDateToReadableString(date2);
+  }
+
+  static getWeekdayForDate(date: Date) : Weekday {
+    switch (date.getDay()) {
+      case 1: return Weekday.MONDAY;
+      case 2: return Weekday.TUESDAY;
+      case 3: return Weekday.WEDNESDAY;
+      case 4: return Weekday.THURSDAY;
+      case 5: return Weekday.FRIDAY;
+      default: return Weekday.MONDAY;
+    }
   }
 }

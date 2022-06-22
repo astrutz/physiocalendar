@@ -357,8 +357,9 @@ export default class Terminfinder extends Vue {
         this.selectedAppointmentRequests,
         this.backup.daylist,
         this.backup.masterlist,
+        this.backup.therapists,
       );
-      this.appointmentSuggestions = appointmentFinder.getSuggestionsV2();
+      this.appointmentSuggestions = appointmentFinder.getSuggestions();
     }
   }
 

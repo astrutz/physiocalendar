@@ -1,7 +1,9 @@
+import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import Daylist from '@/class/Daylist';
 import {
+  JSONAbsence,
   JSONAppointmentSeries,
   JSONBackup, JSONDaylist, JSONListSingleDay, JSONListWeekDay, JSONMasterlist, JSONSingleAppointment, JSONTherapist,
 } from '@/class/JSONStructures';
@@ -57,13 +59,23 @@ function convertDaylist(daylist: Daylist): JSONDaylist {
   return { elements: listSingleDays };
 }
 
+function convertAbsences(absences : Absence[]) : JSONAbsence[] {
+  return absences.map(
+    (absence) => ({
+      day: absence.day,
+      start: absence.start.toString(),
+      end: absence.end.toString(),
+    }),
+  );
+}
+
 function convertTherapists(therapists: Therapist[]): JSONTherapist[] {
   return therapists.map(
     (therapist) => {
       const activeSince = therapist.activeSince.getTime() === 315532800000 ? -1 : therapist.activeSince.getTime();
       const activeUntil = therapist.activeUntil.getTime() === 3471292800000 ? -1 : therapist.activeUntil.getTime();
       return {
-        name: therapist.name, id: therapist.id, activeSince, activeUntil,
+        name: therapist.name, id: therapist.id, activeSince, activeUntil, absences: convertAbsences(therapist.absences),
       };
     },
   );
