@@ -174,6 +174,41 @@ export default class Masterlist {
     }
   }
 
+  addCancellation(date : string, appointment : AppointmentSeries) : void {
+    const currentDay = this.findListday(appointment.weekday);
+    const appointmentToBeChanged = currentDay?.appointments.find(
+      (searchedAppointment) => searchedAppointment.therapistID === appointment.therapistID
+        && searchedAppointment.time === appointment.time,
+    );
+    if (currentDay && appointmentToBeChanged) {
+      (appointmentToBeChanged as AppointmentSeries).cancellations.push(date);
+      const newAppointments = currentDay.appointments.filter(
+        (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
+          && filterAppointment.time === appointment.time),
+      );
+      newAppointments.push(appointment);
+      currentDay.appointments = newAppointments;
+    }
+  }
+
+  removeCancellation(date : string, appointment : AppointmentSeries) : void {
+    const currentDay = this.findListday(appointment.weekday);
+    const appointmentToBeChanged = currentDay?.appointments.find(
+      (searchedAppointment) => searchedAppointment.therapistID === appointment.therapistID
+        && searchedAppointment.time === appointment.time,
+    );
+    if (currentDay && appointmentToBeChanged) {
+      (appointmentToBeChanged as AppointmentSeries)
+        .cancellations = (appointmentToBeChanged as AppointmentSeries).cancellations.filter((c) => c !== date);
+      const newAppointments = currentDay.appointments.filter(
+        (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
+          && filterAppointment.time === appointment.time),
+      );
+      newAppointments.push(appointment);
+      currentDay.appointments = newAppointments;
+    }
+  }
+
   private findListday(weekday: Weekday): ListWeekDay | undefined {
     return this.elements.find(
       (listday) => listday.weekday === weekday,

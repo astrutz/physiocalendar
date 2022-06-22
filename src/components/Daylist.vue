@@ -15,10 +15,14 @@
                 :therapist="header.text"
                 :therapistID="header.id"
                 :head="header"
-                :absences="header.absences.filter((abs) => abs.day.includes('.'))"
-                :masterlistAbsences="header.absences.filter((abs) => !abs.day.includes('.'))"
+                :absences="
+                  header.absences.filter((abs) => abs.day.includes('.'))
+                "
+                :masterlistAbsences="
+                  header.absences.filter((abs) => !abs.day.includes('.'))
+                "
                 :date="currentSingleDay"
-                :key="headerHash"
+                :key="`${hash}-${header.id}`"
                 @absencesChanged="saveAbsences($event)"
               />
             </th>
@@ -63,12 +67,15 @@
               ></div>
               <DaylistElement
                 v-else-if="row[header.value] && row[header.value].patient"
+                :key="`${hash}-${row[header.value].therapistID}-${row.time}`"
                 @appointmentAdded="addAppointment($event)"
                 @appointmentChanged="changeAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
+                @exceptionChanged="changeException($event)"
                 :patient="row[header.value].patient"
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
+                :isException="row[header.value].startDate ? row[header.value].cancellations.includes(currentSingleDay) : false"
                 :time="row.time"
                 :appointment="row[header.value]"
                 :date="currentSingleDay"
@@ -97,7 +104,7 @@
             Unter diesem Namen wurden weitere Termine gefunden:
             <div
               v-for="appointment in appointmentsForPatient"
-              :key="`${appointment.therapistID}-${appointment.time}`"
+            :key="`${appointment.therapistID}-${appointment.time}-${appointment.weekday}`"
             >
               {{
                 appointment.weekday
@@ -189,7 +196,7 @@ export default class Daylist extends Vue {
 
   appointmentsForPatient: Appointment[] = [];
 
-  headerHash = uuidv4();
+  hash = uuidv4();
 
   private headers: { text: string, value: string, id: string, absences: Absence[], align: string }[] = [
     {
@@ -209,20 +216,20 @@ export default class Daylist extends Vue {
   currentSingleDayChanged(): void {
     this.createHeaders();
     this.createRows();
-    this.headerHash = uuidv4();
+    this.hash = uuidv4();
   }
 
   @Watch('localBackup')
   localBackupChanged(): void {
     this.createHeaders();
     this.createRows();
-    this.headerHash = uuidv4();
+    this.hash = uuidv4();
   }
 
   mounted(): void {
     this.createHeaders();
     this.createRows();
-    this.headerHash = uuidv4();
+    this.hash = uuidv4();
   }
 
   createHeaders(): void {
@@ -356,6 +363,16 @@ export default class Daylist extends Vue {
         Dateconversions.convertReadableStringToDate(this.currentSingleDay),
       );
       this.store.deleteSingleAppointment(appointment);
+    }
+  }
+
+  changeException(event: { isException: boolean, appointment: AppointmentSeries }): void {
+    if (this.localBackup) {
+      if (event.isException) {
+        this.store.addCancellation({ date: this.currentSingleDay, appointment: event.appointment });
+      } else {
+        this.store.removeCancellation({ date: this.currentSingleDay, appointment: event.appointment });
+      }
     }
   }
 

@@ -17,7 +17,7 @@
                 :head="header"
                 :absences="header.absences"
                 :date="currentWeekDay"
-                :key="headerHash"
+                :key="`${hash}-${header.id}`"
                 @absencesChanged="saveAbsences($event)"
               />
             </th>
@@ -58,6 +58,7 @@
               ></div>
               <MasterlistElement
                 v-else-if="row[header.value] && row[header.value].patient"
+                :key="`${hash}-${row[header.value].therapistID}-${row.time}`"
                 @appointmentAdded="addAppointment($event)"
                 @appointmentChanged="changeAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
@@ -237,7 +238,7 @@ export default class Masterlist extends Vue {
 
   private conflicts: SingleAppointment[] = [];
 
-  headerHash = uuidv4();
+  hash = uuidv4();
 
   store = getModule(Store);
 
@@ -259,14 +260,14 @@ export default class Masterlist extends Vue {
   currentSingleDayChanged(): void {
     this.createHeaders();
     this.createRows();
-    this.headerHash = uuidv4();
+    this.hash = uuidv4();
   }
 
   @Watch('localBackup')
   localBackupChanged(): void {
     this.createHeaders();
     this.createRows();
-    this.headerHash = uuidv4();
+    this.hash = uuidv4();
   }
 
   @Watch('inputFields.startDateString')
@@ -278,7 +279,7 @@ export default class Masterlist extends Vue {
   mounted(): void {
     this.createHeaders();
     this.createRows();
-    this.headerHash = uuidv4();
+    this.hash = uuidv4();
   }
 
   createHeaders(): void {
@@ -384,6 +385,7 @@ export default class Masterlist extends Vue {
       event.patient,
       event.time as unknown as Time,
       this.currentWeekDay,
+      [],
       event.startDate,
       event.isBWO,
     );
@@ -394,7 +396,9 @@ export default class Masterlist extends Vue {
   }
 
   changeAppointment(
-    event: { therapist: string, therapistID: string, patient: string, time: string, startDate: Date, isBWO: boolean },
+    event: {
+      patient: string, therapist: string, therapistID: string, time: string, cancellations: string[], startDate: Date, isBWO: boolean,
+    },
   ): void {
     const appointment = new AppointmentSeries(
       event.therapist,
@@ -402,6 +406,7 @@ export default class Masterlist extends Vue {
       event.patient,
       event.time as unknown as Time,
       this.currentWeekDay,
+      event.cancellations,
       event.startDate,
       event.isBWO,
     );
@@ -411,7 +416,9 @@ export default class Masterlist extends Vue {
   }
 
   deleteAppointment(
-    event: { patient: string, therapist: string, therapistID: string, time: string, startDate: Date, isBWO: boolean },
+    event: {
+      patient: string, therapist: string, therapistID: string, time: string, cancellations: string[], startDate: Date, isBWO: boolean,
+    },
   ): void {
     if (this.localBackup) {
       const appointment = new AppointmentSeries(
@@ -420,6 +427,7 @@ export default class Masterlist extends Vue {
         event.patient,
         event.time as unknown as Time,
         this.currentWeekDay,
+        event.cancellations,
         event.startDate,
         event.isBWO,
       );

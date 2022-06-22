@@ -221,6 +221,7 @@ export default class MasterlistElement extends Vue {
         therapistID: this.therapistID,
         time: this.time,
         startDate: this.startDate,
+        cancellations: this.appointment.cancellations,
         isBWO: this.isBWO,
       });
     } else {
@@ -230,6 +231,7 @@ export default class MasterlistElement extends Vue {
         therapistID: this.therapistID,
         time: this.time,
         startDate: this.startDate,
+        cancellations: this.appointment.cancellations,
         isBWO: this.isBWO,
       });
     }
@@ -248,7 +250,7 @@ export default class MasterlistElement extends Vue {
 
   printAppointment(): void {
     const printer = new Printer(
-      this.patient, this.therapist, this.time as unknown as Time, this.day,
+      this.patient, this.therapist, this.time as unknown as Time, this.day, this.appointment.cancellations,
     );
     printer.printAppointmentSeries();
   }

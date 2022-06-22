@@ -15,6 +15,8 @@ export default class Printer {
 
   day: Weekday | Date;
 
+  cancellations : string[];
+
   MAX_APPOINTMENT_COUNT = 10;
 
   constructor(
@@ -22,11 +24,13 @@ export default class Printer {
     therapist: string,
     time: Time,
     day: Weekday | Date,
+    cancellations: string[] = [],
   ) {
     this.patient = patient;
     this.therapist = therapist;
     this.time = time;
     this.day = day;
+    this.cancellations = cancellations;
   }
 
   printSingleAppointment(appointmentsForPatient: Appointment[]): void {
@@ -93,7 +97,8 @@ export default class Printer {
       const readableString = Dateconversions.convertGermanToEnglishReadableString(
         Dateconversions.convertDateToReadableString(currentSearchDate),
       );
-      if (!holidays.includes(readableString)) {
+      if (!holidays.includes(readableString)
+      && !this.cancellations.includes(Dateconversions.convertDateToReadableString(currentSearchDate))) {
         str += `${dateAsString}, ${Dateconversions.convertDateToReadableString(currentSearchDate)} um ${this.time}\n`;
         i += 1;
       }

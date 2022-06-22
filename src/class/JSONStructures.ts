@@ -8,7 +8,8 @@ export interface JSONAppointmentSeries {
   patient: string,
   time: string,
   startDate : number,
-  isBWO : boolean
+  isBWO : boolean,
+  cancellations: string[]
 }
 
 export interface JSONListWeekDay {

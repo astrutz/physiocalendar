@@ -8,9 +8,13 @@
         v-bind="attrs"
         v-on="on"
       >
-        <span :class="appointment.startDate ? 'appointmentSeries' : ''">{{
-          patient
-        }}</span>
+        <span
+          :class="{
+            appointmentSeries: appointment.startDate,
+            cancelled: appointment.startDate && isExceptionField,
+          }"
+          >{{ patient }}</span
+        >
       </button>
     </template>
 
@@ -27,11 +31,17 @@
           v-model="patientTextfield"
           clearable
         ></v-text-field>
-        <v-alert v-if="!!appointment.startDate" type="warning"
-          >Dieser Termin wurde aus der Stammliste generiert und kann daher nicht
-          in der Terminliste verändert werden.</v-alert
-        >
-
+        <div v-if="!!appointment.startDate">
+          <v-alert type="warning"
+            >Dieser Termin wurde aus der Stammliste generiert und kann daher
+            nicht in der Terminliste verändert werden.
+          </v-alert>
+          <v-checkbox
+            label="Termin fällt aus"
+            v-model="isExceptionField"
+            :value="isExceptionField"
+          ></v-checkbox>
+        </div>
         <v-alert
           v-if="appointmentsForPatient.length > 0 && !appointment.startDate"
           type="info"
@@ -39,7 +49,7 @@
           Unter diesem Namen wurden weitere Termine gefunden:
           <div
             v-for="appointment in appointmentsForPatient"
-            :key="`${appointment.therapistID}-${appointment.time}`"
+            :key="`${appointment.therapistID}-${appointment.time}-${appointment.weekday}`"
           >
             {{
               appointment.weekday
@@ -66,16 +76,15 @@
         </v-btn>
         <v-spacer></v-spacer>
         <v-btn
-          v-if="patient !== ''"
+          v-if="patient !== '' && !appointment.startDate"
           color="primary"
           @click="printAppointment()"
           text
         >
           Drucken
         </v-btn>
-        <v-spacer v-if="!appointment.startDate"></v-spacer>
+        <v-spacer></v-spacer>
         <v-btn
-          v-if="!appointment.startDate"
           color="primary"
           button
           @click="
@@ -103,6 +112,7 @@ import Dateconversions from '@/class/Dateconversions';
 import { getModule } from 'vuex-module-decorators';
 import Backup from '@/class/Backup';
 import SingleAppointment from '@/class/SingleAppointment';
+import AppointmentSeries from '@/class/AppointmentSeries';
 import Store from '../store/backup';
 
 @Component
@@ -117,6 +127,8 @@ export default class DaylistElement extends Vue {
 
   @Prop() readonly therapistID!: string;
 
+  @Prop() readonly isException!: boolean;
+
   @Prop() readonly appointment!: Appointment;
 
   store = getModule(Store);
@@ -124,6 +136,8 @@ export default class DaylistElement extends Vue {
   private dialogIsOpen = false;
 
   private patientTextfield = this.patient;
+
+  private isExceptionField = this.isException;
 
   appointmentsForPatient: Appointment[] = [];
 
@@ -150,9 +164,15 @@ export default class DaylistElement extends Vue {
 
   changeAppointment(): void {
     if (this.patientTextfield !== '' && this.patientTextfield !== null) {
-      this.$emit('appointmentChanged', {
-        patient: this.patientTextfield, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
-      });
+      if ((this.appointment as AppointmentSeries).startDate) {
+        this.$emit('exceptionChanged', {
+          isException: this.isExceptionField, appointment: this.appointment as AppointmentSeries,
+        });
+      } else {
+        this.$emit('appointmentChanged', {
+          patient: this.patientTextfield, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
+        });
+      }
     } else {
       this.$emit('appointmentDeleted', {
         patient: this.patient, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
@@ -182,3 +202,9 @@ export default class DaylistElement extends Vue {
   }
 }
 </script>
+
+<style scoped>
+  .cancelled {
+    text-decoration: line-through;
+  }
+</style>
