@@ -17,6 +17,8 @@ export default class Printer {
 
   cancellations : string[];
 
+  startDate: Date | undefined;
+
   MAX_APPOINTMENT_COUNT = 10;
 
   constructor(
@@ -25,12 +27,14 @@ export default class Printer {
     time: Time,
     day: Weekday | Date,
     cancellations: string[] = [],
+    startDate?: Date,
   ) {
     this.patient = patient;
     this.therapist = therapist;
     this.time = time;
     this.day = day;
     this.cancellations = cancellations;
+    this.startDate = startDate;
   }
 
   printSingleAppointment(appointmentsForPatient: Appointment[]): void {
@@ -88,7 +92,11 @@ export default class Printer {
     }
 
     let i = 0;
-    const currentSearchDate = new Date();
+    let currentSearchDate = new Date();
+    if (this.startDate && this.startDate > currentSearchDate) {
+      currentSearchDate = new Date(this.startDate.getTime());
+    }
+
     // eslint-disable-next-line no-mixed-operators
     currentSearchDate.setDate(currentSearchDate.getDate() + ((7 - currentSearchDate.getDay()) % 7 + weekdayOffset) % 7);
 

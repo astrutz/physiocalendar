@@ -11,7 +11,7 @@
         <span
           :class="{
             appointmentSeries: appointment.startDate,
-            cancelled: appointment.startDate && isExceptionField,
+            cancelled: appointment.startDate && isException,
           }"
           >{{ patient }}</span
         >
@@ -137,7 +137,7 @@ export default class DaylistElement extends Vue {
 
   private patientTextfield = this.patient;
 
-  private isExceptionField = this.isException;
+  private isExceptionField = !!this.isException;
 
   appointmentsForPatient: Appointment[] = [];
 

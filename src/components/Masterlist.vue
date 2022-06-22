@@ -347,7 +347,7 @@ export default class Masterlist extends Vue {
   getCombinedDate(): Date {
     const timezoneOffsetInHours = new Date(`${this.inputFields.startDateString}T00:00:00.000Z`).getTimezoneOffset() * -1;
     const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
-    return new Date(`${this.inputFields.startDateString}T15:00:00.000${offsetSuffix}`);
+    return new Date(`${this.inputFields.startDateString}T04:00:00.000${offsetSuffix}`);
   }
 
   convertGermanToEnglishReadableString(): string {
