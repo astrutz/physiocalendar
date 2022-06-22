@@ -67,7 +67,8 @@ export default class AppointmentFinder {
       suggestions = suggestions.concat(this.getSuggestionForWeek(currentSearchDate));
       currentSearchDate.setDate(currentSearchDate.getDate() + 7);
     }
-    return suggestions;
+    const suggestionsReduced = suggestions.slice();
+    return suggestionsReduced;
   }
 
   private getSuggestionForWeek(startDate: Date): SingleAppointment[] {
@@ -81,7 +82,7 @@ export default class AppointmentFinder {
         );
       });
     });
-    const suggestionsReduced = suggestions.slice(0, this.MAX_APPOINTMENTS_TOTAL);
+    const suggestionsReduced = suggestions.slice(0, Math.ceil(this.MAX_APPOINTMENTS_TOTAL / this.appointmentsNeeded));
     suggestionsReduced.sort((suggestionA, suggestionB) => suggestionA.date.getTime() - suggestionB.date.getTime());
     return suggestionsReduced;
   }

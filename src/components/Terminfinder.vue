@@ -59,6 +59,7 @@
               v-model="appointmentCount"
               clearable
               type="number"
+              max="40"
             ></v-text-field>
           </v-col>
           <v-col>
@@ -174,8 +175,8 @@
       </v-stepper-content>
 
       <v-stepper-content step="2">
-        <div v-if="appointmentSuggestions.length > 0">
-          <p class="pl-3">Folgende Termine stehen zur Auswahl:</p>
+        <div v-if="appointmentSuggestions.length > 0" style="overflow: scroll; max-height: 500px">
+          <p class="pl-3">Folgende Termine stehen zur Auswahl: {{appointmentSuggestions.length}}</p>
           <v-row class="pl-3">
             <v-col
               v-for="suggestion in appointmentSuggestions"
