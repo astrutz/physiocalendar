@@ -59,7 +59,7 @@
               v-model="startDateString"
               :allowed-dates="
                 (dateVal) => {
-                  return new Date(dateVal) > new Date();
+                  return new Date(dateVal) >= new Date();
                 }
               "
               @input="
@@ -159,7 +159,7 @@ export default class MasterlistElement extends Vue {
 
   private appointmentTherapist = this.appointment.therapist;
 
-  private startDate = this.appointment?.startDate;
+  private startDate = new Date(this.appointment?.startDate.getTime());
 
   private startDateString: string = new Date(
     this.startDate.getTime() - this.startDate.getTimezoneOffset() * 60000,
@@ -220,7 +220,7 @@ export default class MasterlistElement extends Vue {
         therapist: this.therapist,
         therapistID: this.therapistID,
         time: this.time,
-        startDate: this.startDate,
+        startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         isBWO: this.isBWO,
       });
@@ -230,7 +230,7 @@ export default class MasterlistElement extends Vue {
         therapist: this.therapist,
         therapistID: this.therapistID,
         time: this.time,
-        startDate: this.startDate,
+        startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         isBWO: this.isBWO,
       });
@@ -243,7 +243,7 @@ export default class MasterlistElement extends Vue {
       therapist: this.therapist,
       therapistID: this.therapistID,
       time: this.time,
-      startDate: this.startDate,
+      startDate: this.getCombinedDate(),
       isBWO: this.isBWO,
     });
   }

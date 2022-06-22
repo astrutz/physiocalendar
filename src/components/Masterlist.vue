@@ -123,7 +123,7 @@
                 v-model="inputFields.startDateString"
                 :allowed-dates="
                   (dateVal) => {
-                    return new Date(dateVal) > new Date();
+                    return new Date(dateVal) >= new Date();
                   }
                 "
                 @input="
@@ -176,7 +176,7 @@
                 patient: inputFields.patientTextfield,
                 time: selectedAppointment.time,
                 isBWO: inputFields.isBWO,
-                startDate: inputFields.startDate,
+                startDate: getCombinedDate(),
               });
               createDialog = false;
             "
