@@ -1,4 +1,3 @@
-import Absence from './Absence';
 import Daylist from './Daylist';
 import Masterlist from './Masterlist';
 import Therapist from './Therapist';

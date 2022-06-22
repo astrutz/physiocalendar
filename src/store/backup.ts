@@ -134,37 +134,22 @@ class StoreBackup extends VuexModule {
     }
   }
 
-  // --------------------------------------------
-
-  // TODO: Set absences into therapist array and then search there for every one with day
   @Action
-  public clearAbsencesForTherapistForDay(therapistID : string, day: string | Weekday) : void {
+  public setAbsencesForTherapistForDay(
+    { absences, therapistID, day }: { absences: Absence[], therapistID: string, day: Weekday | string },
+  ): void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
       const foundTherapist = localBackup.therapists.find((therapist) => therapist.id === therapistID);
       if (foundTherapist) {
-        // TODO: Change his absences
-        localBackup.therapists[localBackup.therapists.indexOf(foundTherapist)].name = name;
-      } else {
-
+        let newAbsences = foundTherapist.absences.filter((abs) => abs.day !== day);
+        newAbsences = newAbsences.concat(absences);
+        localBackup.therapists[localBackup.therapists.indexOf(foundTherapist)].absences = newAbsences;
       }
+      this.setBackup(localBackup);
+      this.saveBackup();
     }
   }
-
-  @Action
-  public setAbsence(absence : Absence) : void {
-    if (this.getBackup) {
-      const localBackup = { ...this.getBackup };
-      const foundAbsence = localBackup.absences.find((abs) => abs.day === absence.day && abs.therapist);
-      if (foundAbsence) {
-        // TODO: Change them
-      } else {
-        localBackup.absences.push(absence);
-      }
-    }
-  }
-
-  // --------------------------------------------
 
   @Mutation
   public setBackup(newBackup?: Backup): void {

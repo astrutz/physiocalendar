@@ -9,7 +9,17 @@
               :key="header.value"
               class="text-center text-subtitle-2"
             >
-              {{ header.text }}
+              <span v-if="header.text === ''">{{ header.text }}</span>
+              <MasterlistHeader
+                v-else
+                :therapist="header.text"
+                :therapistID="header.id"
+                :head="header"
+                :absences="header.absences"
+                :date="currentWeekDay"
+                :key="headerHash"
+                @absencesChanged="saveAbsences($event)"
+              />
             </th>
           </tr>
         </thead>
@@ -25,6 +35,8 @@
                   row[header.value] &&
                   row[header.value].patient &&
                   row[header.value].isBWO,
+                'cell-absence':
+                  header.text !== '' && hasAbsenceInTime(header.id, rowIndex),
               }"
               @click="
                 row[header.value] === ''
@@ -163,7 +175,7 @@
                 patient: inputFields.patientTextfield,
                 time: selectedAppointment.time,
                 isBWO: inputFields.isBWO,
-                startDate: inputFields.startDate
+                startDate: inputFields.startDate,
               });
               createDialog = false;
             "
@@ -178,6 +190,8 @@
 </template>
 
 <script lang="ts">
+import { v4 as uuidv4 } from 'uuid';
+import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
@@ -189,10 +203,12 @@ import {
 import { getModule } from 'vuex-module-decorators';
 import Store from '../store/backup';
 import MasterlistElement from './MasterlistElement.vue';
+import MasterlistHeader from './MasterlistHeader.vue';
 
 @Component({
   components: {
     MasterlistElement,
+    MasterlistHeader,
   },
 })
 
@@ -221,14 +237,18 @@ export default class Masterlist extends Vue {
 
   private conflicts: SingleAppointment[] = [];
 
+  headerHash = uuidv4();
+
   store = getModule(Store);
 
-  private headers = [
-    { text: '', value: 'time', id: '' },
+  private headers: { text: string, value: string, id: string, absences: Absence[] }[] = [
+    {
+      text: '', value: 'time', id: '', absences: [],
+    },
   ];
 
   private rows: {
-    [key: string]: string | Time | AppointmentSeries
+    [key: string]: string | Time | AppointmentSeries | Absence[]
   }[] = [{ timeString: '' }];
 
   get localBackup(): Backup | null {
@@ -239,12 +259,14 @@ export default class Masterlist extends Vue {
   currentSingleDayChanged(): void {
     this.createHeaders();
     this.createRows();
+    this.headerHash = uuidv4();
   }
 
   @Watch('localBackup')
   localBackupChanged(): void {
     this.createHeaders();
     this.createRows();
+    this.headerHash = uuidv4();
   }
 
   @Watch('inputFields.startDateString')
@@ -256,6 +278,7 @@ export default class Masterlist extends Vue {
   mounted(): void {
     this.createHeaders();
     this.createRows();
+    this.headerHash = uuidv4();
   }
 
   createHeaders(): void {
@@ -263,8 +286,15 @@ export default class Masterlist extends Vue {
       const today = new Date();
       const therapistHeaders = this.localBackup.therapists.filter(
         (therapist) => therapist.activeSince < today && therapist.activeUntil > today,
-      ).map((therapist) => ({ text: therapist.name, value: therapist.name, id: therapist.id }));
-      this.headers = [{ text: '', value: 'time', id: '' }].concat(therapistHeaders);
+      ).map((therapist) => ({
+        text: therapist.name,
+        value: therapist.name,
+        id: therapist.id,
+        absences: therapist.absences.filter((abs) => abs.day === this.currentWeekDay),
+      }));
+      this.headers = [{
+        text: '', value: 'time', id: '', absences: [new Absence('a', Time['7:00'], Time['7:00'])],
+      }].concat(therapistHeaders);
     }
   }
 
@@ -396,6 +426,28 @@ export default class Masterlist extends Vue {
       this.store.deleteAppointmentSeries(appointment);
     }
   }
+
+  hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
+    const therapist = this.headers.find((header) => header.id === therapistID);
+    let hasAbsence = false;
+    if (therapist) {
+      therapist.absences.forEach((abs) => {
+        if (parseInt(Time[abs.start], 10) <= rowIndex && parseInt(Time[abs.end], 10) >= rowIndex + 1) {
+          hasAbsence = true;
+        }
+      });
+    }
+    return hasAbsence;
+  }
+
+  saveAbsences(event: { absences: [{ start: string, end: string }], therapistID: string }): void {
+    if (this.localBackup) {
+      const absences = event.absences.map(
+        (abs) => new Absence(this.currentWeekDay, abs.start as unknown as Time, abs.end as unknown as Time),
+      );
+      this.store.setAbsencesForTherapistForDay({ absences, therapistID: event.therapistID.slice(), day: this.currentWeekDay });
+    }
+  }
 }
 
 </script>
@@ -457,6 +509,20 @@ tr td:first-child:hover {
 
 .cell-bwo {
   background-color: yellow;
+}
+
+.cell-absence {
+  background-color: #6c7272;
+}
+
+.cell-absence:hover {
+  background-color: #6c7272 !important;
+  cursor: default;
+}
+
+th:hover {
+  cursor: pointer;
+  background-color: #9e9eaa96;
 }
 
 .hour-begin {

@@ -59,18 +59,6 @@ function convertDaylist(daylist: Daylist): JSONDaylist {
   return { elements: listSingleDays };
 }
 
-function convertTherapists(therapists: Therapist[]): JSONTherapist[] {
-  return therapists.map(
-    (therapist) => {
-      const activeSince = therapist.activeSince.getTime() === 315532800000 ? -1 : therapist.activeSince.getTime();
-      const activeUntil = therapist.activeUntil.getTime() === 3471292800000 ? -1 : therapist.activeUntil.getTime();
-      return {
-        name: therapist.name, id: therapist.id, activeSince, activeUntil,
-      };
-    },
-  );
-}
-
 function convertAbsences(absences : Absence[]) : JSONAbsence[] {
   return absences.map(
     (absence) => ({
@@ -81,13 +69,24 @@ function convertAbsences(absences : Absence[]) : JSONAbsence[] {
   );
 }
 
+function convertTherapists(therapists: Therapist[]): JSONTherapist[] {
+  return therapists.map(
+    (therapist) => {
+      const activeSince = therapist.activeSince.getTime() === 315532800000 ? -1 : therapist.activeSince.getTime();
+      const activeUntil = therapist.activeUntil.getTime() === 3471292800000 ? -1 : therapist.activeUntil.getTime();
+      return {
+        name: therapist.name, id: therapist.id, activeSince, activeUntil, absences: convertAbsences(therapist.absences),
+      };
+    },
+  );
+}
+
 export default function convertToJSON(backup: Backup): JSONBackup {
   const backupJSON = {
     createdDate: backup.createdDate.getTime(),
     masterlist: convertMasterlist(backup.masterlist),
     daylist: convertDaylist(backup.daylist),
     therapists: convertTherapists(backup.therapists),
-    absences: convertAbsences(backup.absences),
   };
   return backupJSON;
 }

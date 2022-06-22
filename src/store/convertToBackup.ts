@@ -40,28 +40,28 @@ function getListSingleDays(listSingleDaysJSON: JSONDaylist): ListSingleDay[] {
   return listSingleDays;
 }
 
+function getAbsencesForTherapist(absencesJSON: JSONAbsence[]) : Absence[] {
+  const absences = absencesJSON.map((jsonElement) => {
+    let day : Weekday | string;
+    if (jsonElement.day.includes('.')) {
+      day = jsonElement.day;
+    } else {
+      day = jsonElement.day as Weekday;
+    }
+    return new Absence(day, jsonElement.start as unknown as Time, jsonElement.end as unknown as Time);
+  });
+  return absences;
+}
+
 function getTherapists(therapistsJSON: JSONTherapist[]): Therapist[] {
   const therapists = therapistsJSON.map((jsonElement) => {
     // 315532800000 is "01.01.1980"
     const activeSinceDate = jsonElement.activeSince === -1 ? new Date(315532800000) : new Date(jsonElement.activeSince);
     // 3471292800000 is "01.01.2080"
     const activeUntilDate = jsonElement.activeUntil === -1 ? new Date(3471292800000) : new Date(jsonElement.activeUntil);
-    return new Therapist(jsonElement.name, jsonElement.id, activeSinceDate, activeUntilDate);
+    return new Therapist(jsonElement.name, jsonElement.id, activeSinceDate, activeUntilDate, getAbsencesForTherapist(jsonElement.absences));
   });
   return therapists;
-}
-
-function getAbsences(absencesJSON: JSONAbsence[]) : Absence[] {
-  const absences = absencesJSON.map((jsonElement) => {
-    let day : Weekday | string;
-    try {
-      day = jsonElement.day as Weekday;
-    } catch (err) {
-      day = jsonElement.day;
-    }
-    return new Absence(day, jsonElement.start as unknown as Time, jsonElement.end as unknown as Time);
-  });
-  return absences;
 }
 
 export default function convertToBackup(responseData: JSONBackup): Backup {
@@ -69,7 +69,6 @@ export default function convertToBackup(responseData: JSONBackup): Backup {
   const masterList = new Masterlist(getListWeekDays(responseData.masterlist));
   const dayList = new Daylist(getListSingleDays(responseData.daylist));
   const therapists = getTherapists(responseData.therapists);
-  const absences = getAbsences(responseData.absences);
 
-  return new Backup(masterList, dayList, createdDate, therapists, absences);
+  return new Backup(masterList, dayList, createdDate, therapists);
 }

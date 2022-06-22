@@ -1,23 +1,28 @@
 <template>
-  <div
-    class="therapist-header"
-    @click="absenceDialog = true"
-  >
+  <div class="therapist-header" @click="absenceDialog = true">
     {{ therapist }}
-    <v-dialog
-      v-model="absenceDialog"
-      width="600"
-    >
+    <v-dialog v-model="absenceDialog" width="600">
       <v-card>
         <v-card-title class="text-h5 grey lighten-2">
-          Abwesenheiten von {{ therapist }} am {{date}}
+          Abwesenheiten von {{ therapist }} am {{ date }}
         </v-card-title>
 
         <v-card-text class="pt-5">
-            <v-row
-              v-for="(absence, index) in newAbsences"
-              :key="`${absence.start}-${absence.end}-${index}`"
-            >
+          <v-row v-if="masterlistAbsences.length > 0">
+            <v-col>
+              <v-alert type="info">
+                Für diesen Therapeuten sind Abwesenheiten in der Stammliste
+                vorhanden:
+                <p v-for="absence in masterlistAbsences" :key="absence.start" style="margin-bottom: 0px">
+                  {{absence.day}} - {{ absence.start }} bis {{ absence.end }}
+                </p>
+              </v-alert>
+            </v-col>
+          </v-row>
+          <v-row
+            v-for="(absence, index) in newAbsences"
+            :key="`${absence.start}-${absence.end}-${index}`"
+          >
             <v-col>
               <v-select
                 :items="times"
@@ -38,17 +43,19 @@
               <v-btn
                 icon
                 color="primary"
-                @click="newAbsences = newAbsences.filter((abs, i) => i !== index)"
-                style="margin-top: 12px;"
+                @click="
+                  newAbsences = newAbsences.filter((abs, i) => i !== index)
+                "
+                style="margin-top: 12px"
               >
                 <v-icon>mdi-delete</v-icon>
               </v-btn>
             </v-col>
-            </v-row>
+          </v-row>
           <v-btn
             icon
             color="primary"
-            @click="newAbsences.push({start: null, end: null})"
+            @click="newAbsences.push({ start: null, end: null })"
           >
             <v-icon>mdi-clock-plus-outline</v-icon>
           </v-btn>
@@ -56,11 +63,7 @@
         <v-divider></v-divider>
 
         <v-card-actions>
-          <v-btn
-            color="error"
-            text
-            @click="resetInputs()"
-          > Abbrechen </v-btn>
+          <v-btn color="error" text @click="resetInputs()"> Abbrechen </v-btn>
           <v-spacer></v-spacer>
           <v-spacer></v-spacer>
           <v-btn
@@ -87,9 +90,13 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 export default class DaylistHeader extends Vue {
   @Prop() readonly therapist!: string;
 
+  @Prop() readonly therapistID!: string;
+
   @Prop() readonly date!: string;
 
   @Prop() readonly absences!: { start: Time, end: Time }[];
+
+  @Prop() readonly masterlistAbsences!: { start: Time, end: Time }[];
 
   times = ['7:00', '7:20', '7:40',
     '8:00', '8:20', '8:40',
@@ -107,20 +114,21 @@ export default class DaylistHeader extends Vue {
     '20:00', '20:20', '20:40',
   ]
 
-  newAbsences = this.absences;
+  newAbsences = JSON.parse(JSON.stringify(this.absences)) as { start: Time, end: Time }[];
 
   absenceDialog = false;
 
   resetInputs(): void {
-    this.newAbsences = this.absences;
+    this.newAbsences = JSON.parse(JSON.stringify(this.absences)) as { start: Time, end: Time }[];
     this.absenceDialog = false;
   }
 
   submitAbsences(): void {
     const absencesToBeSubmitted = this.newAbsences.filter((abs) => abs.start !== null && abs.end !== null);
-    console.log(absencesToBeSubmitted);
-    // TODO: Emit absences as event to daylist
-    this.absenceDialog = false;
+    this.$emit('absencesChanged', {
+      absences: absencesToBeSubmitted, therapistID: this.therapistID.slice(),
+    });
+    this.resetInputs();
   }
 }
 
