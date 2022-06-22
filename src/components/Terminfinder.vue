@@ -175,13 +175,13 @@
       </v-stepper-content>
 
       <v-stepper-content step="2">
-        <div v-if="appointmentSuggestions.length > 0" style="overflow: scroll; max-height: 500px">
+        <div v-if="appointmentSuggestions.length > 0" style="overflow-y: scroll; overflow-x: hidden; max-height: 500px">
           <p class="pl-3">Folgende Termine stehen zur Auswahl: {{appointmentSuggestions.length}}</p>
           <v-row class="pl-3">
             <v-col
               v-for="suggestion in appointmentSuggestions"
               :key="`${suggestion.therapist}-${suggestion.date}-${suggestion.time}-${Math.random()}`"
-              cols="2"
+              cols="4"
               style="padding: 0"
             >
               <v-checkbox
