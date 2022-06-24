@@ -20,7 +20,7 @@
             v-model="dateFormatted"
             v-bind="attrs"
             v-on="on"
-            >{{ dateFormatted }}</v-btn
+            >{{ weekday }} {{ dateFormatted }}</v-btn
           >
         </template>
         <v-date-picker
@@ -52,7 +52,9 @@ import holidaysJSON from '@/data/holidays.json';
 export default class SingleDayPicker extends Vue {
   private date: string = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10)
 
-  private dateFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.date)
+  private dateFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.date);
+
+  private weekday = this.getWeekdaybyDate(new Date());
 
   private menu = false;
 
@@ -67,6 +69,7 @@ export default class SingleDayPicker extends Vue {
   @Watch('date')
   dateChanged(): void {
     this.dateFormatted = Dateconversions.convertEnglishToGermanReadableString(this.date);
+    this.weekday = this.getWeekdaybyDate();
     this.$emit('currentDayChanged', this.dateFormatted);
   }
 
@@ -91,6 +94,18 @@ export default class SingleDayPicker extends Vue {
     const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
     const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
     return new Date(`${date}T00:00:00.000${offsetSuffix}`);
+  }
+
+  getWeekdaybyDate(date? : Date) : string {
+    const dateToCheck = date || this.getCombinedDate();
+    switch (dateToCheck.getDay()) {
+      case 1: return 'Mo,';
+      case 2: return 'Di,';
+      case 3: return 'Mi,';
+      case 4: return 'Do,';
+      case 5: return 'Fr,';
+      default: return '';
+    }
   }
 
   setPreviousDate(): void {
