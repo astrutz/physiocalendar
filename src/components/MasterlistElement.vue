@@ -31,6 +31,15 @@
             :value="isBWO"
           ></v-checkbox>
         </v-row>
+        <v-row class="pl-3 pr-3">
+          <v-text-field
+            label="Wöchentliches Interval"
+            type="number"
+            :rules="[v => (v > 0 && v % 1 === 0)]"
+            v-model="interval"
+            :value="interval"
+          ></v-text-field>
+        </v-row>
         <v-row class="pl-3">
           <v-menu
             v-model="menuIsOpen"
@@ -167,6 +176,8 @@ export default class MasterlistElement extends Vue {
 
   private isBWO = this.appointment?.isBWO || false;
 
+  private interval = this.appointment?.interval.toString() || '1';
+
   private dialogIsOpen = false;
 
   private menuIsOpen = false;
@@ -239,6 +250,7 @@ export default class MasterlistElement extends Vue {
         time: this.time,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
+        interval: parseInt(this.interval, 10),
         isBWO: this.isBWO,
       });
     } else {
@@ -249,6 +261,7 @@ export default class MasterlistElement extends Vue {
         time: this.time,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
+        interval: parseInt(this.interval, 10),
         isBWO: this.isBWO,
       });
     }
@@ -261,6 +274,7 @@ export default class MasterlistElement extends Vue {
       therapistID: this.therapistID,
       time: this.time,
       startDate: this.getCombinedDate(),
+      interval: parseInt(this.interval, 10),
       isBWO: this.isBWO,
     });
   }
