@@ -1,5 +1,10 @@
 # physiocalendar
 
+## Prerequisites
+
+* `node@16.16.0`
+* `npm@9.1.1`
+
 ## Project setup
 ```
 npm install
