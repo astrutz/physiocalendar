@@ -176,7 +176,7 @@ export default class MasterlistElement extends Vue {
 
   private isBWO = this.appointment?.isBWO || false;
 
-  private interval = this.appointment?.interval.toString() || '1';
+  private interval = this.appointment?.interval?.toString() || '1';
 
   private dialogIsOpen = false;
 
