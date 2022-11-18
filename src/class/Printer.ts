@@ -15,6 +15,8 @@ export default class Printer {
 
   day: Weekday | Date;
 
+  interval: number;
+
   cancellations : string[];
 
   startDate: Date | undefined;
@@ -26,6 +28,7 @@ export default class Printer {
     therapist: string,
     time: Time,
     day: Weekday | Date,
+    interval: number,
     cancellations: string[] = [],
     startDate?: Date,
   ) {
@@ -33,6 +36,7 @@ export default class Printer {
     this.therapist = therapist;
     this.time = time;
     this.day = day;
+    this.interval = interval;
     this.cancellations = cancellations;
     this.startDate = startDate;
   }
@@ -110,7 +114,7 @@ export default class Printer {
         str += `${dateAsString}, ${Dateconversions.convertDateToReadableString(currentSearchDate)} um ${this.time}\n`;
         i += 1;
       }
-      currentSearchDate.setDate(currentSearchDate.getDate() + 7);
+      currentSearchDate.setDate(currentSearchDate.getDate() + (this.interval * 7));
     }
     this.print([str]);
   }
