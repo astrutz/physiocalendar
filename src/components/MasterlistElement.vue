@@ -195,6 +195,13 @@ export default class MasterlistElement extends Vue {
   @Watch('dialogIsOpen')
   dialogIsOpenChanged(): void {
     this.getAppointmentConflicts();
+    if (this.dialogIsOpen) {
+      this.startDate = new Date(this.appointment?.startDate.getTime());
+      this.startDateString = new Date(
+        this.startDate.getTime() - this.startDate.getTimezoneOffset() * 60000,
+      ).toISOString().substr(0, 10);
+      this.startDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
+    }
   }
 
   @Watch('startDateString')
