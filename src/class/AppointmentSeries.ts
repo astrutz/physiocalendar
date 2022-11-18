@@ -4,6 +4,8 @@ import { Time, Weekday } from './Enums';
 export default class AppointmentSeries extends Appointment {
   weekday: Weekday;
 
+  interval: number;
+
   cancellations: string[];
 
   startDate: Date;
@@ -16,12 +18,14 @@ export default class AppointmentSeries extends Appointment {
     patient: string,
     time: Time,
     weekday: Weekday,
+    interval: number,
     cancellations: string[],
     startDate?: Date,
     isBWO = false,
   ) {
     super(therapist, therapistID, patient, time);
     this.weekday = weekday;
+    this.interval = interval;
     this.cancellations = cancellations;
     this.startDate = startDate || new Date();
     this.isBWO = isBWO;

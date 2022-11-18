@@ -1,3 +1,4 @@
+import holidaysJSON from '@/data/holidays.json';
 import AppointmentRequest from './AppointmentRequest';
 import Dateconversions from './Dateconversions';
 import Daylist from './Daylist';
@@ -104,7 +105,9 @@ export default class AppointmentFinder {
           && Time[abs.end] > Time[time as unknown as Time]
           && (abs.day === weekday || abs.day === Dateconversions.convertDateToReadableString(searchingDate))),
         );
-        if (foundAbsences) {
+        if (foundAbsences || holidaysJSON.days.includes(
+          Dateconversions.convertGermanToEnglishReadableString(Dateconversions.convertDateToReadableString(searchingDate)),
+        )) {
           return true;
         }
       }
