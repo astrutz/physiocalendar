@@ -46,6 +46,9 @@
                   row[header.value].isBWO,
                 'cell-absence':
                   header.text !== '' && hasAbsenceInTime(header.id, rowIndex),
+                'cell-saturday':
+                  convertStringToDate(currentSingleDay).getDay() === 6 && !(typeof row[header.value] === 'string' &&
+                  row[header.value].includes(':'))
               }"
               @click="
                 row[header.value] === ''
@@ -109,7 +112,7 @@
               {{
                 appointment.weekday
                   ? appointment.weekday + "s"
-                  : convertDate(appointment.date)
+                  : convertDateToString(appointment.date)
               }}, {{ appointment.time }} bei
               {{ appointment.therapist }}
             </div>
@@ -279,10 +282,14 @@ export default class Daylist extends Vue {
           } else {
             const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
             const weekday = Dateconversions.getWeekdayForDate(currentSingleDate);
-            const masterAppointment = this.localBackup?.masterlist.searchAppointmentForDaylist(
-              header.id, weekday, row.time as Time, currentSingleDate,
-            );
-            newRow[header.text] = masterAppointment || '';
+            if (weekday) {
+              const masterAppointment = this.localBackup?.masterlist.searchAppointmentForDaylist(
+                header.id, weekday, row.time as Time, currentSingleDate,
+              );
+              newRow[header.text] = masterAppointment || '';
+            } else {
+              newRow[header.text] = '';
+            }
           }
         }
       });
@@ -399,7 +406,12 @@ export default class Daylist extends Vue {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  convertDate(date: Date): string {
+  convertStringToDate(date: string) : Date {
+    return Dateconversions.convertReadableStringToDate(date);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  convertDateToString(date: Date): string {
     return Dateconversions.convertDateToReadableString(date);
   }
 }
@@ -461,6 +473,24 @@ td:hover {
 .cell-absence:hover {
   background-color: #6c7272 !important;
   cursor: default;
+}
+
+.cell-saturday {
+  background-color: #6c7272;
+}
+
+.cell-saturday:hover {
+  background-color: #6c7272 !important;
+  cursor: default;
+}
+
+.cell-saturday + .cell-absence {
+  cursor: pointer !important;
+  background-color: white !important;
+}
+
+.cell-saturday + .cell-absence:hover {
+  background-color: #b4b6d196 !important;
 }
 
 tr:hover {

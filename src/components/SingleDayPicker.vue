@@ -79,14 +79,14 @@ export default class SingleDayPicker extends Vue {
         return false;
       }
       const day = this.getCombinedDate(dateVal).getDay();
-      return day > 0 && day < 6;
+      return day > 0 && day < 7;
     }
     const readableString = Dateconversions.convertGermanToEnglishReadableString(Dateconversions.convertDateToReadableString(dateVal));
     if (this.holidays.includes(readableString)) {
       return false;
     }
     const day = dateVal.getDay();
-    return day > 0 && day < 6;
+    return day > 0 && day < 7;
   }
 
   getCombinedDate(dateString?: string): Date {
@@ -104,6 +104,7 @@ export default class SingleDayPicker extends Vue {
       case 3: return 'Mi,';
       case 4: return 'Do,';
       case 5: return 'Fr,';
+      case 6: return 'Sa,';
       default: return '';
     }
   }
