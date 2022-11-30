@@ -4,7 +4,7 @@
     <v-dialog v-model="absenceDialog" width="600">
       <v-card>
         <v-card-title class="text-h5 grey lighten-2">
-          Abwesenheiten von {{ therapist }} am {{ date }}
+          {{ absenceType }} von {{ therapist }} am {{ date }}
         </v-card-title>
 
         <v-card-text class="pt-5">
@@ -83,6 +83,7 @@
 </template>
 
 <script lang="ts">
+import Dateconversions from '@/class/Dateconversions';
 import { Time } from '@/class/Enums';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
@@ -97,6 +98,8 @@ export default class DaylistHeader extends Vue {
   @Prop() readonly absences!: { start: Time, end: Time }[];
 
   @Prop() readonly masterlistAbsences!: { start: Time, end: Time }[];
+
+  private absenceType = Dateconversions.convertReadableStringToDate(this.date).getDay() === 6 ? 'Anwesenheiten' : 'Abwesenheiten';
 
   times = ['7:00', '7:20', '7:40',
     '8:00', '8:20', '8:40',
