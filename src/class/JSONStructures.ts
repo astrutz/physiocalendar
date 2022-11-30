@@ -6,7 +6,7 @@ export interface JSONAppointmentSeries {
   therapist : string,
   therapistID : string,
   patient: string,
-  time: string,
+  startTime: string,
   startDate : number,
   isBWO : boolean,
   interval: number,
@@ -26,7 +26,7 @@ export interface JSONSingleAppointment {
   therapist : string,
   therapistID : string,
   patient: string,
-  time: string,
+  startTime: string,
 }
 
 export interface JSONListSingleDay {

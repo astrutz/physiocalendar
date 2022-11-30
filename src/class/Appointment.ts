@@ -7,17 +7,17 @@ export default class Appointment {
 
   patient : string;
 
-  time: Time;
+  startTime: Time;
 
   constructor(
     therapist : string,
     therapistID : string,
     patient: string,
-    time: Time,
+    startTime: Time,
   ) {
     this.therapist = therapist;
     this.therapistID = therapistID;
     this.patient = patient;
-    this.time = time;
+    this.startTime = startTime;
   }
 }

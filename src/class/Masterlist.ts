@@ -14,18 +14,18 @@ export default class Masterlist {
   }
 
   private static filterAppointment(
-    therapistID: string, time: Time, appointment: AppointmentSeries,
+    therapistID: string, startTime: Time, appointment: AppointmentSeries,
   ): AppointmentSeries | undefined {
-    if (appointment.therapistID === therapistID && appointment.time === time) {
+    if (appointment.therapistID === therapistID && appointment.startTime === startTime) {
       return appointment;
     }
     return undefined;
   }
 
   private static filterAppointmentForDaylist(
-    therapistID: string, time: Time, appointment: AppointmentSeries, date: Date,
+    therapistID: string, startTime: Time, appointment: AppointmentSeries, date: Date,
   ): AppointmentSeries | undefined {
-    if (appointment.therapistID === therapistID && appointment.time === time && this.appointmentIsInInterval(appointment, date)) {
+    if (appointment.therapistID === therapistID && appointment.startTime === startTime && this.appointmentIsInInterval(appointment, date)) {
       const readableStartDate = Dateconversions.convertDateToReadableString(appointment.startDate);
       const readableTargetDate = Dateconversions.convertDateToReadableString(date);
       if (
@@ -65,43 +65,43 @@ export default class Masterlist {
     return false;
   }
 
-  searchAppointment(therapistID: string, weekday: Weekday, time: Time): AppointmentSeries | undefined {
+  searchAppointment(therapistID: string, weekday: Weekday, startTime: Time): AppointmentSeries | undefined {
     const currentDay = this.findListday(weekday);
     if (currentDay !== undefined) {
       return currentDay.appointments.find(
-        (appointment) => Masterlist.filterAppointment(therapistID, time, appointment as AppointmentSeries),
+        (appointment) => Masterlist.filterAppointment(therapistID, startTime, appointment as AppointmentSeries),
       ) as AppointmentSeries;
     }
     return undefined;
   }
 
-  searchAppointmentString(therapistID: string, weekday: Weekday, time: Time): string {
+  searchAppointmentString(therapistID: string, weekday: Weekday, startTime: Time): string {
     const currentDay = this.findListday(weekday);
     if (currentDay !== undefined) {
       const foundAppointment = currentDay.appointments.find(
-        (appointment) => Masterlist.filterAppointment(therapistID, time, appointment as AppointmentSeries),
+        (appointment) => Masterlist.filterAppointment(therapistID, startTime, appointment as AppointmentSeries),
       ) as AppointmentSeries;
       return foundAppointment?.patient || '';
     }
     return '';
   }
 
-  searchAppointmentStringForDaylist(therapistID: string, weekday: Weekday, time: Time, date: Date): string {
+  searchAppointmentStringForDaylist(therapistID: string, weekday: Weekday, startTime: Time, date: Date): string {
     const currentDay = this.findListday(weekday);
     if (currentDay !== undefined) {
       const foundAppointment = currentDay.appointments.find(
-        (appointment) => Masterlist.filterAppointmentForDaylist(therapistID, time, appointment as AppointmentSeries, date),
+        (appointment) => Masterlist.filterAppointmentForDaylist(therapistID, startTime, appointment as AppointmentSeries, date),
       ) as AppointmentSeries;
       return foundAppointment?.patient || '';
     }
     return '';
   }
 
-  searchAppointmentForDaylist(therapistID: string, weekday: Weekday, time: Time, date: Date): AppointmentSeries | undefined {
+  searchAppointmentForDaylist(therapistID: string, weekday: Weekday, startTime: Time, date: Date): AppointmentSeries | undefined {
     const currentDay = this.findListday(weekday);
     if (currentDay !== undefined) {
       return currentDay.appointments.find(
-        (appointment) => Masterlist.filterAppointmentForDaylist(therapistID, time, appointment as AppointmentSeries, date),
+        (appointment) => Masterlist.filterAppointmentForDaylist(therapistID, startTime, appointment as AppointmentSeries, date),
       ) as AppointmentSeries;
     }
     return undefined;
@@ -110,7 +110,7 @@ export default class Masterlist {
   getAppointmentConflict(
     date: Date,
     therapistID: string,
-    time: Time,
+    startTime: Time,
   ): AppointmentSeries | undefined {
     const dateWeekday = date.getDay();
     let weekday : Weekday = Weekday.FRIDAY;
@@ -124,7 +124,7 @@ export default class Masterlist {
       default: break;
     }
 
-    return this.searchAppointmentForDaylist(therapistID, weekday, time, date);
+    return this.searchAppointmentForDaylist(therapistID, weekday, startTime, date);
   }
 
   getAppointmentSeriesByPatient(patient: string): AppointmentSeries[] {
@@ -156,8 +156,8 @@ export default class Masterlist {
     const newAppointments: AppointmentSeries[] = [];
     appointmentList.forEach((appointmentToBeChecked) => {
       if (!newAppointments.find(
-        (appointment) => (appointment.weekday === appointmentToBeChecked.weekday && appointment.time === appointmentToBeChecked.time
-          && appointment.therapistID === appointmentToBeChecked.therapistID),
+        (appointment) => (appointment.weekday === appointmentToBeChecked.weekday
+          && appointment.startTime === appointmentToBeChecked.startTime && appointment.therapistID === appointmentToBeChecked.therapistID),
       )) {
         newAppointments.push(appointmentToBeChecked);
       }
@@ -178,13 +178,13 @@ export default class Masterlist {
     const currentDay = this.findListday(appointment.weekday);
     const appointmentToBeChanged = currentDay?.appointments.find(
       (searchedAppointment) => searchedAppointment.therapistID === appointment.therapistID
-        && searchedAppointment.time === appointment.time,
+        && searchedAppointment.startTime === appointment.startTime,
     );
     if (currentDay && appointmentToBeChanged) {
       appointmentToBeChanged.patient = appointment.patient;
       const newAppointments = currentDay.appointments.filter(
         (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
-          && filterAppointment.time === appointment.time),
+          && filterAppointment.startTime === appointment.startTime),
       );
       newAppointments.push(appointment);
       currentDay.appointments = newAppointments;
@@ -196,7 +196,7 @@ export default class Masterlist {
     if (currentDay) {
       const newAppointments = currentDay.appointments.filter(
         (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
-          && filterAppointment.time === appointment.time),
+          && filterAppointment.startTime === appointment.startTime),
       );
       currentDay.appointments = newAppointments;
     }
@@ -206,13 +206,13 @@ export default class Masterlist {
     const currentDay = this.findListday(appointment.weekday);
     const appointmentToBeChanged = currentDay?.appointments.find(
       (searchedAppointment) => searchedAppointment.therapistID === appointment.therapistID
-        && searchedAppointment.time === appointment.time,
+        && searchedAppointment.startTime === appointment.startTime,
     );
     if (currentDay && appointmentToBeChanged) {
       (appointmentToBeChanged as AppointmentSeries).cancellations.push(date);
       const newAppointments = currentDay.appointments.filter(
         (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
-          && filterAppointment.time === appointment.time),
+          && filterAppointment.startTime === appointment.startTime),
       );
       newAppointments.push(appointment);
       currentDay.appointments = newAppointments;
@@ -223,14 +223,14 @@ export default class Masterlist {
     const currentDay = this.findListday(appointment.weekday);
     const appointmentToBeChanged = currentDay?.appointments.find(
       (searchedAppointment) => searchedAppointment.therapistID === appointment.therapistID
-        && searchedAppointment.time === appointment.time,
+        && searchedAppointment.startTime === appointment.startTime,
     );
     if (currentDay && appointmentToBeChanged) {
       (appointmentToBeChanged as AppointmentSeries)
         .cancellations = (appointmentToBeChanged as AppointmentSeries).cancellations.filter((c) => c !== date);
       const newAppointments = currentDay.appointments.filter(
         (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
-          && filterAppointment.time === appointment.time),
+          && filterAppointment.startTime === appointment.startTime),
       );
       newAppointments.push(appointment);
       currentDay.appointments = newAppointments;

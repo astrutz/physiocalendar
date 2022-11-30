@@ -52,7 +52,7 @@
               }"
               @click="
                 row[header.value] === ''
-                  ? openCreateDialog(header.value, header.id, row.time)
+                  ? openCreateDialog(header.value, header.id, row.startTime)
                   : {}
               "
             >
@@ -66,11 +66,11 @@
               <div
                 v-else-if="row[header.value] === ''"
                 class="create-appointment"
-                @click="openCreateDialog(header.value, header.id, row.time)"
+                @click="openCreateDialog(header.value, header.id, row.startTime)"
               ></div>
               <DaylistElement
                 v-else-if="row[header.value] && row[header.value].patient"
-                :key="`${hash}-${row[header.value].therapistID}-${row.time}`"
+                :key="`${hash}-${row[header.value].therapistID}-${row.startTime}`"
                 @appointmentAdded="addAppointment($event)"
                 @appointmentChanged="changeAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
@@ -79,7 +79,7 @@
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
                 :isException="row[header.value].startDate ? row[header.value].cancellations.includes(currentSingleDay) : false"
-                :time="row.time"
+                :startTime="row.startTime"
                 :appointment="row[header.value]"
                 :date="currentSingleDay"
               />
@@ -92,7 +92,7 @@
       <v-card>
         <v-card-title class="text-h5 grey lighten-2">
           {{ selectedAppointment.therapist }} - {{ currentSingleDay }} -
-          {{ selectedAppointment.time }}
+          {{ selectedAppointment.startTime }}
         </v-card-title>
 
         <v-card-text class="pt-5">
@@ -107,13 +107,13 @@
             Unter diesem Namen wurden weitere Termine gefunden:
             <div
               v-for="appointment in appointmentsForPatient"
-            :key="`${appointment.therapistID}-${appointment.time}-${appointment.weekday}`"
+            :key="`${appointment.therapistID}-${appointment.startTime}-${appointment.weekday}`"
             >
               {{
                 appointment.weekday
                   ? appointment.weekday + "s"
                   : convertDateToString(appointment.date)
-              }}, {{ appointment.time }} bei
+              }}, {{ appointment.startTime }} bei
               {{ appointment.therapist }}
             </div>
           </v-alert>
@@ -141,7 +141,7 @@
                 therapist: selectedAppointment.therapist,
                 therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
-                time: selectedAppointment.time,
+                startTime: selectedAppointment.startTime,
               });
               createDialog = false;
             "
@@ -191,7 +191,7 @@ export default class Daylist extends Vue {
   selectedAppointment = {
     therapist: '',
     therapistID: '',
-    time: '7:00',
+    startTime: '7:00',
     day: this.currentSingleDay,
   };
 
@@ -203,13 +203,13 @@ export default class Daylist extends Vue {
 
   private headers: { text: string, value: string, id: string, absences: Absence[], align: string }[] = [
     {
-      text: '', value: 'time', id: '', absences: [], align: '',
+      text: '', value: 'startTime', id: '', absences: [], align: '',
     },
   ];
 
   private rows: {
     [key: string]: string | Time | SingleAppointment | AppointmentSeries | Absence[]
-  }[] = [{ timeString: '' }];
+  }[] = [{ startTimeString: '' }];
 
   get localBackup(): Backup | null {
     return this.store.getBackup;
@@ -251,7 +251,7 @@ export default class Daylist extends Vue {
         align: 'center',
       }));
       this.headers = [{
-        text: '', value: 'time', id: '', absences: [new Absence('a', Time['7:00'], Time['7:00'])], align: '',
+        text: '', value: 'startTime', id: '', absences: [new Absence('a', Time['7:00'], Time['7:00'])], align: '',
       }].concat(therapistHeaders);
     }
   }
@@ -261,21 +261,21 @@ export default class Daylist extends Vue {
       [key: string]: string | Time | SingleAppointment | AppointmentSeries
     }
 
-    const times = Object.values(Time).filter((time): time is string => time.toString().includes(':'));
-    const emptyRows = times.map((time) => ({
-      timeString: time.toString(),
-      time: time as unknown as Time,
+    const startTimes = Object.values(Time).filter((startTime): startTime is string => startTime.toString().includes(':'));
+    const emptyRows = startTimes.map((startTime) => ({
+      startTimeString: startTime.toString(),
+      startTime: startTime as unknown as Time,
     }));
 
     this.rows = emptyRows.map((row) => {
       const newRow: TableRow = {
-        timeString: row.timeString,
-        time: row.time,
+        startTimeString: row.startTimeString,
+        startTime: row.startTime,
       };
       this.headers.forEach((header) => {
         if (header.text !== '') {
           const singleAppointment = this.localBackup?.daylist.searchAppointment(
-            header.id, this.currentSingleDay, row.time as Time,
+            header.id, this.currentSingleDay, row.startTime as Time,
           );
           if (singleAppointment !== undefined) {
             newRow[header.text] = singleAppointment;
@@ -284,7 +284,7 @@ export default class Daylist extends Vue {
             const weekday = Dateconversions.getWeekdayForDate(currentSingleDate);
             if (weekday) {
               const masterAppointment = this.localBackup?.masterlist.searchAppointmentForDaylist(
-                header.id, weekday, row.time as Time, currentSingleDate,
+                header.id, weekday, row.startTime as Time, currentSingleDate,
               );
               newRow[header.text] = masterAppointment || '';
             } else {
@@ -297,10 +297,10 @@ export default class Daylist extends Vue {
     });
   }
 
-  openCreateDialog(therapist: string, therapistID: string, time: string): void {
+  openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
-    this.selectedAppointment.time = time;
+    this.selectedAppointment.startTime = startTime;
     this.createDialog = true;
   }
 
@@ -312,7 +312,7 @@ export default class Daylist extends Vue {
     this.selectedAppointment = {
       therapist: '',
       therapistID: '',
-      time: '7:00',
+      startTime: '7:00',
       day: this.currentSingleDay,
     };
 
@@ -328,13 +328,13 @@ export default class Daylist extends Vue {
   }
 
   addAppointment(
-    event: { therapist: string, therapistID: string, patient: string, time: string },
+    event: { therapist: string, therapistID: string, patient: string, startTime: string },
   ): void {
     const appointment = new SingleAppointment(
       event.therapist,
       event.therapistID,
       event.patient,
-      event.time as unknown as Time,
+      event.startTime as unknown as Time,
       Dateconversions.convertReadableStringToDate(this.currentSingleDay),
     );
     if (this.localBackup) {
@@ -344,13 +344,13 @@ export default class Daylist extends Vue {
   }
 
   changeAppointment(
-    event: { therapist: string, therapistID: string, patient: string, time: string },
+    event: { therapist: string, therapistID: string, patient: string, startTime: string },
   ): void {
     const appointment = new SingleAppointment(
       event.therapist,
       event.therapistID,
       event.patient,
-      event.time as unknown as Time,
+      event.startTime as unknown as Time,
       Dateconversions.convertReadableStringToDate(this.currentSingleDay),
     );
     if (this.localBackup) {
@@ -359,14 +359,14 @@ export default class Daylist extends Vue {
   }
 
   deleteAppointment(
-    event: { patient: string, therapist: string, therapistID: string, time: string },
+    event: { patient: string, therapist: string, therapistID: string, startTime: string },
   ): void {
     if (this.localBackup) {
       const appointment = new SingleAppointment(
         event.therapist,
         event.therapistID,
         event.patient,
-        event.time as unknown as Time,
+        event.startTime as unknown as Time,
         Dateconversions.convertReadableStringToDate(this.currentSingleDay),
       );
       this.store.deleteSingleAppointment(appointment);

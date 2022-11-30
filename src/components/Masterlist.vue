@@ -40,7 +40,7 @@
               }"
               @click="
                 row[header.value] === ''
-                  ? openCreateDialog(header.value, header.id, row.time)
+                  ? openCreateDialog(header.value, header.id, row.startTime)
                   : {}
               "
             >
@@ -54,18 +54,18 @@
               <div
                 v-else-if="row[header.value] === ''"
                 class="create-appointment"
-                @click="openCreateDialog(header.value, header.id, row.time)"
+                @click="openCreateDialog(header.value, header.id, row.startTime)"
               ></div>
               <MasterlistElement
                 v-else-if="row[header.value] && row[header.value].patient"
-                :key="`${hash}-${row[header.value].therapistID}-${row.time}`"
+                :key="`${hash}-${row[header.value].therapistID}-${row.startTime}`"
                 @appointmentAdded="addAppointment($event)"
                 @appointmentChanged="changeAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
                 :patient="row[header.value].patient"
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
-                :time="row.time"
+                :startTime="row.startTime"
                 :appointment="row[header.value]"
                 :day="currentWeekDay"
               />
@@ -78,7 +78,7 @@
       <v-card>
         <v-card-title class="text-h5 grey lighten-2">
           {{ selectedAppointment.therapist }} -
-          {{ currentWeekDay.toLowerCase() }}s - {{ selectedAppointment.time }}
+          {{ currentWeekDay.toLowerCase() }}s - {{ selectedAppointment.startTime }}
         </v-card-title>
 
         <v-card-text class="pt-5">
@@ -153,7 +153,7 @@
               >
                 {{ conflict.patient }} -
                 {{ conflict.date.toLocaleDateString() }},
-                {{ conflict.time }}
+                {{ conflict.startTime }}
               </li>
             </ul>
           </v-alert>
@@ -183,7 +183,7 @@
                 therapist: selectedAppointment.therapist,
                 therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
-                time: selectedAppointment.time,
+                startTime: selectedAppointment.startTime,
                 interval: parseInt(inputFields.interval, 10),
                 isBWO: inputFields.isBWO,
                 startDate: getCombinedDate(),
@@ -243,7 +243,7 @@ export default class Masterlist extends Vue {
   selectedAppointment = {
     therapist: '',
     therapistID: '',
-    time: '7:00',
+    startTime: '7:00',
     weekday: this.currentWeekDay,
   };
 
@@ -255,13 +255,13 @@ export default class Masterlist extends Vue {
 
   private headers: { text: string, value: string, id: string, absences: Absence[] }[] = [
     {
-      text: '', value: 'time', id: '', absences: [],
+      text: '', value: 'startTime', id: '', absences: [],
     },
   ];
 
   private rows: {
     [key: string]: string | Time | AppointmentSeries | Absence[]
-  }[] = [{ timeString: '' }];
+  }[] = [{ startTimeString: '' }];
 
   get localBackup(): Backup | null {
     return this.store.getBackup;
@@ -305,7 +305,7 @@ export default class Masterlist extends Vue {
         absences: therapist.absences.filter((abs) => abs.day === this.currentWeekDay),
       }));
       this.headers = [{
-        text: '', value: 'time', id: '', absences: [new Absence('a', Time['7:00'], Time['7:00'])],
+        text: '', value: 'startTime', id: '', absences: [new Absence('a', Time['7:00'], Time['7:00'])],
       }].concat(therapistHeaders);
     }
   }
@@ -315,31 +315,31 @@ export default class Masterlist extends Vue {
       [key: string]: string | Time | AppointmentSeries
     }
 
-    const times = Object.values(Time).filter((time): time is string => time.toString().includes(':'));
-    const emptyRows = times.map((time) => ({
-      timeString: time.toString(),
-      time: time as unknown as Time,
+    const startTimes = Object.values(Time).filter((startTime): startTime is string => startTime.toString().includes(':'));
+    const emptyRows = startTimes.map((startTime) => ({
+      startTimeString: startTime.toString(),
+      startTime: startTime as unknown as Time,
     }));
 
     this.rows = emptyRows.map((row) => {
       const newRow: TableRow = {
-        timeString: row.timeString,
-        time: row.time,
+        startTimeString: row.startTimeString,
+        startTime: row.startTime,
       };
       this.headers.forEach((header) => {
         if (header.text !== '') {
           newRow[header.text] = this
-            .localBackup?.masterlist.searchAppointment(header.id, this.currentWeekDay, row.time as Time) || '';
+            .localBackup?.masterlist.searchAppointment(header.id, this.currentWeekDay, row.startTime as Time) || '';
         }
       });
       return newRow;
     });
   }
 
-  openCreateDialog(therapist: string, therapistID: string, time: string): void {
+  openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
-    this.selectedAppointment.time = time;
+    this.selectedAppointment.startTime = startTime;
     this.createDialog = true;
     this.getAppointmentConflicts();
   }
@@ -349,7 +349,7 @@ export default class Masterlist extends Vue {
       this.conflicts = this.localBackup.daylist.getAppointmentConflicts(
         this.currentWeekDay,
         this.selectedAppointment.therapistID,
-        this.selectedAppointment.time as unknown as Time,
+        this.selectedAppointment.startTime as unknown as Time,
         this.inputFields.startDate,
       );
     }
@@ -381,7 +381,7 @@ export default class Masterlist extends Vue {
     this.selectedAppointment = {
       therapist: '',
       therapistID: '',
-      time: '7:00',
+      startTime: '7:00',
       weekday: this.currentWeekDay,
     };
 
@@ -389,13 +389,14 @@ export default class Masterlist extends Vue {
   }
 
   addAppointment(
-    event: { therapist: string, therapistID: string, patient: string, time: string, startDate: Date, isBWO: boolean, interval: number },
+    event: { therapist: string, therapistID: string, patient: string, startTime: string,
+    startDate: Date, isBWO: boolean, interval: number },
   ): void {
     const appointment = new AppointmentSeries(
       event.therapist,
       event.therapistID,
       event.patient,
-      event.time as unknown as Time,
+      event.startTime as unknown as Time,
       this.currentWeekDay,
       event.interval,
       [],
@@ -410,7 +411,7 @@ export default class Masterlist extends Vue {
 
   changeAppointment(
     event: {
-      patient: string, therapist: string, therapistID: string, time: string,
+      patient: string, therapist: string, therapistID: string, startTime: string,
       cancellations: string[], startDate: Date, isBWO: boolean, interval: number
     },
   ): void {
@@ -418,7 +419,7 @@ export default class Masterlist extends Vue {
       event.therapist,
       event.therapistID,
       event.patient,
-      event.time as unknown as Time,
+      event.startTime as unknown as Time,
       this.currentWeekDay,
       event.interval,
       event.cancellations,
@@ -432,7 +433,7 @@ export default class Masterlist extends Vue {
 
   deleteAppointment(
     event: {
-      patient: string, therapist: string, therapistID: string, time: string,
+      patient: string, therapist: string, therapistID: string, startTime: string,
       cancellations: string[], startDate: Date, isBWO: boolean, interval: number
     },
   ): void {
@@ -441,7 +442,7 @@ export default class Masterlist extends Vue {
         event.therapist,
         event.therapistID,
         event.patient,
-        event.time as unknown as Time,
+        event.startTime as unknown as Time,
         this.currentWeekDay,
         event.interval,
         event.cancellations,

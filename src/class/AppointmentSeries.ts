@@ -16,14 +16,14 @@ export default class AppointmentSeries extends Appointment {
     therapist: string,
     therapistID: string,
     patient: string,
-    time: Time,
+    startTime: Time,
     weekday: Weekday,
     interval: number,
     cancellations: string[],
     startDate?: Date,
     isBWO = false,
   ) {
-    super(therapist, therapistID, patient, time);
+    super(therapist, therapistID, patient, startTime);
     this.weekday = weekday;
     this.interval = interval;
     this.cancellations = cancellations;
@@ -32,6 +32,6 @@ export default class AppointmentSeries extends Appointment {
   }
 
   getTimeAsString(): string {
-    return Time[this.time];
+    return Time[this.startTime];
   }
 }

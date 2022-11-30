@@ -20,7 +20,7 @@
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
-        {{ therapist }} - {{ date }} - {{ time }}
+        {{ therapist }} - {{ date }} - {{ startTime }}
       </v-card-title>
 
       <v-card-text class="pt-5">
@@ -49,13 +49,13 @@
           Unter diesem Namen wurden weitere Termine gefunden:
           <div
             v-for="appointment in appointmentsForPatient"
-            :key="`${appointment.therapistID}-${appointment.time}-${appointment.weekday}`"
+            :key="`${appointment.therapistID}-${appointment.startTime}-${appointment.weekday}`"
           >
             {{
               appointment.weekday
                 ? appointment.weekday + "s"
                 : convertDate(appointment.date)
-            }}, {{ appointment.time }} bei
+            }}, {{ appointment.startTime }} bei
             {{ appointment.therapist }}
           </div>
         </v-alert>
@@ -119,7 +119,7 @@ import Store from '../store/backup';
 export default class DaylistElement extends Vue {
   @Prop() readonly patient!: string;
 
-  @Prop() readonly time!: string;
+  @Prop() readonly startTime!: string;
 
   @Prop() readonly date!: string;
 
@@ -153,7 +153,7 @@ export default class DaylistElement extends Vue {
       );
       this.appointmentsForPatient = this.appointmentsForPatient.filter((appointment) => {
         if (this.appointment instanceof SingleAppointment && appointment instanceof SingleAppointment) {
-          return !(appointment.time === this.appointment.time
+          return !(appointment.startTime === this.appointment.startTime
             && this.appointment.date === appointment.date
             && this.appointment.therapistID === appointment.therapistID);
         }
@@ -170,19 +170,19 @@ export default class DaylistElement extends Vue {
         });
       } else {
         this.$emit('appointmentChanged', {
-          patient: this.patientTextfield, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
+          patient: this.patientTextfield, therapist: this.therapist, therapistID: this.therapistID, startTime: this.startTime,
         });
       }
     } else {
       this.$emit('appointmentDeleted', {
-        patient: this.patient, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
+        patient: this.patient, therapist: this.therapist, therapistID: this.therapistID, startTime: this.startTime,
       });
     }
   }
 
   addAppointment(): void {
     this.$emit('appointmentAdded', {
-      patient: this.patientTextfield, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
+      patient: this.patientTextfield, therapist: this.therapist, therapistID: this.therapistID, startTime: this.startTime,
     });
   }
 
@@ -190,7 +190,7 @@ export default class DaylistElement extends Vue {
     const printer = new Printer(
       this.patient,
       this.therapist,
-      this.time as unknown as Time,
+      this.startTime as unknown as Time,
       Dateconversions.convertReadableStringToDate(this.date),
       0,
     );

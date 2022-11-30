@@ -89,20 +89,20 @@ export default class AppointmentFinder {
   }
 
   private getAppointmentForTherapistinRequest(
-    therapist: string, therapistID: string, times: string[], weekday: Weekday, startDate: Date,
+    therapist: string, therapistID: string, startTimes: string[], weekday: Weekday, startDate: Date,
   ): SingleAppointment[] {
     let foundCounter = 0;
     const foundAppointments: SingleAppointment[] = [];
     const searchingDate = AppointmentFinder.getNextDateForWeekday(weekday, startDate);
-    times.every((time) => {
+    startTimes.every((startTime) => {
       if (foundCounter === AppointmentFinder.APPOINTMENTS_PER_WEEK) {
         return false;
       }
       const therapistAbsences = this.allTherapists.find((thera) => thera.id === therapistID)?.absences;
       if (therapistAbsences) {
         const foundAbsences = therapistAbsences.find(
-          (abs) => (Time[abs.start] <= Time[time as unknown as Time]
-          && Time[abs.end] > Time[time as unknown as Time]
+          (abs) => (Time[abs.start] <= Time[startTime as unknown as Time]
+          && Time[abs.end] > Time[startTime as unknown as Time]
           && (abs.day === weekday || abs.day === Dateconversions.convertDateToReadableString(searchingDate))),
         );
         if (foundAbsences || holidaysJSON.days.includes(
@@ -112,19 +112,20 @@ export default class AppointmentFinder {
         }
       }
       const foundAppointment = this.daylist.searchAppointment(
-        therapistID, Dateconversions.convertDateToReadableString(searchingDate), time as unknown as Time, this.appointmentLength === 40,
+        therapistID, Dateconversions.convertDateToReadableString(searchingDate),
+        startTime as unknown as Time, this.appointmentLength === 40,
       );
       if (foundAppointment === undefined) {
         const hasConflict = this.masterlist.getAppointmentConflict(
-          searchingDate, therapistID, time as unknown as Time,
+          searchingDate, therapistID, startTime as unknown as Time,
         );
         const nextHasConflict = this.appointmentLength === 40 ? this.masterlist.getAppointmentConflict(
-          searchingDate, therapistID, nextTime(time as unknown as Time),
+          searchingDate, therapistID, nextTime(startTime as unknown as Time),
         ) : false;
         if (!hasConflict && !nextHasConflict) {
           foundCounter += 1;
           foundAppointments.push(
-            new SingleAppointment(therapist, therapistID, this.patient, time as unknown as Time, new Date(searchingDate.getTime())),
+            new SingleAppointment(therapist, therapistID, this.patient, startTime as unknown as Time, new Date(searchingDate.getTime())),
           );
         }
       }

@@ -14,7 +14,7 @@
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
-        {{ therapist }} - {{ day.toLowerCase() }}s - {{ time }}
+        {{ therapist }} - {{ day.toLowerCase() }}s - {{ startTime }}
       </v-card-title>
 
       <v-card-text class="pt-5">
@@ -85,7 +85,7 @@
               :key="conflict.date.toLocaleDateString()"
             >
               {{ conflict.patient }} - {{ conflict.date.toLocaleDateString() }},
-              {{ conflict.time }}
+              {{ conflict.startTime }}
             </li>
           </ul>
         </v-alert>
@@ -148,7 +148,7 @@ import Store from '../store/backup';
 export default class MasterlistElement extends Vue {
   @Prop() readonly patient!: string;
 
-  @Prop() readonly time!: string;
+  @Prop() readonly startTime!: string;
 
   @Prop() readonly therapist!: string;
 
@@ -162,7 +162,7 @@ export default class MasterlistElement extends Vue {
 
   private appointmentPatient = this.appointment.patient;
 
-  private appointmentPatientTime = this.appointment.time.toString();
+  private appointmentPatientTime = this.appointment.startTime.toString();
 
   private appointmentTherapist = this.appointment.therapist;
 
@@ -231,7 +231,7 @@ export default class MasterlistElement extends Vue {
       this.conflicts = this.localBackup.daylist.getAppointmentConflicts(
         this.day,
         this.therapistID,
-        this.time as unknown as Time,
+        this.startTime as unknown as Time,
         this.startDate,
       );
     }
@@ -254,7 +254,7 @@ export default class MasterlistElement extends Vue {
         patient: this.patientTextfield,
         therapist: this.therapist,
         therapistID: this.therapistID,
-        time: this.time,
+        startTime: this.startTime,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         interval: parseInt(this.interval, 10),
@@ -265,7 +265,7 @@ export default class MasterlistElement extends Vue {
         patient: this.patient,
         therapist: this.therapist,
         therapistID: this.therapistID,
-        time: this.time,
+        startTime: this.startTime,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         interval: parseInt(this.interval, 10),
@@ -279,7 +279,7 @@ export default class MasterlistElement extends Vue {
       patient: this.patientTextfield,
       therapist: this.therapist,
       therapistID: this.therapistID,
-      time: this.time,
+      startTime: this.startTime,
       startDate: this.getCombinedDate(),
       interval: parseInt(this.interval, 10),
       isBWO: this.isBWO,
@@ -288,7 +288,7 @@ export default class MasterlistElement extends Vue {
 
   printAppointment(): void {
     const printer = new Printer(
-      this.patient, this.therapist, this.time as unknown as Time, this.day,
+      this.patient, this.therapist, this.startTime as unknown as Time, this.day,
       parseInt(this.interval, 10), this.appointment.cancellations, this.appointment.startDate,
     );
     printer.printAppointmentSeries();
