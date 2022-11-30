@@ -100,6 +100,7 @@ export default class DaylistHeader extends Vue {
   @Prop() readonly masterlistAbsences!: { start: Time, end: Time }[];
 
   private absenceType = Dateconversions.convertReadableStringToDate(this.date).getDay() === 6 ? 'Anwesenheiten' : 'Abwesenheiten';
+  // todo
 
   times = ['7:00', '7:20', '7:40',
     '8:00', '8:20', '8:40',
