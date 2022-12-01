@@ -124,8 +124,10 @@ export default class AppointmentFinder {
         ) : false;
         if (!hasConflict && !nextHasConflict) {
           foundCounter += 1;
+          // TODO: Don't use startTime twice, instead rewrite this with a endTime
           foundAppointments.push(
-            new SingleAppointment(therapist, therapistID, this.patient, startTime as unknown as Time, new Date(searchingDate.getTime())),
+            new SingleAppointment(therapist, therapistID, this.patient,
+              startTime as unknown as Time, startTime as unknown as Time, new Date(searchingDate.getTime())),
           );
         }
       }

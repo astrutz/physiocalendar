@@ -19,6 +19,7 @@ function convertAppointmentSeries(appointments: AppointmentSeries[]): JSONAppoin
         therapistID: appointment.therapistID,
         patient: appointment.patient,
         startTime: appointment.startTime.toString(),
+        endTime: appointment.endTime.toString(),
         startDate: appointment.startDate.getTime(),
         isBWO: appointment.isBWO || false,
         interval: appointment.interval,
@@ -46,6 +47,7 @@ function convertSingleAppointments(appointments: SingleAppointment[]): JSONSingl
         therapistID: appointment.therapistID,
         patient: appointment.patient,
         startTime: appointment.startTime.toString(),
+        endTime: appointment.endTime.toString(),
       }
     ),
   );

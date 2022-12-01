@@ -24,6 +24,14 @@
           v-model="patientTextfield"
           clearable
         ></v-text-field>
+
+         <v-select
+          :items="getAllTimes()"
+          label="Endzeit"
+          v-model="endTimeSelect"
+          :value="endTime"
+        ></v-select>
+
         <v-row class="pl-3 pr-3">
           <v-checkbox
             label="Patient ist aus BWO"
@@ -150,6 +158,8 @@ export default class MasterlistElement extends Vue {
 
   @Prop() readonly startTime!: string;
 
+  @Prop() readonly endTime!: string;
+
   @Prop() readonly therapist!: string;
 
   @Prop() readonly therapistID!: string;
@@ -183,6 +193,8 @@ export default class MasterlistElement extends Vue {
   private menuIsOpen = false;
 
   private patientTextfield = this.appointmentPatient;
+
+  private endTimeSelect = this.appointment.endTime;
 
   private conflicts: SingleAppointment[] = [];
 
@@ -255,6 +267,7 @@ export default class MasterlistElement extends Vue {
         therapist: this.therapist,
         therapistID: this.therapistID,
         startTime: this.startTime,
+        endTime: this.endTimeSelect,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         interval: parseInt(this.interval, 10),
@@ -266,6 +279,7 @@ export default class MasterlistElement extends Vue {
         therapist: this.therapist,
         therapistID: this.therapistID,
         startTime: this.startTime,
+        endTime: this.endTimeSelect,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         interval: parseInt(this.interval, 10),
@@ -280,6 +294,7 @@ export default class MasterlistElement extends Vue {
       therapist: this.therapist,
       therapistID: this.therapistID,
       startTime: this.startTime,
+      endTime: this.endTimeSelect,
       startDate: this.getCombinedDate(),
       interval: parseInt(this.interval, 10),
       isBWO: this.isBWO,
@@ -288,10 +303,15 @@ export default class MasterlistElement extends Vue {
 
   printAppointment(): void {
     const printer = new Printer(
-      this.patient, this.therapist, this.startTime as unknown as Time, this.day,
+      this.patient, this.therapist, this.startTime as unknown as Time, this.endTime as unknown as Time, this.day,
       parseInt(this.interval, 10), this.appointment.cancellations, this.appointment.startDate,
     );
     printer.printAppointmentSeries();
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getAllTimes(): string[] {
+    return Dateconversions.getAllTimes();
   }
 }
 </script>

@@ -87,6 +87,11 @@
             v-model="inputFields.patientTextfield"
             clearable
           ></v-text-field>
+          <v-select
+            :items="getAllTimes()"
+            label="Endzeit"
+            v-model="inputFields.endTimeSelect"
+          ></v-select>
           <v-row class="pl-3">
             <v-checkbox
               label="Patient ist aus BWO"
@@ -184,6 +189,7 @@
                 therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
                 startTime: selectedAppointment.startTime,
+                endTime: inputFields.endTimeSelect,
                 interval: parseInt(inputFields.interval, 10),
                 isBWO: inputFields.isBWO,
                 startDate: getCombinedDate(),
@@ -230,6 +236,7 @@ export default class Masterlist extends Vue {
 
   inputFields = {
     patientTextfield: '',
+    endTimeSelect: '',
     menuIsOpen: false,
     startDate: new Date(),
     interval: '1',
@@ -368,6 +375,7 @@ export default class Masterlist extends Vue {
   resetInputs(): void {
     this.inputFields = {
       patientTextfield: '',
+      endTimeSelect: '',
       menuIsOpen: false,
       interval: '1',
       isBWO: false,
@@ -389,7 +397,7 @@ export default class Masterlist extends Vue {
   }
 
   addAppointment(
-    event: { therapist: string, therapistID: string, patient: string, startTime: string,
+    event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string,
     startDate: Date, isBWO: boolean, interval: number },
   ): void {
     const appointment = new AppointmentSeries(
@@ -397,6 +405,7 @@ export default class Masterlist extends Vue {
       event.therapistID,
       event.patient,
       event.startTime as unknown as Time,
+      event.endTime as unknown as Time,
       this.currentWeekDay,
       event.interval,
       [],
@@ -411,7 +420,7 @@ export default class Masterlist extends Vue {
 
   changeAppointment(
     event: {
-      patient: string, therapist: string, therapistID: string, startTime: string,
+      patient: string, therapist: string, therapistID: string, startTime: string, endTime: string,
       cancellations: string[], startDate: Date, isBWO: boolean, interval: number
     },
   ): void {
@@ -420,6 +429,7 @@ export default class Masterlist extends Vue {
       event.therapistID,
       event.patient,
       event.startTime as unknown as Time,
+      event.endTime as unknown as Time,
       this.currentWeekDay,
       event.interval,
       event.cancellations,
@@ -433,7 +443,7 @@ export default class Masterlist extends Vue {
 
   deleteAppointment(
     event: {
-      patient: string, therapist: string, therapistID: string, startTime: string,
+      patient: string, therapist: string, therapistID: string, startTime: string, endTime: string,
       cancellations: string[], startDate: Date, isBWO: boolean, interval: number
     },
   ): void {
@@ -443,6 +453,7 @@ export default class Masterlist extends Vue {
         event.therapistID,
         event.patient,
         event.startTime as unknown as Time,
+        event.endTime as unknown as Time,
         this.currentWeekDay,
         event.interval,
         event.cancellations,
@@ -473,6 +484,11 @@ export default class Masterlist extends Vue {
       );
       this.store.setAbsencesForTherapistForDay({ absences, therapistID: event.therapistID.slice(), day: this.currentWeekDay });
     }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getAllTimes(): string[] {
+    return Dateconversions.getAllTimes();
   }
 }
 
