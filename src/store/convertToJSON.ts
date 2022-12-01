@@ -15,6 +15,7 @@ function convertAppointmentSeries(appointments: AppointmentSeries[]): JSONAppoin
   return appointments.map(
     (appointment) => (
       {
+        id: appointment.id,
         therapist: appointment.therapist,
         therapistID: appointment.therapistID,
         patient: appointment.patient,
@@ -43,6 +44,7 @@ function convertSingleAppointments(appointments: SingleAppointment[]): JSONSingl
   return appointments.map(
     (appointment) => (
       {
+        id: appointment.id,
         therapist: appointment.therapist,
         therapistID: appointment.therapistID,
         patient: appointment.patient,

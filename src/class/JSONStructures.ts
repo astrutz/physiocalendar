@@ -3,6 +3,7 @@
 import { Weekday } from './Enums';
 
 export interface JSONAppointmentSeries {
+  id: string,
   therapist : string,
   therapistID : string,
   patient: string,
@@ -24,6 +25,7 @@ export interface JSONMasterlist {
 }
 
 export interface JSONSingleAppointment {
+  id: string,
   therapist : string,
   therapistID : string,
   patient: string,

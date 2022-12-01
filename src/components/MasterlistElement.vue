@@ -2,7 +2,7 @@
   <v-dialog persistent v-model="dialogIsOpen" width="600">
     <template v-slot:activator="{ on, attrs }">
       <button
-        style="width: 100%"
+        style="width: 100%; height: 100%"
         type="button"
         @click="dialogIsOpen = true"
         v-bind="attrs"
@@ -14,7 +14,7 @@
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
-        {{ therapist }} - {{ day.toLowerCase() }}s - {{ startTime }}
+        {{ therapist }} - {{ day.toLowerCase() }}s - {{ startTime }} bis {{ endTime }}
       </v-card-title>
 
       <v-card-text class="pt-5">
@@ -25,9 +25,16 @@
           clearable
         ></v-text-field>
 
+        <v-select
+          :items="getAllTimes()"
+          label="Start um"
+          v-model="startTimeSelect"
+          :value="startTime"
+        ></v-select>
+
          <v-select
           :items="getAllTimes()"
-          label="Endzeit"
+          label="Ende um"
           v-model="endTimeSelect"
           :value="endTime"
         ></v-select>
@@ -168,6 +175,8 @@ export default class MasterlistElement extends Vue {
 
   @Prop() readonly appointment!: AppointmentSeries;
 
+  @Prop() readonly id!: string;
+
   store = getModule(Store);
 
   private appointmentPatient = this.appointment.patient;
@@ -193,6 +202,8 @@ export default class MasterlistElement extends Vue {
   private menuIsOpen = false;
 
   private patientTextfield = this.appointmentPatient;
+
+  private startTimeSelect = this.appointment.startTime;
 
   private endTimeSelect = this.appointment.endTime;
 
@@ -266,11 +277,12 @@ export default class MasterlistElement extends Vue {
         patient: this.patientTextfield,
         therapist: this.therapist,
         therapistID: this.therapistID,
-        startTime: this.startTime,
+        startTime: this.startTimeSelect,
         endTime: this.endTimeSelect,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         interval: parseInt(this.interval, 10),
+        id: this.id,
         isBWO: this.isBWO,
       });
     } else {
@@ -278,11 +290,12 @@ export default class MasterlistElement extends Vue {
         patient: this.patient,
         therapist: this.therapist,
         therapistID: this.therapistID,
-        startTime: this.startTime,
+        startTime: this.startTimeSelect,
         endTime: this.endTimeSelect,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         interval: parseInt(this.interval, 10),
+        id: this.id,
         isBWO: this.isBWO,
       });
     }
@@ -293,7 +306,7 @@ export default class MasterlistElement extends Vue {
       patient: this.patientTextfield,
       therapist: this.therapist,
       therapistID: this.therapistID,
-      startTime: this.startTime,
+      startTime: this.startTimeSelect,
       endTime: this.endTimeSelect,
       startDate: this.getCombinedDate(),
       interval: parseInt(this.interval, 10),

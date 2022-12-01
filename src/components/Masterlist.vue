@@ -26,11 +26,12 @@
         <tbody>
           <tr v-for="(row, rowIndex) in rows" :key="row.name">
             <td
-              v-for="header in headers"
+              v-for="header in headers.filter(header => header === '' || row[header.value] != undefined)"
               :key="header.value"
+              :rowspan="calculateRowspan(row[header.value])"
               :class="{
                 'text-center': true,
-                'hour-begin': rowIndex % 3 === 0,
+                'hour-begin': rowIndex % 6 === 0,
                 'cell-bwo':
                   row[header.value] &&
                   row[header.value].patient &&
@@ -63,9 +64,11 @@
                 @appointmentChanged="changeAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
                 :patient="row[header.value].patient"
+                :id="row[header.value].id"
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
                 :startTime="row.startTime"
+                :endTime="row[header.value].endTime"
                 :appointment="row[header.value]"
                 :day="currentWeekDay"
               />
@@ -89,7 +92,7 @@
           ></v-text-field>
           <v-select
             :items="getAllTimes()"
-            label="Endzeit"
+            label="Ende um"
             v-model="inputFields.endTimeSelect"
           ></v-select>
           <v-row class="pl-3">
@@ -328,18 +331,36 @@ export default class Masterlist extends Vue {
       startTime: startTime as unknown as Time,
     }));
 
-    this.rows = emptyRows.map((row) => {
+    this.rows = [];
+
+    emptyRows.forEach((row) => {
       const newRow: TableRow = {
         startTimeString: row.startTimeString,
         startTime: row.startTime,
       };
       this.headers.forEach((header) => {
-        if (header.text !== '') {
+        if (header.text !== '' && !this.hasOngoingAppointments(header.value, row.startTime)) {
           newRow[header.text] = this
             .localBackup?.masterlist.searchAppointment(header.id, this.currentWeekDay, row.startTime as Time) || '';
         }
       });
-      return newRow;
+      this.rows.push(newRow);
+    });
+  }
+
+  hasOngoingAppointments(therapist : string, time: Time) : boolean {
+    return this.rows.some((row) => {
+      if (row[therapist] !== '') {
+        try {
+          const appointment = (row[therapist] as AppointmentSeries);
+          if (Time[appointment.startTime] < Time[time] && Time[appointment.endTime] > Time[time]) {
+            return true;
+          }
+        } catch (err) {
+          return false;
+        }
+      }
+      return false;
     });
   }
 
@@ -398,7 +419,7 @@ export default class Masterlist extends Vue {
 
   addAppointment(
     event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string,
-    startDate: Date, isBWO: boolean, interval: number },
+    startDate: Date, id: string, isBWO: boolean, interval: number },
   ): void {
     const appointment = new AppointmentSeries(
       event.therapist,
@@ -410,6 +431,7 @@ export default class Masterlist extends Vue {
       event.interval,
       [],
       event.startDate,
+      event.id,
       event.isBWO,
     );
     if (this.localBackup) {
@@ -421,7 +443,7 @@ export default class Masterlist extends Vue {
   changeAppointment(
     event: {
       patient: string, therapist: string, therapistID: string, startTime: string, endTime: string,
-      cancellations: string[], startDate: Date, isBWO: boolean, interval: number
+      cancellations: string[], startDate: Date, id: string, isBWO: boolean, interval: number
     },
   ): void {
     const appointment = new AppointmentSeries(
@@ -434,6 +456,7 @@ export default class Masterlist extends Vue {
       event.interval,
       event.cancellations,
       event.startDate,
+      event.id,
       event.isBWO,
     );
     if (this.localBackup) {
@@ -444,7 +467,7 @@ export default class Masterlist extends Vue {
   deleteAppointment(
     event: {
       patient: string, therapist: string, therapistID: string, startTime: string, endTime: string,
-      cancellations: string[], startDate: Date, isBWO: boolean, interval: number
+      cancellations: string[], startDate: Date, id: string, isBWO: boolean, interval: number
     },
   ): void {
     if (this.localBackup) {
@@ -458,6 +481,7 @@ export default class Masterlist extends Vue {
         event.interval,
         event.cancellations,
         event.startDate,
+        event.id,
         event.isBWO,
       );
       this.store.deleteAppointmentSeries(appointment);
@@ -487,6 +511,14 @@ export default class Masterlist extends Vue {
   }
 
   // eslint-disable-next-line class-methods-use-this
+  calculateRowspan(appointment : string | AppointmentSeries) : number {
+    if (typeof appointment === 'string') {
+      return 1;
+    }
+    return appointment.calculateLength();
+  }
+
+  // eslint-disable-next-line class-methods-use-this
   getAllTimes(): string[] {
     return Dateconversions.getAllTimes();
   }
@@ -503,6 +535,10 @@ th:first-child {
 
 th:last-child {
   border-top-right-radius: 15px;
+}
+
+tr:last-child td {
+  border-bottom: 1px solid #2a2f79 !important;
 }
 
 tr:last-child td:first-child {
@@ -523,10 +559,10 @@ th {
 
 td {
   border-right: 1px solid #2a2f79;
-  border-bottom: 1px solid #2a2f79;
   padding-left: 0px !important;
   padding-right: 0px !important;
   column-width: 300px;
+  height: 24px !important;
 }
 
 td:hover {

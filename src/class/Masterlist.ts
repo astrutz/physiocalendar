@@ -177,14 +177,13 @@ export default class Masterlist {
   changeAppointment(appointment: AppointmentSeries): void {
     const currentDay = this.findListday(appointment.weekday);
     const appointmentToBeChanged = currentDay?.appointments.find(
-      (searchedAppointment) => searchedAppointment.therapistID === appointment.therapistID
-        && searchedAppointment.startTime === appointment.startTime,
+      (searchedAppointment) => searchedAppointment.id === appointment.id,
     );
     if (currentDay && appointmentToBeChanged) {
       appointmentToBeChanged.patient = appointment.patient;
+      appointmentToBeChanged.startTime = appointment.startTime;
       const newAppointments = currentDay.appointments.filter(
-        (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
-          && filterAppointment.startTime === appointment.startTime),
+        (filterAppointment) => filterAppointment.id !== appointment.id,
       );
       newAppointments.push(appointment);
       currentDay.appointments = newAppointments;
@@ -195,8 +194,7 @@ export default class Masterlist {
     const currentDay = this.findListday(appointment.weekday);
     if (currentDay) {
       const newAppointments = currentDay.appointments.filter(
-        (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
-          && filterAppointment.startTime === appointment.startTime),
+        (filterAppointment) => filterAppointment.id !== appointment.id,
       );
       currentDay.appointments = newAppointments;
     }
@@ -205,14 +203,12 @@ export default class Masterlist {
   addCancellation(date : string, appointment : AppointmentSeries) : void {
     const currentDay = this.findListday(appointment.weekday);
     const appointmentToBeChanged = currentDay?.appointments.find(
-      (searchedAppointment) => searchedAppointment.therapistID === appointment.therapistID
-        && searchedAppointment.startTime === appointment.startTime,
+      (searchedAppointment) => searchedAppointment.id === appointment.id,
     );
     if (currentDay && appointmentToBeChanged) {
       (appointmentToBeChanged as AppointmentSeries).cancellations.push(date);
       const newAppointments = currentDay.appointments.filter(
-        (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
-          && filterAppointment.startTime === appointment.startTime),
+        (filterAppointment) => filterAppointment.id !== appointment.id,
       );
       newAppointments.push(appointment);
       currentDay.appointments = newAppointments;
@@ -222,15 +218,13 @@ export default class Masterlist {
   removeCancellation(date : string, appointment : AppointmentSeries) : void {
     const currentDay = this.findListday(appointment.weekday);
     const appointmentToBeChanged = currentDay?.appointments.find(
-      (searchedAppointment) => searchedAppointment.therapistID === appointment.therapistID
-        && searchedAppointment.startTime === appointment.startTime,
+      (searchedAppointment) => searchedAppointment.id === appointment.id,
     );
     if (currentDay && appointmentToBeChanged) {
       (appointmentToBeChanged as AppointmentSeries)
         .cancellations = (appointmentToBeChanged as AppointmentSeries).cancellations.filter((c) => c !== date);
       const newAppointments = currentDay.appointments.filter(
-        (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
-          && filterAppointment.startTime === appointment.startTime),
+        (filterAppointment) => filterAppointment.id !== appointment.id,
       );
       newAppointments.push(appointment);
       currentDay.appointments = newAppointments;

@@ -379,7 +379,11 @@ export default class Terminfinder extends Vue {
       this.selectedAppointmentSuggestions.forEach((suggestion) => {
         this.store.addSingleAppointment(suggestion);
         if (this.appointmentLength === 40) {
-          const nextBlocker = { ...suggestion };
+          // const nextBlocker = { ...suggestion };
+          const nextBlocker = Object.create(
+            Object.getPrototypeOf(suggestion),
+            Object.getOwnPropertyDescriptors(suggestion),
+          );
           nextBlocker.startTime = nextTime(suggestion.startTime);
           nextBlocker.patient = '/';
           this.store.addSingleAppointment(nextBlocker);
