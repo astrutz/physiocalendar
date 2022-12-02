@@ -431,7 +431,7 @@ export default class Masterlist extends Vue {
       event.interval,
       [],
       event.startDate,
-      event.id,
+      uuidv4(),
       event.isBWO,
     );
     if (this.localBackup) {

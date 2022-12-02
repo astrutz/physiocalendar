@@ -2,7 +2,7 @@
   <v-dialog persistent v-model="dialogIsOpen" width="600">
     <template v-slot:activator="{ on, attrs }">
       <button
-        style="width: 100%"
+        style="width: 100%; height: 100%"
         type="button"
         @click="dialogIsOpen = true"
         v-bind="attrs"
@@ -35,7 +35,15 @@
         <v-select
           :disabled="!!appointment.startDate"
           :items="getAllTimes()"
-          label="Endzeit"
+          label="Start um"
+          v-model="startTimeSelect"
+          :value="appointment.startTime"
+        ></v-select>
+
+        <v-select
+          :disabled="!!appointment.startDate"
+          :items="getAllTimes()"
+          label="Ende um"
           v-model="endTimeSelect"
           :value="appointment.endTime"
         ></v-select>
@@ -142,11 +150,15 @@ export default class DaylistElement extends Vue {
 
   @Prop() readonly appointment!: Appointment;
 
+  @Prop() readonly id!: string;
+
   store = getModule(Store);
 
   private dialogIsOpen = false;
 
   private patientTextfield = this.patient;
+
+  private startTimeSelect = this.startTime;
 
   private endTimeSelect = this.endTime;
 
@@ -186,8 +198,9 @@ export default class DaylistElement extends Vue {
           patient: this.patientTextfield,
           therapist: this.therapist,
           therapistID: this.therapistID,
-          startTime: this.startTime,
+          startTime: this.startTimeSelect,
           endTime: this.endTimeSelect,
+          id: this.id,
         });
       }
     } else {
@@ -195,8 +208,9 @@ export default class DaylistElement extends Vue {
         patient: this.patient,
         therapist: this.therapist,
         therapistID: this.therapistID,
-        startTime: this.startTime,
+        startTime: this.startTimeSelect,
         endTime: this.endTimeSelect,
+        id: this.id,
       });
     }
   }
@@ -206,7 +220,7 @@ export default class DaylistElement extends Vue {
       patient: this.patientTextfield,
       therapist: this.therapist,
       therapistID: this.therapistID,
-      startTime: this.startTime,
+      startTime: this.startTimeSelect,
       endTime: this.endTimeSelect,
     });
   }

@@ -122,14 +122,13 @@ export default class Daylist {
   changeAppointment(appointment: SingleAppointment): void {
     const currentDay = this.findListday(appointment.date);
     const appointmentToBeChanged = currentDay?.appointments.find(
-      (searchedAppointment) => searchedAppointment.therapistID === appointment.therapistID
-        && searchedAppointment.startTime === appointment.startTime,
+      (searchedAppointment) => searchedAppointment.id === appointment.id,
     );
     if (currentDay && appointmentToBeChanged) {
       appointmentToBeChanged.patient = appointment.patient;
+      appointmentToBeChanged.startTime = appointment.startTime;
       const newAppointments = currentDay.appointments.filter(
-        (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
-          && filterAppointment.startTime === appointment.startTime),
+        (filterAppointment) => filterAppointment.id !== appointment.id,
       );
       newAppointments.push(appointment);
       currentDay.appointments = newAppointments;
@@ -140,8 +139,7 @@ export default class Daylist {
     const currentDay = this.findListday(appointment.date);
     if (currentDay) {
       const newAppointments = currentDay.appointments.filter(
-        (filterAppointment) => !(filterAppointment.therapistID === appointment.therapistID
-          && filterAppointment.startTime === appointment.startTime),
+        (filterAppointment) => filterAppointment.id !== appointment.id,
       );
       currentDay.appointments = newAppointments;
     }
