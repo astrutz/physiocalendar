@@ -92,6 +92,11 @@
           ></v-text-field>
           <v-select
             :items="getAllTimes()"
+            label="Start um"
+            v-model="inputFields.startTimeSelect"
+          ></v-select>
+          <v-select
+            :items="getAllTimes()"
             label="Ende um"
             v-model="inputFields.endTimeSelect"
           ></v-select>
@@ -191,7 +196,7 @@
                 therapist: selectedAppointment.therapist,
                 therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
-                startTime: selectedAppointment.startTime,
+                startTime: inputFields.startTimeSelect,
                 endTime: inputFields.endTimeSelect,
                 interval: parseInt(inputFields.interval, 10),
                 isBWO: inputFields.isBWO,
@@ -239,6 +244,7 @@ export default class Masterlist extends Vue {
 
   inputFields = {
     patientTextfield: '',
+    startTimeSelect: '',
     endTimeSelect: '',
     menuIsOpen: false,
     startDate: new Date(),
@@ -368,6 +374,7 @@ export default class Masterlist extends Vue {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
     this.selectedAppointment.startTime = startTime;
+    this.inputFields.startTimeSelect = startTime;
     this.createDialog = true;
     this.getAppointmentConflicts();
   }
@@ -396,6 +403,7 @@ export default class Masterlist extends Vue {
   resetInputs(): void {
     this.inputFields = {
       patientTextfield: '',
+      startTimeSelect: '',
       endTimeSelect: '',
       menuIsOpen: false,
       interval: '1',

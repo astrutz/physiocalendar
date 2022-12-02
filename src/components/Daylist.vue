@@ -108,9 +108,15 @@
 
           <v-select
           :items="getAllTimes()"
+          label="Start um"
+          v-model="inputFields.startTimeSelect"
+          ></v-select>
+
+          <v-select
+          :items="getAllTimes()"
           label="Ende um"
           v-model="inputFields.endTimeSelect"
-        ></v-select>
+          ></v-select>
 
           <v-alert v-if="appointmentsForPatient.length > 0" type="info">
             Unter diesem Namen wurden weitere Termine gefunden:
@@ -150,7 +156,7 @@
                 therapist: selectedAppointment.therapist,
                 therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
-                startTime: selectedAppointment.startTime,
+                startTime: inputFields.startTimeSelect,
                 endTime: inputFields.endTimeSelect,
               });
               createDialog = false;
@@ -196,6 +202,7 @@ export default class Daylist extends Vue {
 
   inputFields = {
     patientTextfield: '',
+    startTimeSelect: '',
     endTimeSelect: '',
   }
 
@@ -330,12 +337,14 @@ export default class Daylist extends Vue {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
     this.selectedAppointment.startTime = startTime;
+    this.inputFields.startTimeSelect = startTime;
     this.createDialog = true;
   }
 
   resetInputs(): void {
     this.inputFields = {
       patientTextfield: '',
+      startTimeSelect: '',
       endTimeSelect: '',
     };
 
