@@ -67,6 +67,7 @@
                 :id="row[header.value].id"
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
+                :appointmentStartDate="row[header.value].startDate"
                 :startTime="row.startTime"
                 :endTime="row[header.value].endTime"
                 :appointment="row[header.value]"
@@ -284,31 +285,31 @@ export default class Masterlist extends Vue {
   }
 
   @Watch('currentWeekDay')
-  currentSingleDayChanged(): void {
+  private currentWeekDayChanged(): void {
     this.createHeaders();
     this.createRows();
     this.hash = uuidv4();
   }
 
   @Watch('localBackup')
-  localBackupChanged(): void {
+  private localBackupChanged(): void {
     this.createHeaders();
     this.createRows();
     this.hash = uuidv4();
   }
 
   @Watch('inputFields.startTimeSelect')
-  startTimeSelectChanged(): void {
+  private startTimeSelectChanged(): void {
     this.getAppointmentConflicts();
   }
 
   @Watch('inputFields.endTimeSelect')
-  endTimeSelectChanged(): void {
+  private endTimeSelectChanged(): void {
     this.getAppointmentConflicts();
   }
 
   @Watch('inputFields.startDateString')
-  dateChanged(): void {
+  private dateChanged(): void {
     this.getAppointmentConflicts();
     this.inputFields.startDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.inputFields.startDateString);
   }
@@ -319,7 +320,7 @@ export default class Masterlist extends Vue {
     this.hash = uuidv4();
   }
 
-  createHeaders(): void {
+  private createHeaders(): void {
     if (this.localBackup !== null) {
       const today = new Date();
       const therapistHeaders = this.localBackup.therapists.filter(
@@ -336,7 +337,7 @@ export default class Masterlist extends Vue {
     }
   }
 
-  createRows(): void {
+  private createRows(): void {
     type TableRow = {
       [key: string]: string | Time | AppointmentSeries
     }
@@ -364,7 +365,7 @@ export default class Masterlist extends Vue {
     });
   }
 
-  hasOngoingAppointments(therapist : string, time: Time) : boolean {
+  private hasOngoingAppointments(therapist : string, time: Time) : boolean {
     return this.rows.some((row) => {
       if (row[therapist] !== '') {
         try {
@@ -380,7 +381,7 @@ export default class Masterlist extends Vue {
     });
   }
 
-  openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
+  private openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
     this.selectedAppointment.startTime = startTime;
@@ -389,7 +390,7 @@ export default class Masterlist extends Vue {
     this.getAppointmentConflicts();
   }
 
-  getAppointmentConflicts(): void {
+  private getAppointmentConflicts(): void {
     if (this.localBackup && this.inputFields.endTimeSelect !== '') {
       this.conflicts = this.localBackup.daylist.getAppointmentConflicts(
         this.currentWeekDay,
@@ -402,17 +403,17 @@ export default class Masterlist extends Vue {
     }
   }
 
-  getCombinedDate(): Date {
+  private getCombinedDate(): Date {
     const timezoneOffsetInHours = new Date(`${this.inputFields.startDateString}T00:00:00.000Z`).getTimezoneOffset() * -1;
     const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
     return new Date(`${this.inputFields.startDateString}T04:00:00.000${offsetSuffix}`);
   }
 
-  convertGermanToEnglishReadableString(): string {
+  private convertGermanToEnglishReadableString(): string {
     return Dateconversions.convertGermanToEnglishReadableString(this.inputFields.startDateStringFormatted);
   }
 
-  resetInputs(): void {
+  private resetInputs(): void {
     this.inputFields = {
       patientTextfield: '',
       startTimeSelect: '',
@@ -437,7 +438,7 @@ export default class Masterlist extends Vue {
     this.conflicts = [];
   }
 
-  addAppointment(
+  private addAppointment(
     event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string,
     startDate: Date, id: string, isBWO: boolean, interval: number },
   ): void {
@@ -460,7 +461,7 @@ export default class Masterlist extends Vue {
     this.resetInputs();
   }
 
-  changeAppointment(
+  private changeAppointment(
     event: {
       patient: string, therapist: string, therapistID: string, startTime: string, endTime: string,
       cancellations: string[], startDate: Date, id: string, isBWO: boolean, interval: number
@@ -484,7 +485,7 @@ export default class Masterlist extends Vue {
     }
   }
 
-  deleteAppointment(
+  private deleteAppointment(
     event: {
       patient: string, therapist: string, therapistID: string, startTime: string, endTime: string,
       cancellations: string[], startDate: Date, id: string, isBWO: boolean, interval: number
@@ -508,7 +509,7 @@ export default class Masterlist extends Vue {
     }
   }
 
-  hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
+  private hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
     const therapist = this.headers.find((header) => header.id === therapistID);
     let hasAbsence = false;
     if (therapist) {
@@ -521,7 +522,7 @@ export default class Masterlist extends Vue {
     return hasAbsence;
   }
 
-  saveAbsences(event: { absences: [{ start: string, end: string }], therapistID: string }): void {
+  private saveAbsences(event: { absences: [{ start: string, end: string }], therapistID: string }): void {
     if (this.localBackup) {
       const absences = event.absences.map(
         (abs) => new Absence(this.currentWeekDay, abs.start as unknown as Time, abs.end as unknown as Time),
@@ -531,7 +532,7 @@ export default class Masterlist extends Vue {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  calculateRowspan(appointment : string | AppointmentSeries) : number {
+  private calculateRowspan(appointment : string | AppointmentSeries) : number {
     if (typeof appointment === 'string') {
       return 1;
     }
@@ -539,7 +540,7 @@ export default class Masterlist extends Vue {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  getAllTimes(): string[] {
+  private getAllTimes(): string[] {
     return Dateconversions.getAllTimes();
   }
 }

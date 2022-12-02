@@ -139,6 +139,7 @@ export default class AppointmentFinder {
 
   private static getNextDateForWeekday(weekday: Weekday, startDate = new Date()) {
     let weekdayOffset = 1;
+    const cleanStartDate = new Date(startDate);
 
     switch (weekday) {
       case Weekday.MONDAY: weekdayOffset = 1; break;
@@ -150,7 +151,7 @@ export default class AppointmentFinder {
     }
 
     // eslint-disable-next-line no-mixed-operators
-    startDate.setDate(startDate.getDate() + ((7 - startDate.getDay()) % 7 + weekdayOffset) % 7);
-    return startDate;
+    cleanStartDate.setDate(cleanStartDate.getDate() + ((7 - cleanStartDate.getDay()) % 7 + weekdayOffset) % 7);
+    return cleanStartDate;
   }
 }

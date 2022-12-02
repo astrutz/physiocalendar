@@ -84,7 +84,7 @@
                 :startTime="row.startTime"
                 :endTime="row[header.value].endTime"
                 :appointment="row[header.value]"
-                :date="currentSingleDay"
+                :date="row[header.value].startDate ? `Seit ${convertDateToString(row[header.value].startDate)}` : currentSingleDay"
               />
             </td>
           </tr>
@@ -253,7 +253,7 @@ export default class Daylist extends Vue {
     this.hash = uuidv4();
   }
 
-  createHeaders(): void {
+  private createHeaders(): void {
     if (this.localBackup !== null) {
       this.headers = [];
       const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
@@ -274,7 +274,7 @@ export default class Daylist extends Vue {
     }
   }
 
-  createRows(): void {
+  private createRows(): void {
     type TableRow = {
       [key: string]: string | Time | SingleAppointment | AppointmentSeries
     }
@@ -317,7 +317,7 @@ export default class Daylist extends Vue {
     });
   }
 
-  hasOngoingAppointments(therapist : string, time: Time) : boolean {
+  private hasOngoingAppointments(therapist : string, time: Time) : boolean {
     return this.rows.some((row) => {
       if (row[therapist] !== '') {
         try {
@@ -333,7 +333,7 @@ export default class Daylist extends Vue {
     });
   }
 
-  openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
+  private openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
     this.selectedAppointment.startTime = startTime;
@@ -341,7 +341,7 @@ export default class Daylist extends Vue {
     this.createDialog = true;
   }
 
-  resetInputs(): void {
+  private resetInputs(): void {
     this.inputFields = {
       patientTextfield: '',
       startTimeSelect: '',
@@ -358,7 +358,7 @@ export default class Daylist extends Vue {
     this.appointmentsForPatient = [];
   }
 
-  searchAppointmentsForPatient(patient: string): void {
+  private searchAppointmentsForPatient(patient: string): void {
     if (this.localBackup) {
       let appointments: Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
       appointments = appointments.concat(this.localBackup.masterlist.getAppointmentSeriesByPatient(patient));
@@ -366,7 +366,7 @@ export default class Daylist extends Vue {
     }
   }
 
-  addAppointment(
+  private addAppointment(
     event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string },
   ): void {
     const appointment = new SingleAppointment(
@@ -383,7 +383,7 @@ export default class Daylist extends Vue {
     this.resetInputs();
   }
 
-  changeAppointment(
+  private changeAppointment(
     event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, id: string },
   ): void {
     const appointment = new SingleAppointment(
@@ -400,7 +400,7 @@ export default class Daylist extends Vue {
     }
   }
 
-  deleteAppointment(
+  private deleteAppointment(
     event: { patient: string, therapist: string, therapistID: string, startTime: string, endTime: string, id: string },
   ): void {
     if (this.localBackup) {
@@ -417,7 +417,7 @@ export default class Daylist extends Vue {
     }
   }
 
-  changeException(event: { isException: boolean, appointment: AppointmentSeries }): void {
+  private changeException(event: { isException: boolean, appointment: AppointmentSeries }): void {
     if (this.localBackup) {
       if (event.isException) {
         this.store.addCancellation({ date: this.currentSingleDay, appointment: event.appointment });
@@ -427,7 +427,7 @@ export default class Daylist extends Vue {
     }
   }
 
-  hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
+  private hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
     const therapist = this.headers.find((header) => header.id === therapistID);
     let hasAbsence = false;
     if (therapist) {
@@ -440,7 +440,7 @@ export default class Daylist extends Vue {
     return hasAbsence;
   }
 
-  saveAbsences(event: { absences: [{ start: string, end: string }], therapistID: string }): void {
+  private saveAbsences(event: { absences: [{ start: string, end: string }], therapistID: string }): void {
     if (this.localBackup) {
       const absences = event.absences.map(
         (abs) => new Absence(this.currentSingleDay, abs.start as unknown as Time, abs.end as unknown as Time),
@@ -450,7 +450,7 @@ export default class Daylist extends Vue {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  calculateRowspan(appointment : string | AppointmentSeries | SingleAppointment) : number {
+  private calculateRowspan(appointment : string | AppointmentSeries | SingleAppointment) : number {
     if (typeof appointment === 'string') {
       return 1;
     }
@@ -458,17 +458,17 @@ export default class Daylist extends Vue {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  convertStringToDate(date: string) : Date {
+  private convertStringToDate(date: string) : Date {
     return Dateconversions.convertReadableStringToDate(date);
   }
 
   // eslint-disable-next-line class-methods-use-this
-  convertDateToString(date: Date): string {
+  private convertDateToString(date: Date): string {
     return Dateconversions.convertDateToReadableString(date);
   }
 
   // eslint-disable-next-line class-methods-use-this
-  getAllTimes(): string[] {
+  private getAllTimes(): string[] {
     return Dateconversions.getAllTimes();
   }
 }

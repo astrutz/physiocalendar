@@ -187,7 +187,7 @@ export default class DaylistElement extends Vue {
     }
   }
 
-  changeAppointment(): void {
+  private changeAppointment(): void {
     if (this.patientTextfield !== '' && this.patientTextfield !== null) {
       if ((this.appointment as AppointmentSeries).startDate) {
         this.$emit('exceptionChanged', {
@@ -215,7 +215,7 @@ export default class DaylistElement extends Vue {
     }
   }
 
-  addAppointment(): void {
+  private addAppointment(): void {
     this.$emit('appointmentAdded', {
       patient: this.patientTextfield,
       therapist: this.therapist,
@@ -225,7 +225,7 @@ export default class DaylistElement extends Vue {
     });
   }
 
-  printAppointment(): void {
+  private printAppointment(): void {
     const printer = new Printer(
       this.patient,
       this.therapist,
@@ -238,12 +238,12 @@ export default class DaylistElement extends Vue {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  convertDate(date: Date): string {
+  private convertDate(date: Date): string {
     return Dateconversions.convertDateToReadableString(date);
   }
 
   // eslint-disable-next-line class-methods-use-this
-  getAllTimes(): string[] {
+  private getAllTimes(): string[] {
     return Dateconversions.getAllTimes();
   }
 }

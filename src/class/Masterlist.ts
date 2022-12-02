@@ -38,7 +38,7 @@ export default class Masterlist {
   }
 
   private static appointmentIsInInterval(appointment: AppointmentSeries, date: Date) : boolean {
-    const currentDate = appointment.startDate;
+    const currentDate = new Date(appointment.startDate);
     const tomorow = new Date(date.toDateString());
     tomorow.setDate(tomorow.getDate() + 1);
 
@@ -73,17 +73,6 @@ export default class Masterlist {
       ) as AppointmentSeries;
     }
     return undefined;
-  }
-
-  searchAppointmentStringForDaylist(therapistID: string, weekday: Weekday, startTime: Time, date: Date): string {
-    const currentDay = this.findListday(weekday);
-    if (currentDay !== undefined) {
-      const foundAppointment = currentDay.appointments.find(
-        (appointment) => Masterlist.filterAppointmentForDaylist(therapistID, startTime, appointment as AppointmentSeries, date),
-      ) as AppointmentSeries;
-      return foundAppointment?.patient || '';
-    }
-    return '';
   }
 
   searchAppointmentForDaylist(therapistID: string, weekday: Weekday, startTime: Time, date: Date): AppointmentSeries | undefined {

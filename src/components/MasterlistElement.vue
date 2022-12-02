@@ -177,6 +177,8 @@ export default class MasterlistElement extends Vue {
 
   @Prop() readonly id!: string;
 
+  @Prop() readonly appointmentStartDate!: Date;
+
   store = getModule(Store);
 
   private appointmentPatient = this.appointment.patient;
@@ -216,7 +218,7 @@ export default class MasterlistElement extends Vue {
   }
 
   @Watch('dialogIsOpen')
-  dialogIsOpenChanged(): void {
+  private dialogIsOpenChanged(): void {
     this.getAppointmentConflicts();
     if (this.dialogIsOpen) {
       this.startDate = new Date(this.appointment?.startDate.getTime());
@@ -228,22 +230,22 @@ export default class MasterlistElement extends Vue {
   }
 
   @Watch('startTimeSelect')
-  startTimeSelectChanged(): void {
+  private startTimeSelectChanged(): void {
     this.getAppointmentConflicts();
   }
 
   @Watch('endTimeSelect')
-  endTimeSelectChanged(): void {
+  private endTimeSelectChanged(): void {
     this.getAppointmentConflicts();
   }
 
   @Watch('startDateString')
-  dateChanged(): void {
+  private dateChanged(): void {
     this.getAppointmentConflicts();
     this.startDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
   }
 
-  dateIsAllowed(dateVal: string | Date): boolean {
+  private dateIsAllowed(dateVal: string | Date): boolean {
     if (typeof dateVal === 'string') {
       if (this.holidays.includes(dateVal)) {
         return false;
@@ -259,7 +261,7 @@ export default class MasterlistElement extends Vue {
     return day > 0 && day < 6;
   }
 
-  getAppointmentConflicts(): void {
+  private getAppointmentConflicts(): void {
     if (this.localBackup) {
       this.conflicts = this.localBackup.daylist.getAppointmentConflicts(
         this.day,
@@ -271,18 +273,18 @@ export default class MasterlistElement extends Vue {
     }
   }
 
-  getCombinedDate(dateString?: string): Date {
+  private getCombinedDate(dateString?: string): Date {
     const date = dateString || this.startDateString;
     const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
     const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
     return new Date(`${date}T04:00:00.000${offsetSuffix}`);
   }
 
-  convertGermanToEnglishReadableString(): string {
+  private convertGermanToEnglishReadableString(): string {
     return Dateconversions.convertGermanToEnglishReadableString(this.startDateStringFormatted);
   }
 
-  changeAppointment(): void {
+  private changeAppointment(): void {
     if (this.patientTextfield !== '' && this.patientTextfield !== null) {
       this.$emit('appointmentChanged', {
         patient: this.patientTextfield,
@@ -312,7 +314,7 @@ export default class MasterlistElement extends Vue {
     }
   }
 
-  addAppointment(): void {
+  private addAppointment(): void {
     this.$emit('appointmentAdded', {
       patient: this.patientTextfield,
       therapist: this.therapist,
@@ -325,7 +327,7 @@ export default class MasterlistElement extends Vue {
     });
   }
 
-  printAppointment(): void {
+  private printAppointment(): void {
     const printer = new Printer(
       this.patient, this.therapist, this.startTime as unknown as Time, this.endTime as unknown as Time, this.day,
       parseInt(this.interval, 10), this.appointment.cancellations, this.appointment.startDate,
@@ -334,7 +336,7 @@ export default class MasterlistElement extends Vue {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  getAllTimes(): string[] {
+  private getAllTimes(): string[] {
     return Dateconversions.getAllTimes();
   }
 }
