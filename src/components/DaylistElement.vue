@@ -2,7 +2,7 @@
   <v-dialog persistent v-model="dialogIsOpen" width="600">
     <template v-slot:activator="{ on, attrs }">
       <button
-        style="width: 100%"
+        style="width: 100%; height: 100%"
         type="button"
         @click="dialogIsOpen = true"
         v-bind="attrs"
@@ -20,7 +20,7 @@
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
-        {{ therapist }} - {{ date }} - {{ time }}
+        {{ therapist }} - {{ date }} - {{ startTime }} bis {{endTime}}
       </v-card-title>
 
       <v-card-text class="pt-5">
@@ -31,6 +31,23 @@
           v-model="patientTextfield"
           clearable
         ></v-text-field>
+
+        <v-select
+          :disabled="!!appointment.startDate"
+          :items="getAllTimes()"
+          label="Start um"
+          v-model="startTimeSelect"
+          :value="appointment.startTime"
+        ></v-select>
+
+        <v-select
+          :disabled="!!appointment.startDate"
+          :items="getAllTimes()"
+          label="Ende um"
+          v-model="endTimeSelect"
+          :value="appointment.endTime"
+        ></v-select>
+
         <div v-if="!!appointment.startDate">
           <v-alert type="warning"
             >Dieser Termin wurde aus der Stammliste generiert und kann daher
@@ -49,13 +66,13 @@
           Unter diesem Namen wurden weitere Termine gefunden:
           <div
             v-for="appointment in appointmentsForPatient"
-            :key="`${appointment.therapistID}-${appointment.time}-${appointment.weekday}`"
+            :key="`${appointment.therapistID}-${appointment.startTime}-${appointment.weekday}`"
           >
             {{
               appointment.weekday
                 ? appointment.weekday + "s"
                 : convertDate(appointment.date)
-            }}, {{ appointment.time }} bei
+            }}, {{ appointment.startTime }} bei
             {{ appointment.therapist }}
           </div>
         </v-alert>
@@ -119,7 +136,9 @@ import Store from '../store/backup';
 export default class DaylistElement extends Vue {
   @Prop() readonly patient!: string;
 
-  @Prop() readonly time!: string;
+  @Prop() readonly startTime!: string;
+
+  @Prop() readonly endTime!: string;
 
   @Prop() readonly date!: string;
 
@@ -131,11 +150,17 @@ export default class DaylistElement extends Vue {
 
   @Prop() readonly appointment!: Appointment;
 
+  @Prop() readonly id!: string;
+
   store = getModule(Store);
 
   private dialogIsOpen = false;
 
   private patientTextfield = this.patient;
+
+  private startTimeSelect = this.startTime;
+
+  private endTimeSelect = this.endTime;
 
   private isExceptionField = !!this.isException;
 
@@ -153,7 +178,7 @@ export default class DaylistElement extends Vue {
       );
       this.appointmentsForPatient = this.appointmentsForPatient.filter((appointment) => {
         if (this.appointment instanceof SingleAppointment && appointment instanceof SingleAppointment) {
-          return !(appointment.time === this.appointment.time
+          return !(appointment.startTime === this.appointment.startTime
             && this.appointment.date === appointment.date
             && this.appointment.therapistID === appointment.therapistID);
         }
@@ -162,7 +187,7 @@ export default class DaylistElement extends Vue {
     }
   }
 
-  changeAppointment(): void {
+  private changeAppointment(): void {
     if (this.patientTextfield !== '' && this.patientTextfield !== null) {
       if ((this.appointment as AppointmentSeries).startDate) {
         this.$emit('exceptionChanged', {
@@ -170,27 +195,42 @@ export default class DaylistElement extends Vue {
         });
       } else {
         this.$emit('appointmentChanged', {
-          patient: this.patientTextfield, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
+          patient: this.patientTextfield,
+          therapist: this.therapist,
+          therapistID: this.therapistID,
+          startTime: this.startTimeSelect,
+          endTime: this.endTimeSelect,
+          id: this.id,
         });
       }
     } else {
       this.$emit('appointmentDeleted', {
-        patient: this.patient, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
+        patient: this.patient,
+        therapist: this.therapist,
+        therapistID: this.therapistID,
+        startTime: this.startTimeSelect,
+        endTime: this.endTimeSelect,
+        id: this.id,
       });
     }
   }
 
-  addAppointment(): void {
+  private addAppointment(): void {
     this.$emit('appointmentAdded', {
-      patient: this.patientTextfield, therapist: this.therapist, therapistID: this.therapistID, time: this.time,
+      patient: this.patientTextfield,
+      therapist: this.therapist,
+      therapistID: this.therapistID,
+      startTime: this.startTimeSelect,
+      endTime: this.endTimeSelect,
     });
   }
 
-  printAppointment(): void {
+  private printAppointment(): void {
     const printer = new Printer(
       this.patient,
       this.therapist,
-      this.time as unknown as Time,
+      this.startTime as unknown as Time,
+      this.endTime as unknown as Time,
       Dateconversions.convertReadableStringToDate(this.date),
       0,
     );
@@ -198,8 +238,13 @@ export default class DaylistElement extends Vue {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  convertDate(date: Date): string {
+  private convertDate(date: Date): string {
     return Dateconversions.convertDateToReadableString(date);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private getAllTimes(): string[] {
+    return Dateconversions.getAllTimes();
   }
 }
 </script>

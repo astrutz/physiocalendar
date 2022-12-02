@@ -26,11 +26,12 @@
         <tbody>
           <tr v-for="(row, rowIndex) in rows" :key="row.name">
             <td
-              v-for="header in headers"
+              v-for="header in headers.filter(header => header === '' || row[header.value] != undefined)"
               :key="header.value"
+              :rowspan="calculateRowspan(row[header.value])"
               :class="{
                 'text-center': true,
-                'hour-begin': rowIndex % 3 === 0,
+                'hour-begin': rowIndex % 6 === 0,
                 'cell-bwo':
                   row[header.value] &&
                   row[header.value].patient &&
@@ -40,7 +41,7 @@
               }"
               @click="
                 row[header.value] === ''
-                  ? openCreateDialog(header.value, header.id, row.time)
+                  ? openCreateDialog(header.value, header.id, row.startTime)
                   : {}
               "
             >
@@ -54,18 +55,21 @@
               <div
                 v-else-if="row[header.value] === ''"
                 class="create-appointment"
-                @click="openCreateDialog(header.value, header.id, row.time)"
+                @click="openCreateDialog(header.value, header.id, row.startTime)"
               ></div>
               <MasterlistElement
                 v-else-if="row[header.value] && row[header.value].patient"
-                :key="`${hash}-${row[header.value].therapistID}-${row.time}`"
+                :key="`${hash}-${row[header.value].therapistID}-${row.startTime}`"
                 @appointmentAdded="addAppointment($event)"
                 @appointmentChanged="changeAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
                 :patient="row[header.value].patient"
+                :id="row[header.value].id"
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
-                :time="row.time"
+                :appointmentStartDate="row[header.value].startDate"
+                :startTime="row.startTime"
+                :endTime="row[header.value].endTime"
                 :appointment="row[header.value]"
                 :day="currentWeekDay"
               />
@@ -78,7 +82,7 @@
       <v-card>
         <v-card-title class="text-h5 grey lighten-2">
           {{ selectedAppointment.therapist }} -
-          {{ currentWeekDay.toLowerCase() }}s - {{ selectedAppointment.time }}
+          {{ currentWeekDay.toLowerCase() }}s - {{ selectedAppointment.startTime }}
         </v-card-title>
 
         <v-card-text class="pt-5">
@@ -87,6 +91,16 @@
             v-model="inputFields.patientTextfield"
             clearable
           ></v-text-field>
+          <v-select
+            :items="getAllTimes()"
+            label="Start um"
+            v-model="inputFields.startTimeSelect"
+          ></v-select>
+          <v-select
+            :items="getAllTimes()"
+            label="Ende um"
+            v-model="inputFields.endTimeSelect"
+          ></v-select>
           <v-row class="pl-3">
             <v-checkbox
               label="Patient ist aus BWO"
@@ -153,7 +167,7 @@
               >
                 {{ conflict.patient }} -
                 {{ conflict.date.toLocaleDateString() }},
-                {{ conflict.time }}
+                {{ conflict.startTime }}
               </li>
             </ul>
           </v-alert>
@@ -183,7 +197,8 @@
                 therapist: selectedAppointment.therapist,
                 therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
-                time: selectedAppointment.time,
+                startTime: inputFields.startTimeSelect,
+                endTime: inputFields.endTimeSelect,
                 interval: parseInt(inputFields.interval, 10),
                 isBWO: inputFields.isBWO,
                 startDate: getCombinedDate(),
@@ -230,6 +245,8 @@ export default class Masterlist extends Vue {
 
   inputFields = {
     patientTextfield: '',
+    startTimeSelect: '',
+    endTimeSelect: '',
     menuIsOpen: false,
     startDate: new Date(),
     interval: '1',
@@ -243,7 +260,7 @@ export default class Masterlist extends Vue {
   selectedAppointment = {
     therapist: '',
     therapistID: '',
-    time: '7:00',
+    startTime: '7:00',
     weekday: this.currentWeekDay,
   };
 
@@ -255,34 +272,44 @@ export default class Masterlist extends Vue {
 
   private headers: { text: string, value: string, id: string, absences: Absence[] }[] = [
     {
-      text: '', value: 'time', id: '', absences: [],
+      text: '', value: 'startTime', id: '', absences: [],
     },
   ];
 
   private rows: {
     [key: string]: string | Time | AppointmentSeries | Absence[]
-  }[] = [{ timeString: '' }];
+  }[] = [{ startTimeString: '' }];
 
   get localBackup(): Backup | null {
     return this.store.getBackup;
   }
 
   @Watch('currentWeekDay')
-  currentSingleDayChanged(): void {
+  private currentWeekDayChanged(): void {
     this.createHeaders();
     this.createRows();
     this.hash = uuidv4();
   }
 
   @Watch('localBackup')
-  localBackupChanged(): void {
+  private localBackupChanged(): void {
     this.createHeaders();
     this.createRows();
     this.hash = uuidv4();
   }
 
+  @Watch('inputFields.startTimeSelect')
+  private startTimeSelectChanged(): void {
+    this.getAppointmentConflicts();
+  }
+
+  @Watch('inputFields.endTimeSelect')
+  private endTimeSelectChanged(): void {
+    this.getAppointmentConflicts();
+  }
+
   @Watch('inputFields.startDateString')
-  dateChanged(): void {
+  private dateChanged(): void {
     this.getAppointmentConflicts();
     this.inputFields.startDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.inputFields.startDateString);
   }
@@ -293,7 +320,7 @@ export default class Masterlist extends Vue {
     this.hash = uuidv4();
   }
 
-  createHeaders(): void {
+  private createHeaders(): void {
     if (this.localBackup !== null) {
       const today = new Date();
       const therapistHeaders = this.localBackup.therapists.filter(
@@ -305,69 +332,92 @@ export default class Masterlist extends Vue {
         absences: therapist.absences.filter((abs) => abs.day === this.currentWeekDay),
       }));
       this.headers = [{
-        text: '', value: 'time', id: '', absences: [new Absence('a', Time['7:00'], Time['7:00'])],
+        text: '', value: 'startTime', id: '', absences: [new Absence('a', Time['7:00'], Time['7:00'])],
       }].concat(therapistHeaders);
     }
   }
 
-  createRows(): void {
+  private createRows(): void {
     type TableRow = {
       [key: string]: string | Time | AppointmentSeries
     }
 
-    const times = Object.values(Time).filter((time): time is string => time.toString().includes(':'));
-    const emptyRows = times.map((time) => ({
-      timeString: time.toString(),
-      time: time as unknown as Time,
+    const startTimes = Object.values(Time).filter((startTime): startTime is string => startTime.toString().includes(':'));
+    const emptyRows = startTimes.map((startTime) => ({
+      startTimeString: startTime.toString(),
+      startTime: startTime as unknown as Time,
     }));
 
-    this.rows = emptyRows.map((row) => {
+    this.rows = [];
+
+    emptyRows.forEach((row) => {
       const newRow: TableRow = {
-        timeString: row.timeString,
-        time: row.time,
+        startTimeString: row.startTimeString,
+        startTime: row.startTime,
       };
       this.headers.forEach((header) => {
-        if (header.text !== '') {
+        if (header.text !== '' && !this.hasOngoingAppointments(header.value, row.startTime)) {
           newRow[header.text] = this
-            .localBackup?.masterlist.searchAppointment(header.id, this.currentWeekDay, row.time as Time) || '';
+            .localBackup?.masterlist.searchAppointmentOnStartTime(header.id, this.currentWeekDay, row.startTime as Time) || '';
         }
       });
-      return newRow;
+      this.rows.push(newRow);
     });
   }
 
-  openCreateDialog(therapist: string, therapistID: string, time: string): void {
+  private hasOngoingAppointments(therapist : string, time: Time) : boolean {
+    return this.rows.some((row) => {
+      if (row[therapist] !== '') {
+        try {
+          const appointment = (row[therapist] as AppointmentSeries);
+          if (Time[appointment.startTime] < Time[time] && Time[appointment.endTime] > Time[time]) {
+            return true;
+          }
+        } catch (err) {
+          return false;
+        }
+      }
+      return false;
+    });
+  }
+
+  private openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
-    this.selectedAppointment.time = time;
+    this.selectedAppointment.startTime = startTime;
+    this.inputFields.startTimeSelect = startTime;
     this.createDialog = true;
     this.getAppointmentConflicts();
   }
 
-  getAppointmentConflicts(): void {
-    if (this.localBackup) {
+  private getAppointmentConflicts(): void {
+    if (this.localBackup && this.inputFields.endTimeSelect !== '') {
       this.conflicts = this.localBackup.daylist.getAppointmentConflicts(
         this.currentWeekDay,
         this.selectedAppointment.therapistID,
-        this.selectedAppointment.time as unknown as Time,
+        this.inputFields.startTimeSelect !== this.selectedAppointment.startTime
+          ? this.inputFields.startTimeSelect as unknown as Time : this.selectedAppointment.startTime as unknown as Time,
+        this.inputFields.endTimeSelect as unknown as Time,
         this.inputFields.startDate,
       );
     }
   }
 
-  getCombinedDate(): Date {
+  private getCombinedDate(): Date {
     const timezoneOffsetInHours = new Date(`${this.inputFields.startDateString}T00:00:00.000Z`).getTimezoneOffset() * -1;
     const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
     return new Date(`${this.inputFields.startDateString}T04:00:00.000${offsetSuffix}`);
   }
 
-  convertGermanToEnglishReadableString(): string {
+  private convertGermanToEnglishReadableString(): string {
     return Dateconversions.convertGermanToEnglishReadableString(this.inputFields.startDateStringFormatted);
   }
 
-  resetInputs(): void {
+  private resetInputs(): void {
     this.inputFields = {
       patientTextfield: '',
+      startTimeSelect: '',
+      endTimeSelect: '',
       menuIsOpen: false,
       interval: '1',
       isBWO: false,
@@ -381,25 +431,28 @@ export default class Masterlist extends Vue {
     this.selectedAppointment = {
       therapist: '',
       therapistID: '',
-      time: '7:00',
+      startTime: '7:00',
       weekday: this.currentWeekDay,
     };
 
     this.conflicts = [];
   }
 
-  addAppointment(
-    event: { therapist: string, therapistID: string, patient: string, time: string, startDate: Date, isBWO: boolean, interval: number },
+  private addAppointment(
+    event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string,
+    startDate: Date, id: string, isBWO: boolean, interval: number },
   ): void {
     const appointment = new AppointmentSeries(
       event.therapist,
       event.therapistID,
       event.patient,
-      event.time as unknown as Time,
+      event.startTime as unknown as Time,
+      event.endTime as unknown as Time,
       this.currentWeekDay,
       event.interval,
       [],
       event.startDate,
+      uuidv4(),
       event.isBWO,
     );
     if (this.localBackup) {
@@ -408,21 +461,23 @@ export default class Masterlist extends Vue {
     this.resetInputs();
   }
 
-  changeAppointment(
+  private changeAppointment(
     event: {
-      patient: string, therapist: string, therapistID: string, time: string,
-      cancellations: string[], startDate: Date, isBWO: boolean, interval: number
+      patient: string, therapist: string, therapistID: string, startTime: string, endTime: string,
+      cancellations: string[], startDate: Date, id: string, isBWO: boolean, interval: number
     },
   ): void {
     const appointment = new AppointmentSeries(
       event.therapist,
       event.therapistID,
       event.patient,
-      event.time as unknown as Time,
+      event.startTime as unknown as Time,
+      event.endTime as unknown as Time,
       this.currentWeekDay,
       event.interval,
       event.cancellations,
       event.startDate,
+      event.id,
       event.isBWO,
     );
     if (this.localBackup) {
@@ -430,10 +485,10 @@ export default class Masterlist extends Vue {
     }
   }
 
-  deleteAppointment(
+  private deleteAppointment(
     event: {
-      patient: string, therapist: string, therapistID: string, time: string,
-      cancellations: string[], startDate: Date, isBWO: boolean, interval: number
+      patient: string, therapist: string, therapistID: string, startTime: string, endTime: string,
+      cancellations: string[], startDate: Date, id: string, isBWO: boolean, interval: number
     },
   ): void {
     if (this.localBackup) {
@@ -441,18 +496,20 @@ export default class Masterlist extends Vue {
         event.therapist,
         event.therapistID,
         event.patient,
-        event.time as unknown as Time,
+        event.startTime as unknown as Time,
+        event.endTime as unknown as Time,
         this.currentWeekDay,
         event.interval,
         event.cancellations,
         event.startDate,
+        event.id,
         event.isBWO,
       );
       this.store.deleteAppointmentSeries(appointment);
     }
   }
 
-  hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
+  private hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
     const therapist = this.headers.find((header) => header.id === therapistID);
     let hasAbsence = false;
     if (therapist) {
@@ -465,13 +522,26 @@ export default class Masterlist extends Vue {
     return hasAbsence;
   }
 
-  saveAbsences(event: { absences: [{ start: string, end: string }], therapistID: string }): void {
+  private saveAbsences(event: { absences: [{ start: string, end: string }], therapistID: string }): void {
     if (this.localBackup) {
       const absences = event.absences.map(
         (abs) => new Absence(this.currentWeekDay, abs.start as unknown as Time, abs.end as unknown as Time),
       );
       this.store.setAbsencesForTherapistForDay({ absences, therapistID: event.therapistID.slice(), day: this.currentWeekDay });
     }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private calculateRowspan(appointment : string | AppointmentSeries) : number {
+    if (typeof appointment === 'string') {
+      return 1;
+    }
+    return appointment.calculateLength();
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private getAllTimes(): string[] {
+    return Dateconversions.getAllTimes();
   }
 }
 
@@ -486,6 +556,10 @@ th:first-child {
 
 th:last-child {
   border-top-right-radius: 15px;
+}
+
+tr:last-child td {
+  border-bottom: 1px solid #2a2f79 !important;
 }
 
 tr:last-child td:first-child {
@@ -506,10 +580,10 @@ th {
 
 td {
   border-right: 1px solid #2a2f79;
-  border-bottom: 1px solid #2a2f79;
   padding-left: 0px !important;
   padding-right: 0px !important;
   column-width: 300px;
+  height: 24px !important;
 }
 
 td:hover {

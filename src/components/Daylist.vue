@@ -31,11 +31,12 @@
         <tbody>
           <tr v-for="(row, rowIndex) in rows" :key="row.name">
             <td
-              v-for="header in headers"
+              v-for="header in headers.filter(header => header === '' || row[header.value] != undefined)"
               :key="header.value"
+              :rowspan="calculateRowspan(row[header.value])"
               :class="{
                 'text-center': true,
-                'hour-begin': rowIndex % 3 === 0,
+                'hour-begin': rowIndex % 6 === 0,
                 'cell-filled':
                   row[header.value] &&
                   row[header.value].patient &&
@@ -52,7 +53,7 @@
               }"
               @click="
                 row[header.value] === ''
-                  ? openCreateDialog(header.value, header.id, row.time)
+                  ? openCreateDialog(header.value, header.id, row.startTime)
                   : {}
               "
             >
@@ -66,22 +67,24 @@
               <div
                 v-else-if="row[header.value] === ''"
                 class="create-appointment"
-                @click="openCreateDialog(header.value, header.id, row.time)"
+                @click="openCreateDialog(header.value, header.id, row.startTime)"
               ></div>
               <DaylistElement
                 v-else-if="row[header.value] && row[header.value].patient"
-                :key="`${hash}-${row[header.value].therapistID}-${row.time}`"
+                :key="`${hash}-${row[header.value].therapistID}-${row.startTime}`"
                 @appointmentAdded="addAppointment($event)"
                 @appointmentChanged="changeAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
                 @exceptionChanged="changeException($event)"
                 :patient="row[header.value].patient"
+                :id="row[header.value].id"
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
                 :isException="row[header.value].startDate ? row[header.value].cancellations.includes(currentSingleDay) : false"
-                :time="row.time"
+                :startTime="row.startTime"
+                :endTime="row[header.value].endTime"
                 :appointment="row[header.value]"
-                :date="currentSingleDay"
+                :date="row[header.value].startDate ? `Seit ${convertDateToString(row[header.value].startDate)}` : currentSingleDay"
               />
             </td>
           </tr>
@@ -92,7 +95,7 @@
       <v-card>
         <v-card-title class="text-h5 grey lighten-2">
           {{ selectedAppointment.therapist }} - {{ currentSingleDay }} -
-          {{ selectedAppointment.time }}
+          {{ selectedAppointment.startTime }}
         </v-card-title>
 
         <v-card-text class="pt-5">
@@ -103,17 +106,29 @@
             clearable
           ></v-text-field>
 
+          <v-select
+          :items="getAllTimes()"
+          label="Start um"
+          v-model="inputFields.startTimeSelect"
+          ></v-select>
+
+          <v-select
+          :items="getAllTimes()"
+          label="Ende um"
+          v-model="inputFields.endTimeSelect"
+          ></v-select>
+
           <v-alert v-if="appointmentsForPatient.length > 0" type="info">
             Unter diesem Namen wurden weitere Termine gefunden:
             <div
               v-for="appointment in appointmentsForPatient"
-            :key="`${appointment.therapistID}-${appointment.time}-${appointment.weekday}`"
+            :key="`${appointment.therapistID}-${appointment.startTime}-${appointment.weekday}`"
             >
               {{
                 appointment.weekday
                   ? appointment.weekday + "s"
                   : convertDateToString(appointment.date)
-              }}, {{ appointment.time }} bei
+              }}, {{ appointment.startTime }} bei
               {{ appointment.therapist }}
             </div>
           </v-alert>
@@ -141,7 +156,8 @@
                 therapist: selectedAppointment.therapist,
                 therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
-                time: selectedAppointment.time,
+                startTime: inputFields.startTimeSelect,
+                endTime: inputFields.endTimeSelect,
               });
               createDialog = false;
             "
@@ -186,12 +202,14 @@ export default class Daylist extends Vue {
 
   inputFields = {
     patientTextfield: '',
+    startTimeSelect: '',
+    endTimeSelect: '',
   }
 
   selectedAppointment = {
     therapist: '',
     therapistID: '',
-    time: '7:00',
+    startTime: '7:00',
     day: this.currentSingleDay,
   };
 
@@ -203,13 +221,13 @@ export default class Daylist extends Vue {
 
   private headers: { text: string, value: string, id: string, absences: Absence[], align: string }[] = [
     {
-      text: '', value: 'time', id: '', absences: [], align: '',
+      text: '', value: 'startTime', id: '', absences: [], align: '',
     },
   ];
 
   private rows: {
     [key: string]: string | Time | SingleAppointment | AppointmentSeries | Absence[]
-  }[] = [{ timeString: '' }];
+  }[] = [{ startTimeString: '' }];
 
   get localBackup(): Backup | null {
     return this.store.getBackup;
@@ -235,7 +253,7 @@ export default class Daylist extends Vue {
     this.hash = uuidv4();
   }
 
-  createHeaders(): void {
+  private createHeaders(): void {
     if (this.localBackup !== null) {
       this.headers = [];
       const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
@@ -251,31 +269,33 @@ export default class Daylist extends Vue {
         align: 'center',
       }));
       this.headers = [{
-        text: '', value: 'time', id: '', absences: [new Absence('a', Time['7:00'], Time['7:00'])], align: '',
+        text: '', value: 'startTime', id: '', absences: [new Absence('a', Time['7:00'], Time['7:00'])], align: '',
       }].concat(therapistHeaders);
     }
   }
 
-  createRows(): void {
+  private createRows(): void {
     type TableRow = {
       [key: string]: string | Time | SingleAppointment | AppointmentSeries
     }
 
-    const times = Object.values(Time).filter((time): time is string => time.toString().includes(':'));
-    const emptyRows = times.map((time) => ({
-      timeString: time.toString(),
-      time: time as unknown as Time,
+    const startTimes = Object.values(Time).filter((startTime): startTime is string => startTime.toString().includes(':'));
+    const emptyRows = startTimes.map((startTime) => ({
+      startTimeString: startTime.toString(),
+      startTime: startTime as unknown as Time,
     }));
 
-    this.rows = emptyRows.map((row) => {
+    this.rows = [];
+
+    emptyRows.forEach((row) => {
       const newRow: TableRow = {
-        timeString: row.timeString,
-        time: row.time,
+        startTimeString: row.startTimeString,
+        startTime: row.startTime,
       };
       this.headers.forEach((header) => {
-        if (header.text !== '') {
+        if (header.text !== '' && !this.hasOngoingAppointments(header.value, row.startTime)) {
           const singleAppointment = this.localBackup?.daylist.searchAppointment(
-            header.id, this.currentSingleDay, row.time as Time,
+            header.id, this.currentSingleDay, row.startTime as Time,
           );
           if (singleAppointment !== undefined) {
             newRow[header.text] = singleAppointment;
@@ -284,7 +304,7 @@ export default class Daylist extends Vue {
             const weekday = Dateconversions.getWeekdayForDate(currentSingleDate);
             if (weekday) {
               const masterAppointment = this.localBackup?.masterlist.searchAppointmentForDaylist(
-                header.id, weekday, row.time as Time, currentSingleDate,
+                header.id, weekday, row.startTime as Time, currentSingleDate,
               );
               newRow[header.text] = masterAppointment || '';
             } else {
@@ -293,33 +313,52 @@ export default class Daylist extends Vue {
           }
         }
       });
-      return newRow;
+      this.rows.push(newRow);
     });
   }
 
-  openCreateDialog(therapist: string, therapistID: string, time: string): void {
+  private hasOngoingAppointments(therapist : string, time: Time) : boolean {
+    return this.rows.some((row) => {
+      if (row[therapist] !== '') {
+        try {
+          const appointment = (row[therapist] as Appointment);
+          if (Time[appointment.startTime] < Time[time] && Time[appointment.endTime] > Time[time]) {
+            return true;
+          }
+        } catch (err) {
+          return false;
+        }
+      }
+      return false;
+    });
+  }
+
+  private openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
-    this.selectedAppointment.time = time;
+    this.selectedAppointment.startTime = startTime;
+    this.inputFields.startTimeSelect = startTime;
     this.createDialog = true;
   }
 
-  resetInputs(): void {
+  private resetInputs(): void {
     this.inputFields = {
       patientTextfield: '',
+      startTimeSelect: '',
+      endTimeSelect: '',
     };
 
     this.selectedAppointment = {
       therapist: '',
       therapistID: '',
-      time: '7:00',
+      startTime: '7:00',
       day: this.currentSingleDay,
     };
 
     this.appointmentsForPatient = [];
   }
 
-  searchAppointmentsForPatient(patient: string): void {
+  private searchAppointmentsForPatient(patient: string): void {
     if (this.localBackup) {
       let appointments: Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
       appointments = appointments.concat(this.localBackup.masterlist.getAppointmentSeriesByPatient(patient));
@@ -327,14 +366,15 @@ export default class Daylist extends Vue {
     }
   }
 
-  addAppointment(
-    event: { therapist: string, therapistID: string, patient: string, time: string },
+  private addAppointment(
+    event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string },
   ): void {
     const appointment = new SingleAppointment(
       event.therapist,
       event.therapistID,
       event.patient,
-      event.time as unknown as Time,
+      event.startTime as unknown as Time,
+      event.endTime as unknown as Time,
       Dateconversions.convertReadableStringToDate(this.currentSingleDay),
     );
     if (this.localBackup) {
@@ -343,37 +383,41 @@ export default class Daylist extends Vue {
     this.resetInputs();
   }
 
-  changeAppointment(
-    event: { therapist: string, therapistID: string, patient: string, time: string },
+  private changeAppointment(
+    event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, id: string },
   ): void {
     const appointment = new SingleAppointment(
       event.therapist,
       event.therapistID,
       event.patient,
-      event.time as unknown as Time,
+      event.startTime as unknown as Time,
+      event.endTime as unknown as Time,
       Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+      event.id,
     );
     if (this.localBackup) {
       this.store.changeSingleAppointment(appointment);
     }
   }
 
-  deleteAppointment(
-    event: { patient: string, therapist: string, therapistID: string, time: string },
+  private deleteAppointment(
+    event: { patient: string, therapist: string, therapistID: string, startTime: string, endTime: string, id: string },
   ): void {
     if (this.localBackup) {
       const appointment = new SingleAppointment(
         event.therapist,
         event.therapistID,
         event.patient,
-        event.time as unknown as Time,
+        event.startTime as unknown as Time,
+        event.endTime as unknown as Time,
         Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+        event.id,
       );
       this.store.deleteSingleAppointment(appointment);
     }
   }
 
-  changeException(event: { isException: boolean, appointment: AppointmentSeries }): void {
+  private changeException(event: { isException: boolean, appointment: AppointmentSeries }): void {
     if (this.localBackup) {
       if (event.isException) {
         this.store.addCancellation({ date: this.currentSingleDay, appointment: event.appointment });
@@ -383,7 +427,7 @@ export default class Daylist extends Vue {
     }
   }
 
-  hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
+  private hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
     const therapist = this.headers.find((header) => header.id === therapistID);
     let hasAbsence = false;
     if (therapist) {
@@ -396,7 +440,7 @@ export default class Daylist extends Vue {
     return hasAbsence;
   }
 
-  saveAbsences(event: { absences: [{ start: string, end: string }], therapistID: string }): void {
+  private saveAbsences(event: { absences: [{ start: string, end: string }], therapistID: string }): void {
     if (this.localBackup) {
       const absences = event.absences.map(
         (abs) => new Absence(this.currentSingleDay, abs.start as unknown as Time, abs.end as unknown as Time),
@@ -406,13 +450,26 @@ export default class Daylist extends Vue {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  convertStringToDate(date: string) : Date {
+  private calculateRowspan(appointment : string | AppointmentSeries | SingleAppointment) : number {
+    if (typeof appointment === 'string') {
+      return 1;
+    }
+    return appointment.calculateLength();
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private convertStringToDate(date: string) : Date {
     return Dateconversions.convertReadableStringToDate(date);
   }
 
   // eslint-disable-next-line class-methods-use-this
-  convertDateToString(date: Date): string {
+  private convertDateToString(date: Date): string {
     return Dateconversions.convertDateToReadableString(date);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private getAllTimes(): string[] {
+    return Dateconversions.getAllTimes();
   }
 }
 
@@ -427,6 +484,10 @@ th:first-child {
 
 th:last-child {
   border-top-right-radius: 15px;
+}
+
+tr:last-child td {
+  border-bottom: 1px solid #2a2f79 !important;
 }
 
 tr:last-child td:first-child {
@@ -451,6 +512,7 @@ td {
   padding-left: 0px !important;
   padding-right: 0px !important;
   column-width: 300px;
+  height: 24px !important;
 }
 
 td:hover {

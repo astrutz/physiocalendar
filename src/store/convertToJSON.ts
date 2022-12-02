@@ -15,10 +15,12 @@ function convertAppointmentSeries(appointments: AppointmentSeries[]): JSONAppoin
   return appointments.map(
     (appointment) => (
       {
+        id: appointment.id,
         therapist: appointment.therapist,
         therapistID: appointment.therapistID,
         patient: appointment.patient,
-        time: appointment.time.toString(),
+        startTime: appointment.startTime.toString(),
+        endTime: appointment.endTime.toString(),
         startDate: appointment.startDate.getTime(),
         isBWO: appointment.isBWO || false,
         interval: appointment.interval,
@@ -42,10 +44,12 @@ function convertSingleAppointments(appointments: SingleAppointment[]): JSONSingl
   return appointments.map(
     (appointment) => (
       {
+        id: appointment.id,
         therapist: appointment.therapist,
         therapistID: appointment.therapistID,
         patient: appointment.patient,
-        time: appointment.time.toString(),
+        startTime: appointment.startTime.toString(),
+        endTime: appointment.endTime.toString(),
       }
     ),
   );

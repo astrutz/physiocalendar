@@ -67,13 +67,13 @@ export default class SingleDayPicker extends Vue {
   }
 
   @Watch('date')
-  dateChanged(): void {
+  private dateChanged(): void {
     this.dateFormatted = Dateconversions.convertEnglishToGermanReadableString(this.date);
     this.weekday = this.getWeekdaybyDate();
     this.$emit('currentDayChanged', this.dateFormatted);
   }
 
-  dateIsAllowed(dateVal: string | Date): boolean {
+  private dateIsAllowed(dateVal: string | Date): boolean {
     if (typeof dateVal === 'string') {
       if (this.holidays.includes(dateVal)) {
         return false;
@@ -89,14 +89,14 @@ export default class SingleDayPicker extends Vue {
     return day > 0 && day < 7;
   }
 
-  getCombinedDate(dateString?: string): Date {
+  private getCombinedDate(dateString?: string): Date {
     const date = dateString || this.date;
     const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
     const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
     return new Date(`${date}T00:00:00.000${offsetSuffix}`);
   }
 
-  getWeekdaybyDate(date? : Date) : string {
+  private getWeekdaybyDate(date? : Date) : string {
     const dateToCheck = date || this.getCombinedDate();
     switch (dateToCheck.getDay()) {
       case 1: return 'Mo,';
@@ -109,7 +109,7 @@ export default class SingleDayPicker extends Vue {
     }
   }
 
-  setPreviousDate(): void {
+  private setPreviousDate(): void {
     const date = this.getCombinedDate();
     date.setDate(date.getDate() - 1);
     while (!this.dateIsAllowed(date)) {
@@ -118,7 +118,7 @@ export default class SingleDayPicker extends Vue {
     this.date = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
   }
 
-  setNextDate(): void {
+  private setNextDate(): void {
     const date = this.getCombinedDate();
     date.setDate(date.getDate() + 1);
     while (!this.dateIsAllowed(date)) {

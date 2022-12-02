@@ -180,14 +180,14 @@
           <v-row class="pl-3">
             <v-col
               v-for="suggestion in appointmentSuggestions"
-              :key="`${suggestion.therapist}-${suggestion.date}-${suggestion.time}-${Math.random()}`"
+              :key="`${suggestion.therapist}-${suggestion.date}-${suggestion.startTime}-${Math.random()}`"
               cols="4"
               style="padding: 0"
             >
               <v-checkbox
                 :label="`${suggestion.therapist}, ${convertSuggestionDate(
                   suggestion.date
-                )} um ${suggestion.time}`"
+                )} um ${suggestion.startTime}`"
                 :value="suggestion"
                 v-model="selectedAppointmentSuggestions"
                 :multiple="true"
@@ -238,7 +238,7 @@
           <strong>
             {{ suggestion.therapist }},
             {{ convertSuggestionDate(suggestion.date) }} um
-            {{ suggestion.time }} ({{ appointmentLength }} Minuten)
+            {{ suggestion.startTime }} ({{ appointmentLength }} Minuten)
           </strong>
         </p>
         <v-btn @click="resetFinder()" color="error" text> Abbrechen </v-btn>
@@ -379,8 +379,12 @@ export default class Terminfinder extends Vue {
       this.selectedAppointmentSuggestions.forEach((suggestion) => {
         this.store.addSingleAppointment(suggestion);
         if (this.appointmentLength === 40) {
-          const nextBlocker = { ...suggestion };
-          nextBlocker.time = nextTime(suggestion.time);
+          // const nextBlocker = { ...suggestion };
+          const nextBlocker = Object.create(
+            Object.getPrototypeOf(suggestion),
+            Object.getOwnPropertyDescriptors(suggestion),
+          );
+          nextBlocker.startTime = nextTime(suggestion.startTime);
           nextBlocker.patient = '/';
           this.store.addSingleAppointment(nextBlocker);
         }

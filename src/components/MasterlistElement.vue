@@ -2,7 +2,7 @@
   <v-dialog persistent v-model="dialogIsOpen" width="600">
     <template v-slot:activator="{ on, attrs }">
       <button
-        style="width: 100%"
+        style="width: 100%; height: 100%"
         type="button"
         @click="dialogIsOpen = true"
         v-bind="attrs"
@@ -14,7 +14,7 @@
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
-        {{ therapist }} - {{ day.toLowerCase() }}s - {{ time }}
+        {{ therapist }} - {{ day.toLowerCase() }}s - {{ startTime }} bis {{ endTime }}
       </v-card-title>
 
       <v-card-text class="pt-5">
@@ -24,6 +24,21 @@
           v-model="patientTextfield"
           clearable
         ></v-text-field>
+
+        <v-select
+          :items="getAllTimes()"
+          label="Start um"
+          v-model="startTimeSelect"
+          :value="startTime"
+        ></v-select>
+
+         <v-select
+          :items="getAllTimes()"
+          label="Ende um"
+          v-model="endTimeSelect"
+          :value="endTime"
+        ></v-select>
+
         <v-row class="pl-3 pr-3">
           <v-checkbox
             label="Patient ist aus BWO"
@@ -85,7 +100,7 @@
               :key="conflict.date.toLocaleDateString()"
             >
               {{ conflict.patient }} - {{ conflict.date.toLocaleDateString() }},
-              {{ conflict.time }}
+              {{ conflict.startTime }}
             </li>
           </ul>
         </v-alert>
@@ -148,7 +163,9 @@ import Store from '../store/backup';
 export default class MasterlistElement extends Vue {
   @Prop() readonly patient!: string;
 
-  @Prop() readonly time!: string;
+  @Prop() readonly startTime!: string;
+
+  @Prop() readonly endTime!: string;
 
   @Prop() readonly therapist!: string;
 
@@ -158,11 +175,15 @@ export default class MasterlistElement extends Vue {
 
   @Prop() readonly appointment!: AppointmentSeries;
 
+  @Prop() readonly id!: string;
+
+  @Prop() readonly appointmentStartDate!: Date;
+
   store = getModule(Store);
 
   private appointmentPatient = this.appointment.patient;
 
-  private appointmentPatientTime = this.appointment.time.toString();
+  private appointmentPatientTime = this.appointment.startTime.toString();
 
   private appointmentTherapist = this.appointment.therapist;
 
@@ -184,6 +205,10 @@ export default class MasterlistElement extends Vue {
 
   private patientTextfield = this.appointmentPatient;
 
+  private startTimeSelect = this.appointment.startTime;
+
+  private endTimeSelect = this.appointment.endTime;
+
   private conflicts: SingleAppointment[] = [];
 
   private holidays = holidaysJSON.days;
@@ -193,7 +218,7 @@ export default class MasterlistElement extends Vue {
   }
 
   @Watch('dialogIsOpen')
-  dialogIsOpenChanged(): void {
+  private dialogIsOpenChanged(): void {
     this.getAppointmentConflicts();
     if (this.dialogIsOpen) {
       this.startDate = new Date(this.appointment?.startDate.getTime());
@@ -204,13 +229,23 @@ export default class MasterlistElement extends Vue {
     }
   }
 
+  @Watch('startTimeSelect')
+  private startTimeSelectChanged(): void {
+    this.getAppointmentConflicts();
+  }
+
+  @Watch('endTimeSelect')
+  private endTimeSelectChanged(): void {
+    this.getAppointmentConflicts();
+  }
+
   @Watch('startDateString')
-  dateChanged(): void {
+  private dateChanged(): void {
     this.getAppointmentConflicts();
     this.startDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
   }
 
-  dateIsAllowed(dateVal: string | Date): boolean {
+  private dateIsAllowed(dateVal: string | Date): boolean {
     if (typeof dateVal === 'string') {
       if (this.holidays.includes(dateVal)) {
         return false;
@@ -226,38 +261,41 @@ export default class MasterlistElement extends Vue {
     return day > 0 && day < 6;
   }
 
-  getAppointmentConflicts(): void {
+  private getAppointmentConflicts(): void {
     if (this.localBackup) {
       this.conflicts = this.localBackup.daylist.getAppointmentConflicts(
         this.day,
         this.therapistID,
-        this.time as unknown as Time,
+        this.startTimeSelect !== this.appointment.startTime ? this.startTimeSelect : this.startTime as unknown as Time,
+        this.endTimeSelect !== this.appointment.endTime ? this.endTimeSelect : this.endTime as unknown as Time,
         this.startDate,
       );
     }
   }
 
-  getCombinedDate(dateString?: string): Date {
+  private getCombinedDate(dateString?: string): Date {
     const date = dateString || this.startDateString;
     const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
     const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
     return new Date(`${date}T04:00:00.000${offsetSuffix}`);
   }
 
-  convertGermanToEnglishReadableString(): string {
+  private convertGermanToEnglishReadableString(): string {
     return Dateconversions.convertGermanToEnglishReadableString(this.startDateStringFormatted);
   }
 
-  changeAppointment(): void {
+  private changeAppointment(): void {
     if (this.patientTextfield !== '' && this.patientTextfield !== null) {
       this.$emit('appointmentChanged', {
         patient: this.patientTextfield,
         therapist: this.therapist,
         therapistID: this.therapistID,
-        time: this.time,
+        startTime: this.startTimeSelect,
+        endTime: this.endTimeSelect,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         interval: parseInt(this.interval, 10),
+        id: this.id,
         isBWO: this.isBWO,
       });
     } else {
@@ -265,33 +303,41 @@ export default class MasterlistElement extends Vue {
         patient: this.patient,
         therapist: this.therapist,
         therapistID: this.therapistID,
-        time: this.time,
+        startTime: this.startTimeSelect,
+        endTime: this.endTimeSelect,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         interval: parseInt(this.interval, 10),
+        id: this.id,
         isBWO: this.isBWO,
       });
     }
   }
 
-  addAppointment(): void {
+  private addAppointment(): void {
     this.$emit('appointmentAdded', {
       patient: this.patientTextfield,
       therapist: this.therapist,
       therapistID: this.therapistID,
-      time: this.time,
+      startTime: this.startTimeSelect,
+      endTime: this.endTimeSelect,
       startDate: this.getCombinedDate(),
       interval: parseInt(this.interval, 10),
       isBWO: this.isBWO,
     });
   }
 
-  printAppointment(): void {
+  private printAppointment(): void {
     const printer = new Printer(
-      this.patient, this.therapist, this.time as unknown as Time, this.day,
+      this.patient, this.therapist, this.startTime as unknown as Time, this.endTime as unknown as Time, this.day,
       parseInt(this.interval, 10), this.appointment.cancellations, this.appointment.startDate,
     );
     printer.printAppointmentSeries();
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private getAllTimes(): string[] {
+    return Dateconversions.getAllTimes();
   }
 }
 </script>

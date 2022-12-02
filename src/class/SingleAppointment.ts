@@ -8,10 +8,12 @@ export default class SingleAppointment extends Appointment {
     therapist : string,
     therapistID : string,
     patient: string,
-    time: Time,
+    startTime: Time,
+    endTime: Time,
     date: Date,
+    id?: string,
   ) {
-    super(therapist, therapistID, patient, time);
+    super(therapist, therapistID, patient, startTime, endTime, id);
     this.date = date;
   }
 }

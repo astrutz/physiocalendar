@@ -11,7 +11,9 @@ export default class Printer {
 
   therapist: string;
 
-  time: Time;
+  startTime: Time;
+
+  endTime: Time;
 
   day: Weekday | Date;
 
@@ -26,7 +28,8 @@ export default class Printer {
   constructor(
     patient: string,
     therapist: string,
-    time: Time,
+    startTime: Time,
+    endTime: Time,
     day: Weekday | Date,
     interval: number,
     cancellations: string[] = [],
@@ -34,7 +37,8 @@ export default class Printer {
   ) {
     this.patient = patient;
     this.therapist = therapist;
-    this.time = time;
+    this.startTime = startTime;
+    this.endTime = endTime;
     this.day = day;
     this.interval = interval;
     this.cancellations = cancellations;
@@ -45,7 +49,7 @@ export default class Printer {
     const singleAppointments: SingleAppointment[] = appointmentsForPatient.filter(
       (appointment) => appointment instanceof SingleAppointment,
     ) as SingleAppointment[];
-    singleAppointments.push(new SingleAppointment(this.therapist, '', this.patient, this.time, this.day as Date));
+    singleAppointments.push(new SingleAppointment(this.therapist, '', this.patient, this.startTime, this.endTime, this.day as Date));
     singleAppointments.sort((appointment1, appointment2) => {
       if (appointment1.date > appointment2.date) {
         return 1;
@@ -53,10 +57,10 @@ export default class Printer {
       if (appointment1.date < appointment2.date) {
         return -1;
       }
-      if (appointment1.time > appointment2.time) {
+      if (appointment1.startTime > appointment2.startTime) {
         return 1;
       }
-      if (appointment1.time < appointment2.time) {
+      if (appointment1.startTime < appointment2.startTime) {
         return -1;
       }
       return 0;
@@ -71,7 +75,7 @@ export default class Printer {
       }
       const dateAsString = Dateconversions.convertDateToReadableString(appointment.date);
       const weekdayReadable = Printer.getWeekday(appointment.date);
-      str += `${weekdayReadable}${dateAsString} um ${appointment.time}\n`;
+      str += `${weekdayReadable}${dateAsString} um ${appointment.startTime}\n`;
       i += 1;
       if (j === singleAppointments.length - 1) {
         strs.push(str);
@@ -111,7 +115,7 @@ export default class Printer {
       );
       if (!holidays.includes(readableString)
       && !this.cancellations.includes(Dateconversions.convertDateToReadableString(currentSearchDate))) {
-        str += `${dateAsString}, ${Dateconversions.convertDateToReadableString(currentSearchDate)} um ${this.time}\n`;
+        str += `${dateAsString}, ${Dateconversions.convertDateToReadableString(currentSearchDate)} um ${this.startTime}\n`;
         i += 1;
       }
       currentSearchDate.setDate(currentSearchDate.getDate() + (this.interval * 7));
