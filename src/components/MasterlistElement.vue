@@ -227,6 +227,16 @@ export default class MasterlistElement extends Vue {
     }
   }
 
+  @Watch('startTimeSelect')
+  startTimeSelectChanged(): void {
+    this.getAppointmentConflicts();
+  }
+
+  @Watch('endTimeSelect')
+  endTimeSelectChanged(): void {
+    this.getAppointmentConflicts();
+  }
+
   @Watch('startDateString')
   dateChanged(): void {
     this.getAppointmentConflicts();
@@ -254,7 +264,8 @@ export default class MasterlistElement extends Vue {
       this.conflicts = this.localBackup.daylist.getAppointmentConflicts(
         this.day,
         this.therapistID,
-        this.startTime as unknown as Time,
+        this.startTimeSelect !== this.appointment.startTime ? this.startTimeSelect : this.startTime as unknown as Time,
+        this.endTimeSelect !== this.appointment.endTime ? this.endTimeSelect : this.endTime as unknown as Time,
         this.startDate,
       );
     }

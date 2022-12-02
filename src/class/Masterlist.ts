@@ -65,7 +65,7 @@ export default class Masterlist {
     return false;
   }
 
-  searchAppointment(therapistID: string, weekday: Weekday, startTime: Time): AppointmentSeries | undefined {
+  searchAppointmentOnStartTime(therapistID: string, weekday: Weekday, startTime: Time): AppointmentSeries | undefined {
     const currentDay = this.findListday(weekday);
     if (currentDay !== undefined) {
       return currentDay.appointments.find(
@@ -73,17 +73,6 @@ export default class Masterlist {
       ) as AppointmentSeries;
     }
     return undefined;
-  }
-
-  searchAppointmentString(therapistID: string, weekday: Weekday, startTime: Time): string {
-    const currentDay = this.findListday(weekday);
-    if (currentDay !== undefined) {
-      const foundAppointment = currentDay.appointments.find(
-        (appointment) => Masterlist.filterAppointment(therapistID, startTime, appointment as AppointmentSeries),
-      ) as AppointmentSeries;
-      return foundAppointment?.patient || '';
-    }
-    return '';
   }
 
   searchAppointmentStringForDaylist(therapistID: string, weekday: Weekday, startTime: Time, date: Date): string {

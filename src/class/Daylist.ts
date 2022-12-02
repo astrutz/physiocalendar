@@ -1,7 +1,7 @@
 // eslint-disable-next-line import/no-cycle
 import Appointment from './Appointment';
 import Dateconversions from './Dateconversions';
-import { nextTime, Time, Weekday } from './Enums';
+import { Time, Weekday } from './Enums';
 import ListSingleDay from './ListSingleDay';
 import SingleAppointment from './SingleAppointment';
 
@@ -14,32 +14,26 @@ export default class Daylist {
     this.elements = elements;
   }
 
-  searchAppointment(therapistID: string, dateString: string, startTime: Time, isLongAppointment = false): SingleAppointment | undefined {
+  searchAppointment(
+    therapistID: string, dateString: string, startTime: Time, endTime? : Time | undefined,
+  ): SingleAppointment | undefined {
     const currentDay = this.findListday(dateString);
     if (currentDay !== undefined) {
       return currentDay.appointments.find((appointment) => {
-        if (isLongAppointment) {
-          if (startTime === Time['20:40']) {
-            return false;
-          }
-          const nextAppointment = this.searchAppointment(therapistID, dateString, nextTime(startTime), false);
-          return (appointment.therapistID === therapistID && appointment.startTime === startTime) || nextAppointment;
+        if (appointment.therapistID !== therapistID) {
+          return false;
         }
-        return appointment.therapistID === therapistID && appointment.startTime === startTime;
+        if (endTime) {
+          return Time[appointment.endTime] === Time[endTime]
+          || Time[appointment.startTime] === Time[startTime]
+          || (Time[appointment.startTime] < Time[startTime] && Time[appointment.endTime] > Time[endTime])
+          || (Time[appointment.startTime] > Time[startTime] && Time[appointment.startTime] < Time[endTime])
+          || (Time[appointment.endTime] > Time[startTime] && Time[appointment.endTime] < Time[endTime]);
+        }
+        return Time[appointment.startTime] === Time[startTime];
       }) as SingleAppointment;
     }
     return undefined;
-  }
-
-  searchAppointmentString(therapistID: string, dateString: string, startTime: Time): string {
-    const currentDay = this.findListday(dateString);
-    if (currentDay !== undefined) {
-      const foundAppointment = currentDay.appointments.find(
-        (appointment) => appointment.therapistID === therapistID && appointment.startTime === startTime,
-      );
-      return foundAppointment?.patient || '';
-    }
-    return '';
   }
 
   getSingleAppointmentsByPatient(patient: string): SingleAppointment[] {
@@ -75,6 +69,7 @@ export default class Daylist {
     weekday: Weekday,
     therapistID: string,
     startTime: Time,
+    endTime: Time,
     startDate: Date,
   ): SingleAppointment[] {
     const conflicts: SingleAppointment[] = [];
@@ -89,7 +84,7 @@ export default class Daylist {
       default: break;
     }
 
-    const currentSearchDate = startDate;
+    const currentSearchDate = new Date(startDate);
     // eslint-disable-next-line no-mixed-operators
     currentSearchDate.setDate(currentSearchDate.getDate() + ((7 - currentSearchDate.getDay()) % 7 + weekdayOffset) % 7);
 
@@ -97,13 +92,14 @@ export default class Daylist {
     endDate.setFullYear(endDate.getFullYear() + 1);
 
     while (currentSearchDate < endDate) {
-      const conflictAppointment = this.searchAppointment(
+      const conflictAppointmentOnStart = this.searchAppointment(
         therapistID,
         Dateconversions.convertDateToReadableString(currentSearchDate),
         startTime,
+        endTime,
       );
-      if (conflictAppointment) {
-        conflicts.push(conflictAppointment);
+      if (conflictAppointmentOnStart) {
+        conflicts.push(conflictAppointmentOnStart);
       }
       currentSearchDate.setDate(currentSearchDate.getDate() + 7);
     }

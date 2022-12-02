@@ -297,6 +297,16 @@ export default class Masterlist extends Vue {
     this.hash = uuidv4();
   }
 
+  @Watch('inputFields.startTimeSelect')
+  startTimeSelectChanged(): void {
+    this.getAppointmentConflicts();
+  }
+
+  @Watch('inputFields.endTimeSelect')
+  endTimeSelectChanged(): void {
+    this.getAppointmentConflicts();
+  }
+
   @Watch('inputFields.startDateString')
   dateChanged(): void {
     this.getAppointmentConflicts();
@@ -347,7 +357,7 @@ export default class Masterlist extends Vue {
       this.headers.forEach((header) => {
         if (header.text !== '' && !this.hasOngoingAppointments(header.value, row.startTime)) {
           newRow[header.text] = this
-            .localBackup?.masterlist.searchAppointment(header.id, this.currentWeekDay, row.startTime as Time) || '';
+            .localBackup?.masterlist.searchAppointmentOnStartTime(header.id, this.currentWeekDay, row.startTime as Time) || '';
         }
       });
       this.rows.push(newRow);
@@ -380,11 +390,13 @@ export default class Masterlist extends Vue {
   }
 
   getAppointmentConflicts(): void {
-    if (this.localBackup) {
+    if (this.localBackup && this.inputFields.endTimeSelect !== '') {
       this.conflicts = this.localBackup.daylist.getAppointmentConflicts(
         this.currentWeekDay,
         this.selectedAppointment.therapistID,
-        this.selectedAppointment.startTime as unknown as Time,
+        this.inputFields.startTimeSelect !== this.selectedAppointment.startTime
+          ? this.inputFields.startTimeSelect as unknown as Time : this.selectedAppointment.startTime as unknown as Time,
+        this.inputFields.endTimeSelect as unknown as Time,
         this.inputFields.startDate,
       );
     }

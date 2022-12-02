@@ -111,9 +111,10 @@ export default class AppointmentFinder {
           return true;
         }
       }
+      // TODO: Don't use startTime twice, instead rewrite this with a endTime
       const foundAppointment = this.daylist.searchAppointment(
         therapistID, Dateconversions.convertDateToReadableString(searchingDate),
-        startTime as unknown as Time, this.appointmentLength === 40,
+        startTime as unknown as Time, startTime as unknown as Time,
       );
       if (foundAppointment === undefined) {
         const hasConflict = this.masterlist.getAppointmentConflict(
