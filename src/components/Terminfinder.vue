@@ -63,13 +63,12 @@
             ></v-text-field>
           </v-col>
           <v-col>
-            <v-radio-group v-model="appointmentLength">
-              <v-row>
-                <v-col v-for="n in [20, 40]" :key="n">
-                  <v-radio :label="`${n} Minuten`" :value="n"></v-radio>
-                </v-col>
-              </v-row>
-            </v-radio-group>
+            <v-select
+              :items="availableAppoinmentLengths"
+              label="Dauer der Termine"
+              v-model="appointmentLength"
+            >
+            </v-select>
           </v-col>
         </v-row>
         <v-row class="pl-3 mt-6">
@@ -279,6 +278,20 @@ export default class Terminfinder extends Vue {
   appointmentCount = 0;
 
   appointmentLength = 20;
+
+  availableAppoinmentLengths = [
+    { text: '10 Minuten', value: 10 },
+    { text: '20 Minuten', value: 20 },
+    { text: '30 Minuten', value: 30 },
+    { text: '40 Minuten', value: 40 },
+    { text: '50 Minuten', value: 50 },
+    { text: '60 Minuten', value: 60 },
+    { text: '70 Minuten', value: 70 },
+    { text: '80 Minuten', value: 80 },
+    { text: '90 Minuten', value: 90 },
+    { text: '100 Minuten', value: 100 },
+    { text: '110 Minuten', value: 110 },
+    { text: '120 Minuten', value: 120 }]
 
   menuIsOpen = false;
 

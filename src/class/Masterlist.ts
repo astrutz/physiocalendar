@@ -13,7 +13,7 @@ export default class Masterlist {
     this.elements = elements;
   }
 
-  private static filterAppointment(
+  private static filterAppointmentOnStartTime(
     therapistID: string, startTime: Time, appointment: AppointmentSeries,
   ): AppointmentSeries | undefined {
     if (appointment.therapistID === therapistID && appointment.startTime === startTime) {
@@ -23,21 +23,25 @@ export default class Masterlist {
   }
 
   private static filterAppointmentForDaylist(
-    therapistID: string, startTime: Time, appointment: AppointmentSeries, date: Date,
+    therapistID: string, startTime: Time, appointment: AppointmentSeries, date: Date, endTime?: Time,
   ): AppointmentSeries | undefined {
-    if (appointment.therapistID === therapistID && appointment.startTime === startTime && this.appointmentIsInInterval(appointment, date)) {
-      const readableStartDate = Dateconversions.convertDateToReadableString(appointment.startDate);
-      const readableTargetDate = Dateconversions.convertDateToReadableString(date);
-      if (
-        (appointment.startDate <= date || readableStartDate === readableTargetDate)
-      ) {
-        return appointment;
+    if (appointment.therapistID === therapistID) {
+      if (Dateconversions.appointmentIsInTimeInterval(appointment, startTime, endTime)) {
+        if (this.appointmentIsInDayInterval(appointment, date)) {
+          const readableStartDate = Dateconversions.convertDateToReadableString(appointment.startDate);
+          const readableTargetDate = Dateconversions.convertDateToReadableString(date);
+          if (
+            (appointment.startDate <= date || readableStartDate === readableTargetDate)
+          ) {
+            return appointment;
+          }
+        }
       }
     }
     return undefined;
   }
 
-  private static appointmentIsInInterval(appointment: AppointmentSeries, date: Date) : boolean {
+  private static appointmentIsInDayInterval(appointment: AppointmentSeries, date: Date) : boolean {
     const currentDate = new Date(appointment.startDate);
     const tomorow = new Date(date.toDateString());
     tomorow.setDate(tomorow.getDate() + 1);
@@ -69,17 +73,19 @@ export default class Masterlist {
     const currentDay = this.findListday(weekday);
     if (currentDay !== undefined) {
       return currentDay.appointments.find(
-        (appointment) => Masterlist.filterAppointment(therapistID, startTime, appointment as AppointmentSeries),
+        (appointment) => Masterlist.filterAppointmentOnStartTime(therapistID, startTime, appointment as AppointmentSeries),
       ) as AppointmentSeries;
     }
     return undefined;
   }
 
-  searchAppointmentForDaylist(therapistID: string, weekday: Weekday, startTime: Time, date: Date): AppointmentSeries | undefined {
+  searchAppointmentForDaylist(
+    therapistID: string, weekday: Weekday, startTime: Time, date: Date, endTime?: Time,
+  ): AppointmentSeries | undefined {
     const currentDay = this.findListday(weekday);
     if (currentDay !== undefined) {
       return currentDay.appointments.find(
-        (appointment) => Masterlist.filterAppointmentForDaylist(therapistID, startTime, appointment as AppointmentSeries, date),
+        (appointment) => Masterlist.filterAppointmentForDaylist(therapistID, startTime, appointment as AppointmentSeries, date, endTime),
       ) as AppointmentSeries;
     }
     return undefined;
@@ -89,6 +95,7 @@ export default class Masterlist {
     date: Date,
     therapistID: string,
     startTime: Time,
+    endTime: Time,
   ): AppointmentSeries | undefined {
     const dateWeekday = date.getDay();
     let weekday : Weekday = Weekday.FRIDAY;
@@ -102,7 +109,7 @@ export default class Masterlist {
       default: break;
     }
 
-    return this.searchAppointmentForDaylist(therapistID, weekday, startTime, date);
+    return this.searchAppointmentForDaylist(therapistID, weekday, startTime, date, endTime);
   }
 
   getAppointmentSeriesByPatient(patient: string): AppointmentSeries[] {

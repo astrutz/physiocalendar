@@ -2,7 +2,7 @@ import holidaysJSON from '@/data/holidays.json';
 import AppointmentRequest from './AppointmentRequest';
 import Dateconversions from './Dateconversions';
 import Daylist from './Daylist';
-import { nextTime, Time, Weekday } from './Enums';
+import { Time, Weekday } from './Enums';
 import Masterlist from './Masterlist';
 import SingleAppointment from './SingleAppointment';
 import Therapist from './Therapist';
@@ -111,24 +111,20 @@ export default class AppointmentFinder {
           return true;
         }
       }
-      // TODO: Don't use startTime twice, instead rewrite this with a endTime
+      const endTime = Time[parseInt(Time[startTime as unknown as Time] + (this.appointmentLength / 10), 10)];
       const foundAppointment = this.daylist.searchAppointment(
         therapistID, Dateconversions.convertDateToReadableString(searchingDate),
-        startTime as unknown as Time, startTime as unknown as Time,
+        startTime as unknown as Time, endTime as unknown as Time,
       );
       if (foundAppointment === undefined) {
         const hasConflict = this.masterlist.getAppointmentConflict(
-          searchingDate, therapistID, startTime as unknown as Time,
+          searchingDate, therapistID, startTime as unknown as Time, endTime as unknown as Time,
         );
-        const nextHasConflict = this.appointmentLength === 40 ? this.masterlist.getAppointmentConflict(
-          searchingDate, therapistID, nextTime(startTime as unknown as Time),
-        ) : false;
-        if (!hasConflict && !nextHasConflict) {
+        if (!hasConflict) {
           foundCounter += 1;
-          // TODO: Don't use startTime twice, instead rewrite this with a endTime
           foundAppointments.push(
             new SingleAppointment(therapist, therapistID, this.patient,
-              startTime as unknown as Time, startTime as unknown as Time, new Date(searchingDate.getTime())),
+              startTime as unknown as Time, endTime as unknown as Time, new Date(searchingDate.getTime())),
           );
         }
       }
