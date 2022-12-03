@@ -516,6 +516,8 @@ export default class Masterlist extends Vue {
       therapist.absences.forEach((abs) => {
         if (parseInt(Time[abs.start], 10) <= rowIndex && parseInt(Time[abs.end], 10) >= rowIndex + 1) {
           hasAbsence = true;
+        } else if (abs.end.toString() === '20:50' && rowIndex === 83) {
+          hasAbsence = true;
         }
       });
     }

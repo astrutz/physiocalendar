@@ -100,24 +100,3 @@ export enum Time {
   '20:40',
   '20:50'
 }
-
-export function nextTime(time: Time): Time {
-  const timeString = time.toString();
-  if (timeString === '20:50') {
-    return '7:00' as unknown as Time;
-  }
-
-  let hour = timeString.split(':')[0];
-  let minute = timeString.split(':')[1];
-
-  if (minute === '00') {
-    minute = '20';
-  } else if (minute === '20') {
-    minute = '40';
-  } else {
-    minute = '00';
-    hour = (parseInt(hour, 10) + 1).toString();
-  }
-
-  return `${hour}:${minute}` as unknown as Time;
-}

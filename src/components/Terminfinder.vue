@@ -72,7 +72,7 @@
           </v-col>
         </v-row>
         <v-row class="pl-3 mt-6">
-          <h3 style="color: black">Mögliche Termine</h3>
+          <h3 style="color: black">Mögliche Termine (mindestens drei auswählen)</h3>
         </v-row>
         <v-tooltip top>
           <template v-slot:activator="{ on, attrs }">
@@ -87,7 +87,7 @@
               <li>Vormittag: 10:00 bis 12:00</li>
               <li>Mittag: 12:00 bis 15:00</li>
               <li>Nachmittag: 15:00 bis 18:00</li>
-              <li>Abend: 18:00 bis 21:00</li>
+              <li>Abend: 18:00 bis 20:00</li>
             </ul>
           </span>
         </v-tooltip>
@@ -260,7 +260,7 @@ import AppointmentRequest from '@/class/AppointmentRequest';
 import SingleAppointment from '@/class/SingleAppointment';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
-import { nextTime, TimeOfDay } from '@/class/Enums';
+import { TimeOfDay } from '@/class/Enums';
 import { Component, Vue } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
 import Store from '../store/backup';
@@ -391,16 +391,6 @@ export default class Terminfinder extends Vue {
     if (this.backup) {
       this.selectedAppointmentSuggestions.forEach((suggestion) => {
         this.store.addSingleAppointment(suggestion);
-        if (this.appointmentLength === 40) {
-          // const nextBlocker = { ...suggestion };
-          const nextBlocker = Object.create(
-            Object.getPrototypeOf(suggestion),
-            Object.getOwnPropertyDescriptors(suggestion),
-          );
-          nextBlocker.startTime = nextTime(suggestion.startTime);
-          nextBlocker.patient = '/';
-          this.store.addSingleAppointment(nextBlocker);
-        }
       });
     }
     this.resetFinder();
