@@ -23,14 +23,7 @@ export default class Daylist {
         if (appointment.therapistID !== therapistID) {
           return false;
         }
-        if (endTime) {
-          return Time[appointment.endTime] === Time[endTime]
-          || Time[appointment.startTime] === Time[startTime]
-          || (Time[appointment.startTime] < Time[startTime] && Time[appointment.endTime] > Time[endTime])
-          || (Time[appointment.startTime] > Time[startTime] && Time[appointment.startTime] < Time[endTime])
-          || (Time[appointment.endTime] > Time[startTime] && Time[appointment.endTime] < Time[endTime]);
-        }
-        return Time[appointment.startTime] === Time[startTime];
+        return Dateconversions.appointmentIsInTimeInterval(appointment, startTime, endTime);
       }) as SingleAppointment;
     }
     return undefined;

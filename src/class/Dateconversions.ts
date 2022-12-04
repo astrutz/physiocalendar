@@ -1,6 +1,7 @@
 // eslint-disable-next-line import/no-cycle
 
-import { Weekday } from './Enums';
+import Appointment from './Appointment';
+import { Time, Weekday } from './Enums';
 
 export default class Dateconversions {
   static convertReadableStringToDate(readableDate: string): Date {
@@ -45,5 +46,16 @@ export default class Dateconversions {
       times.push(`${hour}:00`, `${hour}:10`, `${hour}:20`, `${hour}:30`, `${hour}:40`, `${hour}:50`);
     }
     return times;
+  }
+
+  static appointmentIsInTimeInterval(appointment: Appointment, startTime: Time, endTime?: Time) : boolean {
+    if (endTime) {
+      return Time[appointment.endTime] === Time[endTime]
+      || Time[appointment.startTime] === Time[startTime]
+      || (Time[appointment.startTime] < Time[startTime] && Time[appointment.endTime] > Time[endTime])
+      || (Time[appointment.startTime] > Time[startTime] && Time[appointment.startTime] < Time[endTime])
+      || (Time[appointment.endTime] > Time[startTime] && Time[appointment.endTime] < Time[endTime]);
+    }
+    return Time[appointment.startTime] === Time[startTime];
   }
 }

@@ -63,17 +63,16 @@
             ></v-text-field>
           </v-col>
           <v-col>
-            <v-radio-group v-model="appointmentLength">
-              <v-row>
-                <v-col v-for="n in [20, 40]" :key="n">
-                  <v-radio :label="`${n} Minuten`" :value="n"></v-radio>
-                </v-col>
-              </v-row>
-            </v-radio-group>
+            <v-select
+              :items="availableAppoinmentLengths"
+              label="Dauer der Termine"
+              v-model="appointmentLength"
+            >
+            </v-select>
           </v-col>
         </v-row>
         <v-row class="pl-3 mt-6">
-          <h3 style="color: black">Mögliche Termine</h3>
+          <h3 style="color: black">Mögliche Termine (mindestens drei auswählen)</h3>
         </v-row>
         <v-tooltip top>
           <template v-slot:activator="{ on, attrs }">
@@ -88,7 +87,7 @@
               <li>Vormittag: 10:00 bis 12:00</li>
               <li>Mittag: 12:00 bis 15:00</li>
               <li>Nachmittag: 15:00 bis 18:00</li>
-              <li>Abend: 18:00 bis 21:00</li>
+              <li>Abend: 18:00 bis 20:00</li>
             </ul>
           </span>
         </v-tooltip>
@@ -261,7 +260,7 @@ import AppointmentRequest from '@/class/AppointmentRequest';
 import SingleAppointment from '@/class/SingleAppointment';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
-import { nextTime, TimeOfDay } from '@/class/Enums';
+import { TimeOfDay } from '@/class/Enums';
 import { Component, Vue } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
 import Store from '../store/backup';
@@ -279,6 +278,20 @@ export default class Terminfinder extends Vue {
   appointmentCount = 0;
 
   appointmentLength = 20;
+
+  availableAppoinmentLengths = [
+    { text: '10 Minuten', value: 10 },
+    { text: '20 Minuten', value: 20 },
+    { text: '30 Minuten', value: 30 },
+    { text: '40 Minuten', value: 40 },
+    { text: '50 Minuten', value: 50 },
+    { text: '60 Minuten', value: 60 },
+    { text: '70 Minuten', value: 70 },
+    { text: '80 Minuten', value: 80 },
+    { text: '90 Minuten', value: 90 },
+    { text: '100 Minuten', value: 100 },
+    { text: '110 Minuten', value: 110 },
+    { text: '120 Minuten', value: 120 }]
 
   menuIsOpen = false;
 
@@ -378,16 +391,6 @@ export default class Terminfinder extends Vue {
     if (this.backup) {
       this.selectedAppointmentSuggestions.forEach((suggestion) => {
         this.store.addSingleAppointment(suggestion);
-        if (this.appointmentLength === 40) {
-          // const nextBlocker = { ...suggestion };
-          const nextBlocker = Object.create(
-            Object.getPrototypeOf(suggestion),
-            Object.getOwnPropertyDescriptors(suggestion),
-          );
-          nextBlocker.startTime = nextTime(suggestion.startTime);
-          nextBlocker.patient = '/';
-          this.store.addSingleAppointment(nextBlocker);
-        }
       });
     }
     this.resetFinder();
