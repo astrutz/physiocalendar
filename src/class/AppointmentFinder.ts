@@ -30,6 +30,8 @@ export default class AppointmentFinder {
 
   static ADDITIONAL_WEEKS = 3;
 
+  static MAX_SEARCH_DATE_INTERVAL = 31536000000;
+
   static timeMapping = AppointmentRequest.timesOfDayToTimes();
 
   constructor(
@@ -59,7 +61,7 @@ export default class AppointmentFinder {
     const currentSearchDate = new Date();
     for (let i = 0;
       i < this.appointmentsNeeded + AppointmentFinder.ADDITIONAL_WEEKS
-        && (currentSearchDate.getTime() - new Date().getTime() < 31536000000);
+        && (currentSearchDate.getTime() - new Date().getTime() < AppointmentFinder.MAX_SEARCH_DATE_INTERVAL);
       i += 1) {
       currentSearchDate.setDate(currentSearchDate.getDate() + 7);
       const suggestionsForWeek = this.getSuggestionForWeek(currentSearchDate);
@@ -87,7 +89,7 @@ export default class AppointmentFinder {
         return true;
       });
     });
-    const suggestionsReduced = suggestions.slice(0, 3);
+    const suggestionsReduced = suggestions.slice(0, AppointmentFinder.APPOINTMENTS_PER_WEEK);
     suggestionsReduced.sort((suggestionA, suggestionB) => suggestionA.date.getTime() - suggestionB.date.getTime());
     return suggestionsReduced;
   }
