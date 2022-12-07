@@ -35,7 +35,7 @@
               <div>{{ label }}</div>
             </template>
             <template v-slot:prepend-item>
-              <v-list-item ripple @click="toggleAll">
+              <v-list-item ripple @click="toggleAllTherapists">
                 <v-list-item-action>
                   <v-icon
                     :color="
@@ -73,6 +73,14 @@
         </v-row>
         <v-row class="pl-3 mt-6">
           <h3 style="color: black">Mögliche Termine (mindestens drei auswählen)</h3>
+        </v-row>
+        <v-row class="pl-3 mt-6 mb-3">
+          <v-btn
+            @click="toggleAllSlots()"
+            :color="selectedAppointmentRequests.length === appointmentRequests.length ? '' : 'primary'"
+          >
+            Alle {{selectedAppointmentRequests.length === appointmentRequests.length ? 'abwählen' : 'auswählen'}}
+            </v-btn>
         </v-row>
         <v-tooltip top>
           <template v-slot:activator="{ on, attrs }">
@@ -160,7 +168,7 @@
           :disabled="
             patientTextfield === '' ||
             selectedTherapists.length === 0 ||
-            selectedAppointmentRequests.length === 0 ||
+            selectedAppointmentRequests.length < 3 ||
             appointmentCount === 0
           "
           color="primary"
@@ -340,7 +348,15 @@ export default class Terminfinder extends Vue {
     return 'mdi-checkbox-blank-outline';
   }
 
-  toggleAll(): void {
+  toggleAllSlots(): void {
+    if (this.selectedAppointmentRequests.length === this.appointmentRequests.length) {
+      this.selectedAppointmentRequests = [];
+    } else {
+      this.selectedAppointmentRequests = this.appointmentRequests.slice();
+    }
+  }
+
+  toggleAllTherapists(): void {
     if (this.selectedTherapists.length === this.therapists.length) {
       this.selectedTherapists = [];
     } else {
