@@ -1,13 +1,13 @@
 <template>
-  <v-stepper v-model="currentStep">
+  <v-stepper v-model="currentStep" non-linear>
     <v-stepper-header>
-      <v-stepper-step :complete="currentStep > 1" step="1">
+      <v-stepper-step editable :complete="currentStep > 1" step="1" @click="resetSelectedAppointmentSuggestions()">
         Patientendaten eintragen
       </v-stepper-step>
 
       <v-divider></v-divider>
 
-      <v-stepper-step :complete="currentStep > 2" step="2">
+      <v-stepper-step editable :complete="currentStep > 2" step="2">
         Verfügbaren Termin auswählen
       </v-stepper-step>
 
@@ -393,12 +393,17 @@ export default class Terminfinder extends Vue {
     }
   }
 
+  resetSelectedAppointmentSuggestions() : void {
+    this.selectedAppointmentSuggestions = [];
+  }
+
   resetFinder(): void {
     this.currentStep = 1;
     this.patientTextfield = '';
     this.selectedTherapists = [];
     this.selectedAppointmentRequests = [];
     this.selectedAppointmentSuggestions = [];
+    this.appointmentSuggestions = [];
     this.appointmentCount = 0;
     this.$emit('dialogClosed');
   }
