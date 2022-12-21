@@ -1,8 +1,10 @@
 import Appointment from './Appointment';
 import AppointmentSeries from './AppointmentSeries';
+import Cancellation from './Cancellation';
 import Dateconversions from './Dateconversions';
 import { Time, Weekday } from './Enums';
 import ListWeekDay from './ListWeekDay';
+import SingleAppointment from './SingleAppointment';
 
 export default class Masterlist {
   elements: ListWeekDay[];
@@ -114,27 +116,34 @@ export default class Masterlist {
 
   getAppointmentSeriesByPatient(patient: string): AppointmentSeries[] {
     let appointments: Appointment[] = [];
-    const monday = this.findListday(Weekday.MONDAY);
-    if (monday) {
-      appointments = appointments.concat(monday.appointments.filter((appointment) => appointment.patient === patient));
-    }
-    const tuesday = this.findListday(Weekday.TUESDAY);
-    if (tuesday) {
-      appointments = appointments.concat(tuesday.appointments.filter((appointment) => appointment.patient === patient));
-    }
-    const wednesday = this.findListday(Weekday.WEDNESDAY);
-    if (wednesday) {
-      appointments = appointments.concat(wednesday.appointments.filter((appointment) => appointment.patient === patient));
-    }
-    const thursday = this.findListday(Weekday.THURSDAY);
-    if (thursday) {
-      appointments = appointments.concat(thursday.appointments.filter((appointment) => appointment.patient === patient));
-    }
-    const friday = this.findListday(Weekday.FRIDAY);
-    if (friday) {
-      appointments = appointments.concat(friday.appointments.filter((appointment) => appointment.patient === patient));
-    }
+    this.elements.forEach((listWeekDay) => {
+      appointments = appointments.concat(listWeekDay.appointments.filter((appointment) => appointment.patient === patient));
+    });
     return Masterlist.removeDuplicates(appointments as AppointmentSeries[]);
+  }
+
+  getReplacementsByPatient(patient: string) : SingleAppointment[] {
+    const appointments: SingleAppointment[] = [];
+    this.elements.forEach((listWeekDay) => {
+      const replacements = listWeekDay.appointments.filter(
+        (appointment) => (appointment as AppointmentSeries).cancellations.some((c) => c.patient === patient),
+      );
+      replacements.forEach((appointment) => {
+        (appointment as AppointmentSeries).cancellations.forEach((cancellation) => {
+          if (cancellation.patient === patient) {
+            appointments.push(new SingleAppointment(
+              appointment.therapist,
+              appointment.therapistID,
+              appointment.patient,
+              appointment.startTime,
+              appointment.endTime,
+              Dateconversions.convertReadableStringToDate(cancellation.date),
+            ));
+          }
+        });
+      });
+    });
+    return appointments;
   }
 
   private static removeDuplicates(appointmentList: AppointmentSeries[]): AppointmentSeries[] {
@@ -185,18 +194,40 @@ export default class Masterlist {
     }
   }
 
-  addCancellation(date : string, appointment : AppointmentSeries) : void {
+  addCancellation(date : string, patient: string, appointment : AppointmentSeries) : void {
     const currentDay = this.findListday(appointment.weekday);
     const appointmentToBeChanged = currentDay?.appointments.find(
       (searchedAppointment) => searchedAppointment.id === appointment.id,
     );
     if (currentDay && appointmentToBeChanged) {
-      (appointmentToBeChanged as AppointmentSeries).cancellations.push(date);
+      (appointmentToBeChanged as AppointmentSeries).cancellations.push(new Cancellation(date, patient));
       const newAppointments = currentDay.appointments.filter(
         (filterAppointment) => filterAppointment.id !== appointment.id,
       );
       newAppointments.push(appointment);
       currentDay.appointments = newAppointments;
+    }
+  }
+
+  changeCancellation(date : string, patient: string, appointment: AppointmentSeries) : void {
+    const currentDay = this.findListday(appointment.weekday);
+    const appointmentToBeChanged = currentDay?.appointments.find(
+      (searchedAppointment) => searchedAppointment.id === appointment.id,
+    );
+    if (currentDay && appointmentToBeChanged) {
+      const newAppointment = (appointmentToBeChanged as AppointmentSeries);
+      const cancellation = newAppointment.cancellations.find((c) => c.date === date);
+      if (cancellation) {
+        cancellation.patient = patient;
+        const newCancellations = newAppointment.cancellations.filter((c) => c.date !== date);
+        newCancellations.push(cancellation);
+        newAppointment.cancellations = newCancellations;
+        const newAppointments = currentDay.appointments.filter(
+          (filterAppointment) => filterAppointment.id !== appointment.id,
+        );
+        newAppointments.push(newAppointment);
+        currentDay.appointments = newAppointments;
+      }
     }
   }
 
@@ -207,7 +238,7 @@ export default class Masterlist {
     );
     if (currentDay && appointmentToBeChanged) {
       (appointmentToBeChanged as AppointmentSeries)
-        .cancellations = (appointmentToBeChanged as AppointmentSeries).cancellations.filter((c) => c !== date);
+        .cancellations = (appointmentToBeChanged as AppointmentSeries).cancellations.filter((c) => c.date !== date);
       const newAppointments = currentDay.appointments.filter(
         (filterAppointment) => filterAppointment.id !== appointment.id,
       );

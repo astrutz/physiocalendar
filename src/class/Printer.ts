@@ -5,6 +5,7 @@ import Dateconversions from './Dateconversions';
 import { Time, Weekday } from './Enums';
 import SingleAppointment from './SingleAppointment';
 import Appointment from './Appointment';
+import Cancellation from './Cancellation';
 
 export default class Printer {
   patient: string;
@@ -19,7 +20,7 @@ export default class Printer {
 
   interval: number;
 
-  cancellations : string[];
+  cancellations : Cancellation[];
 
   startDate: Date | undefined;
 
@@ -32,7 +33,7 @@ export default class Printer {
     endTime: Time,
     day: Weekday | Date,
     interval: number,
-    cancellations: string[] = [],
+    cancellations: Cancellation[] = [],
     startDate?: Date,
   ) {
     this.patient = patient;
@@ -114,7 +115,7 @@ export default class Printer {
         Dateconversions.convertDateToReadableString(currentSearchDate),
       );
       if (!holidays.includes(readableString)
-      && !this.cancellations.includes(Dateconversions.convertDateToReadableString(currentSearchDate))) {
+      && !this.cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currentSearchDate))) {
         str += `${dateAsString}, ${Dateconversions.convertDateToReadableString(currentSearchDate)} um ${this.startTime}\n`;
         i += 1;
       }

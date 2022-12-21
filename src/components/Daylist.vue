@@ -75,12 +75,16 @@
                 @appointmentAdded="addAppointment($event)"
                 @appointmentChanged="changeAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
+                @exceptionAdded="addException($event)"
                 @exceptionChanged="changeException($event)"
+                @exceptionDeleted="deleteException($event)"
                 :patient="row[header.value].patient"
                 :id="row[header.value].id"
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
-                :isException="row[header.value].startDate ? row[header.value].cancellations.includes(currentSingleDay) : false"
+                :isException="row[header.value].startDate
+                 ? row[header.value].cancellations.some((c) => c.date === currentSingleDay) : false"
+                :replacementPatient="row[header.value].startDate ? getReplacementPatient(row[header.value].cancellations) : ''"
                 :startTime="row.startTime"
                 :endTime="row[header.value].endTime"
                 :appointment="row[header.value]"
@@ -176,6 +180,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Appointment from '@/class/Appointment';
 import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
+import Cancellation from '@/class/Cancellation';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import { Time } from '@/class/Enums';
@@ -362,12 +367,15 @@ export default class Daylist extends Vue {
     if (this.localBackup) {
       let appointments: Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
       appointments = appointments.concat(this.localBackup.masterlist.getAppointmentSeriesByPatient(patient));
+      appointments = appointments.concat(this.localBackup.masterlist.getReplacementsByPatient(patient));
       this.appointmentsForPatient = appointments;
     }
   }
 
   private addAppointment(
-    event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string },
+    event: {
+      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, id: string,
+    },
   ): void {
     const appointment = new SingleAppointment(
       event.therapist,
@@ -384,7 +392,9 @@ export default class Daylist extends Vue {
   }
 
   private changeAppointment(
-    event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, id: string },
+    event: {
+      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, id: string,
+    },
   ): void {
     const appointment = new SingleAppointment(
       event.therapist,
@@ -401,7 +411,9 @@ export default class Daylist extends Vue {
   }
 
   private deleteAppointment(
-    event: { patient: string, therapist: string, therapistID: string, startTime: string, endTime: string, id: string },
+    event: {
+      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, id: string,
+    },
   ): void {
     if (this.localBackup) {
       const appointment = new SingleAppointment(
@@ -417,14 +429,31 @@ export default class Daylist extends Vue {
     }
   }
 
-  private changeException(event: { isException: boolean, appointment: AppointmentSeries }): void {
+  private addException(event: { isException: boolean, patient: string, appointment: AppointmentSeries }): void {
     if (this.localBackup) {
-      if (event.isException) {
-        this.store.addCancellation({ date: this.currentSingleDay, appointment: event.appointment });
-      } else {
-        this.store.removeCancellation({ date: this.currentSingleDay, appointment: event.appointment });
-      }
+      this.store.addCancellation({
+        date: this.currentSingleDay, patient: event.patient, appointment: event.appointment,
+      });
     }
+  }
+
+  private changeException(event: { isException: boolean, patient: string, appointment: AppointmentSeries }): void {
+    if (this.localBackup) {
+      this.store.changeCancellation({
+        date: this.currentSingleDay, patient: event.patient, appointment: event.appointment,
+      });
+    }
+  }
+
+  private deleteException(event: { isException: boolean, patient: string, appointment: AppointmentSeries }): void {
+    if (this.localBackup) {
+      this.store.deleteCancellation({ date: this.currentSingleDay, appointment: event.appointment });
+    }
+  }
+
+  private getReplacementPatient(cancellations : Cancellation[]) : string {
+    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
+    return cancellation?.patient || '';
   }
 
   private hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {

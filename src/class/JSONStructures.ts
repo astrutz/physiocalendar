@@ -2,6 +2,11 @@
 
 import { Weekday } from './Enums';
 
+export interface JSONCancellation {
+  date: string;
+  patient: string;
+}
+
 export interface JSONAppointmentSeries {
   id: string,
   therapist : string,
@@ -12,7 +17,7 @@ export interface JSONAppointmentSeries {
   startDate : number,
   isBWO : boolean,
   interval: number,
-  cancellations: string[]
+  cancellations: JSONCancellation[]
 }
 
 export interface JSONListWeekDay {
