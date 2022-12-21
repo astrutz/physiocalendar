@@ -25,6 +25,7 @@ function convertAppointmentSeries(appointments: AppointmentSeries[]): JSONAppoin
         isBWO: appointment.isBWO || false,
         interval: appointment.interval,
         cancellations: appointment.cancellations,
+        comment: appointment.comment,
       }
     ),
   );
@@ -50,6 +51,7 @@ function convertSingleAppointments(appointments: SingleAppointment[]): JSONSingl
         patient: appointment.patient,
         startTime: appointment.startTime.toString(),
         endTime: appointment.endTime.toString(),
+        comment: appointment.comment,
       }
     ),
   );

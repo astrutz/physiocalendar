@@ -14,6 +14,7 @@ export interface JSONAppointmentSeries {
   patient: string,
   startTime: string,
   endTime: string,
+  comment: string,
   startDate : number,
   isBWO : boolean,
   interval: number,
@@ -36,6 +37,7 @@ export interface JSONSingleAppointment {
   patient: string,
   startTime: string,
   endTime: string,
+  comment: string,
 }
 
 export interface JSONListSingleDay {
