@@ -39,6 +39,18 @@ export default class Dateconversions {
     }
   }
 
+  static getWeekdayStringForDate(date: Date) : string {
+    switch (date.getDay()) {
+      case 1: return 'Mo,';
+      case 2: return 'Di,';
+      case 3: return 'Mi,';
+      case 4: return 'Do,';
+      case 5: return 'Fr,';
+      case 6: return 'Sa,';
+      default: return '';
+    }
+  }
+
   static getAllTimes(): string[] {
     const times = [];
     for (let i = 7; i < 21; i += 1) {

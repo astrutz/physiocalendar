@@ -88,7 +88,8 @@
                 :startTime="row.startTime"
                 :endTime="row[header.value].endTime"
                 :appointment="row[header.value]"
-                :date="row[header.value].startDate ? `Seit ${convertDateToString(row[header.value].startDate)}` : currentSingleDay"
+                :date="row[header.value].startDate ? `seit ${convertDateToString(row[header.value].startDate)}` : currentSingleDay"
+                :weekday="weekday"
               />
             </td>
           </tr>
@@ -98,7 +99,7 @@
     <v-dialog v-model="createDialog" width="600">
       <v-card>
         <v-card-title class="text-h5 grey lighten-2">
-          {{ selectedAppointment.therapist }} - {{ currentSingleDay }} -
+          {{ selectedAppointment.therapist }} - {{ weekday }} {{ currentSingleDay }} -
           {{ selectedAppointment.startTime }}
         </v-card-title>
 
@@ -205,6 +206,8 @@ export default class Daylist extends Vue {
 
   createDialog = false;
 
+  weekday = '';
+
   inputFields = {
     patientTextfield: '',
     startTimeSelect: '',
@@ -243,6 +246,7 @@ export default class Daylist extends Vue {
     this.createHeaders();
     this.createRows();
     this.hash = uuidv4();
+    this.weekday = Dateconversions.getWeekdayStringForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
   }
 
   @Watch('localBackup')
@@ -256,6 +260,7 @@ export default class Daylist extends Vue {
     this.createHeaders();
     this.createRows();
     this.hash = uuidv4();
+    this.weekday = Dateconversions.getWeekdayStringForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
   }
 
   private createHeaders(): void {
