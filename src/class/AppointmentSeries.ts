@@ -1,4 +1,5 @@
 import Appointment from './Appointment';
+import Cancellation from './Cancellation';
 import { Time, Weekday } from './Enums';
 
 export default class AppointmentSeries extends Appointment {
@@ -6,7 +7,7 @@ export default class AppointmentSeries extends Appointment {
 
   interval: number;
 
-  cancellations: string[];
+  cancellations: Cancellation[];
 
   startDate: Date;
 
@@ -20,7 +21,7 @@ export default class AppointmentSeries extends Appointment {
     endTime: Time,
     weekday: Weekday,
     interval: number,
-    cancellations: string[],
+    cancellations: Cancellation[],
     startDate?: Date,
     id?: string,
     isBWO = false,

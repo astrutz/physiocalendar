@@ -15,6 +15,11 @@
           }"
           >{{ patient }}</span
         >
+        <span
+          v-if="appointment.startDate && isException"
+        >
+          <br><span>{{ replacementPatient }}</span>
+        </span>
       </button>
     </template>
 
@@ -58,6 +63,13 @@
             v-model="isExceptionField"
             :value="isExceptionField"
           ></v-checkbox>
+          <v-text-field
+          v-if="isExceptionField"
+          label="Ersatzpatient"
+          :value="replacementPatient"
+          v-model="replacementPatientTextField"
+          clearable
+        ></v-text-field>
         </div>
         <v-alert
           v-if="appointmentsForPatient.length > 0 && !appointment.startDate"
@@ -148,6 +160,8 @@ export default class DaylistElement extends Vue {
 
   @Prop() readonly isException!: boolean;
 
+  @Prop() readonly replacementPatient!: string;
+
   @Prop() readonly appointment!: Appointment;
 
   @Prop() readonly id!: string;
@@ -164,6 +178,8 @@ export default class DaylistElement extends Vue {
 
   private isExceptionField = !!this.isException;
 
+  private replacementPatientTextField = this.replacementPatient;
+
   appointmentsForPatient: Appointment[] = [];
 
   get localBackup(): Backup | null {
@@ -175,6 +191,9 @@ export default class DaylistElement extends Vue {
       this.appointmentsForPatient = this.localBackup.daylist.getSingleAppointmentsByPatient(this.patient);
       this.appointmentsForPatient = this.appointmentsForPatient.concat(
         this.localBackup.masterlist.getAppointmentSeriesByPatient(this.patient),
+      );
+      this.appointmentsForPatient = this.appointmentsForPatient.concat(
+        this.localBackup.masterlist.getReplacementsByPatient(this.patient),
       );
       this.appointmentsForPatient = this.appointmentsForPatient.filter((appointment) => {
         if (this.appointment instanceof SingleAppointment && appointment instanceof SingleAppointment) {
@@ -190,9 +209,27 @@ export default class DaylistElement extends Vue {
   private changeAppointment(): void {
     if (this.patientTextfield !== '' && this.patientTextfield !== null) {
       if ((this.appointment as AppointmentSeries).startDate) {
-        this.$emit('exceptionChanged', {
-          isException: this.isExceptionField, appointment: this.appointment as AppointmentSeries,
-        });
+        if (this.isExceptionField !== this.isException) {
+          if (this.isExceptionField) {
+            this.$emit('exceptionAdded', {
+              isException: this.isExceptionField,
+              patient: this.replacementPatientTextField,
+              appointment: this.appointment as AppointmentSeries,
+            });
+          } else {
+            this.$emit('exceptionDeleted', {
+              isException: this.isExceptionField,
+              patient: this.replacementPatientTextField,
+              appointment: this.appointment as AppointmentSeries,
+            });
+          }
+        } else if (this.replacementPatient !== this.replacementPatientTextField) {
+          this.$emit('exceptionChanged', {
+            isException: this.isExceptionField,
+            patient: this.replacementPatientTextField,
+            appointment: this.appointment as AppointmentSeries,
+          });
+        }
       } else {
         this.$emit('appointmentChanged', {
           patient: this.patientTextfield,

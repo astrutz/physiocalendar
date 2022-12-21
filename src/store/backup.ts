@@ -102,17 +102,27 @@ class StoreBackup extends VuexModule {
   }
 
   @Action
-  public addCancellation({ date, appointment }: { date: string, appointment: AppointmentSeries }) : void {
+  public addCancellation({ date, patient, appointment }: { date: string, patient: string, appointment: AppointmentSeries }) : void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
-      localBackup.masterlist.addCancellation(date, appointment);
+      localBackup.masterlist.addCancellation(date, patient, appointment);
       this.setBackup(localBackup);
       this.saveBackup();
     }
   }
 
   @Action
-  public removeCancellation({ date, appointment }: { date: string, appointment: AppointmentSeries }) : void {
+  public changeCancellation({ date, patient, appointment }: { date: string, patient: string, appointment: AppointmentSeries }) : void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      localBackup.masterlist.changeCancellation(date, patient, appointment);
+      this.setBackup(localBackup);
+      this.saveBackup();
+    }
+  }
+
+  @Action
+  public deleteCancellation({ date, appointment }: { date: string, appointment: AppointmentSeries }) : void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
       localBackup.masterlist.removeCancellation(date, appointment);

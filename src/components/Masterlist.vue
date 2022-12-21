@@ -219,6 +219,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
+import Cancellation from '@/class/Cancellation';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import { Time, Weekday } from '@/class/Enums';
@@ -464,7 +465,7 @@ export default class Masterlist extends Vue {
   private changeAppointment(
     event: {
       patient: string, therapist: string, therapistID: string, startTime: string, endTime: string,
-      cancellations: string[], startDate: Date, id: string, isBWO: boolean, interval: number
+      cancellations: Cancellation[], startDate: Date, id: string, isBWO: boolean, interval: number
     },
   ): void {
     const appointment = new AppointmentSeries(
@@ -488,7 +489,7 @@ export default class Masterlist extends Vue {
   private deleteAppointment(
     event: {
       patient: string, therapist: string, therapistID: string, startTime: string, endTime: string,
-      cancellations: string[], startDate: Date, id: string, isBWO: boolean, interval: number
+      cancellations: Cancellation[], startDate: Date, id: string, isBWO: boolean, interval: number
     },
   ): void {
     if (this.localBackup) {
