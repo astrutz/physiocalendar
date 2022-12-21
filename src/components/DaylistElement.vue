@@ -25,7 +25,7 @@
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
-        {{ therapist }} - {{ date }} - {{ startTime }} bis {{endTime}}
+        {{ therapist }} - {{ weekday }} {{ date }} - {{ startTime }} bis {{endTime}}
       </v-card-title>
 
       <v-card-text class="pt-5">
@@ -165,6 +165,8 @@ export default class DaylistElement extends Vue {
   @Prop() readonly appointment!: Appointment;
 
   @Prop() readonly id!: string;
+
+  @Prop() readonly weekday!: string;
 
   store = getModule(Store);
 
