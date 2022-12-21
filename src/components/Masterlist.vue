@@ -386,7 +386,10 @@ export default class Masterlist extends Vue {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
     this.selectedAppointment.startTime = startTime;
+    const times = this.getAllTimes();
+    const i = times.indexOf(startTime);
     this.inputFields.startTimeSelect = startTime;
+    this.inputFields.endTimeSelect = i + 2 < times.length - 1 ? times[i + 2] : times[times.length - 1];
     this.createDialog = true;
     this.getAppointmentConflicts();
   }
