@@ -123,6 +123,12 @@
           v-model="inputFields.endTimeSelect"
           ></v-select>
 
+          <v-text-field
+            label="Sonstige Bemerkungen"
+            v-model="inputFields.commentTextfield"
+            clearable
+          ></v-text-field>
+
           <v-alert v-if="appointmentsForPatient.length > 0" type="info">
             Unter diesem Namen wurden weitere Termine gefunden:
             <div
@@ -163,6 +169,7 @@
                 patient: inputFields.patientTextfield,
                 startTime: inputFields.startTimeSelect,
                 endTime: inputFields.endTimeSelect,
+                comment: inputFields.commentTextfield
               });
               createDialog = false;
             "
@@ -212,6 +219,7 @@ export default class Daylist extends Vue {
     patientTextfield: '',
     startTimeSelect: '',
     endTimeSelect: '',
+    commentTextfield: '',
   }
 
   selectedAppointment = {
@@ -359,6 +367,7 @@ export default class Daylist extends Vue {
       patientTextfield: '',
       startTimeSelect: '',
       endTimeSelect: '',
+      commentTextfield: '',
     };
 
     this.selectedAppointment = {
@@ -382,7 +391,7 @@ export default class Daylist extends Vue {
 
   private addAppointment(
     event: {
-      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, id: string,
+      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
     },
   ): void {
     const appointment = new SingleAppointment(
@@ -391,6 +400,7 @@ export default class Daylist extends Vue {
       event.patient,
       event.startTime as unknown as Time,
       event.endTime as unknown as Time,
+      event.comment,
       Dateconversions.convertReadableStringToDate(this.currentSingleDay),
     );
     if (this.localBackup) {
@@ -401,7 +411,7 @@ export default class Daylist extends Vue {
 
   private changeAppointment(
     event: {
-      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, id: string,
+      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
     },
   ): void {
     const appointment = new SingleAppointment(
@@ -410,6 +420,7 @@ export default class Daylist extends Vue {
       event.patient,
       event.startTime as unknown as Time,
       event.endTime as unknown as Time,
+      event.comment,
       Dateconversions.convertReadableStringToDate(this.currentSingleDay),
       event.id,
     );
@@ -420,7 +431,7 @@ export default class Daylist extends Vue {
 
   private deleteAppointment(
     event: {
-      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, id: string,
+      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
     },
   ): void {
     if (this.localBackup) {
@@ -430,6 +441,7 @@ export default class Daylist extends Vue {
         event.patient,
         event.startTime as unknown as Time,
         event.endTime as unknown as Time,
+        event.comment,
         Dateconversions.convertReadableStringToDate(this.currentSingleDay),
         event.id,
       );

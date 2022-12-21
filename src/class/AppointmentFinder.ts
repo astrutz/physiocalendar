@@ -125,7 +125,7 @@ export default class AppointmentFinder {
         if (!hasConflict) {
           foundAppointments.push(
             new SingleAppointment(therapist, therapistID, this.patient,
-              startTime as unknown as Time, endTime as unknown as Time, new Date(searchingDate.getTime())),
+              startTime as unknown as Time, endTime as unknown as Time, '', new Date(searchingDate.getTime())),
           );
           return false;
         }

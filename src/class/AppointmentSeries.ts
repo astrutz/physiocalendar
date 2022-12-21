@@ -19,6 +19,7 @@ export default class AppointmentSeries extends Appointment {
     patient: string,
     startTime: Time,
     endTime: Time,
+    comment: string,
     weekday: Weekday,
     interval: number,
     cancellations: Cancellation[],
@@ -26,7 +27,7 @@ export default class AppointmentSeries extends Appointment {
     id?: string,
     isBWO = false,
   ) {
-    super(therapist, therapistID, patient, startTime, endTime, id);
+    super(therapist, therapistID, patient, startTime, endTime, comment, id);
     this.weekday = weekday;
     this.interval = interval;
     this.cancellations = cancellations;

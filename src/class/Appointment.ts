@@ -14,12 +14,15 @@ export default class Appointment {
 
   endTime: Time;
 
+  comment: string;
+
   constructor(
     therapist : string,
     therapistID : string,
     patient: string,
     startTime: Time,
     endTime: Time,
+    comment: string,
     id? : string,
   ) {
     this.id = id || uuidv4();
@@ -28,6 +31,7 @@ export default class Appointment {
     this.patient = patient;
     this.startTime = startTime;
     this.endTime = endTime;
+    this.comment = comment;
   }
 
   // eslint-disable-next-line class-methods-use-this

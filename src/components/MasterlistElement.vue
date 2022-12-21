@@ -39,6 +39,13 @@
           :value="endTime"
         ></v-select>
 
+        <v-text-field
+          label="Sonstige Bemerkungen"
+          :value="comment"
+          v-model="commentTextfield"
+          clearable
+        ></v-text-field>
+
         <v-row class="pl-3 pr-3">
           <v-checkbox
             label="Patient ist aus BWO"
@@ -171,6 +178,8 @@ export default class MasterlistElement extends Vue {
 
   @Prop() readonly therapistID!: string;
 
+  @Prop() readonly comment!: string;
+
   @Prop() readonly day!: Weekday;
 
   @Prop() readonly appointment!: AppointmentSeries;
@@ -208,6 +217,8 @@ export default class MasterlistElement extends Vue {
   private startTimeSelect = this.appointment.startTime;
 
   private endTimeSelect = this.appointment.endTime;
+
+  private commentTextfield = this.appointment.comment || '';
 
   private conflicts: SingleAppointment[] = [];
 
@@ -292,6 +303,7 @@ export default class MasterlistElement extends Vue {
         therapistID: this.therapistID,
         startTime: this.startTimeSelect,
         endTime: this.endTimeSelect,
+        comment: this.commentTextfield,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         interval: parseInt(this.interval, 10),
@@ -305,6 +317,7 @@ export default class MasterlistElement extends Vue {
         therapistID: this.therapistID,
         startTime: this.startTimeSelect,
         endTime: this.endTimeSelect,
+        comment: this.commentTextfield,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
         interval: parseInt(this.interval, 10),
@@ -321,6 +334,7 @@ export default class MasterlistElement extends Vue {
       therapistID: this.therapistID,
       startTime: this.startTimeSelect,
       endTime: this.endTimeSelect,
+      comment: this.commentTextfield,
       startDate: this.getCombinedDate(),
       interval: parseInt(this.interval, 10),
       isBWO: this.isBWO,

@@ -53,6 +53,14 @@
           :value="appointment.endTime"
         ></v-select>
 
+        <v-text-field
+          :disabled="!!appointment.startDate"
+          label="Sonstige Bemerkungen"
+          :value="appointment.comment"
+          v-model="commentTextfield"
+          clearable
+        ></v-text-field>
+
         <div v-if="!!appointment.startDate">
           <v-alert type="warning"
             >Dieser Termin wurde aus der Stammliste generiert und kann daher
@@ -178,6 +186,8 @@ export default class DaylistElement extends Vue {
 
   private endTimeSelect = this.endTime;
 
+  private commentTextfield = this.appointment.comment || '';
+
   private isExceptionField = !!this.isException;
 
   private replacementPatientTextField = this.replacementPatient;
@@ -239,6 +249,7 @@ export default class DaylistElement extends Vue {
           therapistID: this.therapistID,
           startTime: this.startTimeSelect,
           endTime: this.endTimeSelect,
+          comment: this.commentTextfield,
           id: this.id,
         });
       }
@@ -249,6 +260,7 @@ export default class DaylistElement extends Vue {
         therapistID: this.therapistID,
         startTime: this.startTimeSelect,
         endTime: this.endTimeSelect,
+        comment: this.commentTextfield,
         id: this.id,
       });
     }
@@ -261,6 +273,7 @@ export default class DaylistElement extends Vue {
       therapistID: this.therapistID,
       startTime: this.startTimeSelect,
       endTime: this.endTimeSelect,
+      comment: this.commentTextfield,
     });
   }
 

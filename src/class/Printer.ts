@@ -50,7 +50,7 @@ export default class Printer {
     const singleAppointments: SingleAppointment[] = appointmentsForPatient.filter(
       (appointment) => appointment instanceof SingleAppointment,
     ) as SingleAppointment[];
-    singleAppointments.push(new SingleAppointment(this.therapist, '', this.patient, this.startTime, this.endTime, this.day as Date));
+    singleAppointments.push(new SingleAppointment(this.therapist, '', this.patient, this.startTime, this.endTime, '', this.day as Date));
     singleAppointments.sort((appointment1, appointment2) => {
       if (appointment1.date > appointment2.date) {
         return 1;

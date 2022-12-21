@@ -137,6 +137,7 @@ export default class Masterlist {
               appointment.patient,
               appointment.startTime,
               appointment.endTime,
+              '',
               Dateconversions.convertReadableStringToDate(cancellation.date),
             ));
           }
