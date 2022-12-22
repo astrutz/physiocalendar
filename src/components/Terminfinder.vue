@@ -18,11 +18,19 @@
 
     <v-stepper-items>
       <v-stepper-content step="1">
-        <v-text-field
-          label="Name des Patienten"
+        <v-combobox
           v-model="patientTextfield"
+          :loading="patientsLoading"
+          :items="foundPatients"
+          :search-input.sync="searchValue"
+          cache-items
+          class="mb-4 mt-0"
+          flat
+          hide-no-data
+          hide-details
           clearable
-        ></v-text-field>
+          label="Name des Patienten"
+        ></v-combobox>
         <v-row class="pl-3">
           <v-select
             v-model="selectedTherapists"
@@ -269,7 +277,7 @@ import SingleAppointment from '@/class/SingleAppointment';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import { TimeOfDay } from '@/class/Enums';
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue, Watch } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
 import Store from '../store/backup';
 
@@ -319,6 +327,12 @@ export default class Terminfinder extends Vue {
 
   backup: Backup | null = null;
 
+  private patientsLoading = false;
+
+  private searchValue = '';
+
+  private foundPatients : string[] = [];
+
   mounted(): void {
     this.backup = this.store.getBackup;
     if (this.backup) {
@@ -330,6 +344,13 @@ export default class Terminfinder extends Vue {
         (therapist) => therapist.activeSince < today && therapist.activeUntil > today,
       ).map((therapist) => therapist.id);
     }
+  }
+
+  @Watch('searchValue')
+  searchValueChanged(val: string | undefined): boolean {
+    this.foundPatients = [];
+    this.searchPatients(val);
+    return val !== this.patientTextfield;
   }
 
   get label(): string {
@@ -415,6 +436,27 @@ export default class Terminfinder extends Vue {
       });
     }
     this.resetFinder();
+  }
+
+  private searchPatients(searchQuery : string | undefined) : void {
+    if (searchQuery && searchQuery.length > 2 && this.backup) {
+      this.patientsLoading = true;
+      this.backup.masterlist.elements.forEach((listDay) => {
+        this.foundPatients = this.foundPatients.concat(
+          listDay.appointments.filter(
+            (appointment) => appointment.patient && appointment.patient.toLowerCase().includes(searchQuery.toLowerCase()),
+          ).map((appointment) => appointment.patient),
+        );
+      });
+      this.backup.daylist.elements.forEach((listDay) => {
+        this.foundPatients = this.foundPatients.concat(
+          listDay.appointments.filter(
+            (appointment) => appointment.patient && appointment.patient.toLowerCase().includes(searchQuery.toLowerCase()),
+          ).map((appointment) => appointment.patient),
+        );
+      });
+      this.patientsLoading = false;
+    }
   }
 }
 
