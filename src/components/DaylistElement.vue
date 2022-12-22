@@ -28,14 +28,6 @@
       </v-card-title>
 
       <v-card-text class="pt-4">
-        <!-- <v-text-field
-          :disabled="!!appointment.startDate"
-          label="Name des Patienten"
-          :value="patient"
-          v-model="patientTextfield"
-          clearable
-        ></v-text-field> -->
-
         <v-combobox
           :disabled="!!appointment.startDate"
           :value="patient"
@@ -43,7 +35,6 @@
           :loading="patientsLoading"
           :items="foundPatients"
           :search-input.sync="searchValue"
-          cache-items
           class="mb-4 mt-0"
           flat
           hide-no-data

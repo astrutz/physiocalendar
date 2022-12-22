@@ -104,12 +104,18 @@
         </v-card-title>
 
         <v-card-text class="pt-5">
-          <v-text-field
-            label="Name des Patienten"
+          <v-combobox
             v-model="inputFields.patientTextfield"
-            @input="searchAppointmentsForPatient($event)"
+            :loading="patientsLoading"
+            :items="foundPatients"
+            :search-input.sync="searchValue"
+            class="mb-4 mt-0"
+            flat
+            hide-no-data
+            hide-details
             clearable
-          ></v-text-field>
+            label="Name des Patienten"
+          ></v-combobox>
 
           <v-select
           :items="getAllTimes()"
@@ -245,6 +251,12 @@ export default class Daylist extends Vue {
     [key: string]: string | Time | SingleAppointment | AppointmentSeries | Absence[]
   }[] = [{ startTimeString: '' }];
 
+  private patientsLoading = false;
+
+  private searchValue = '';
+
+  private foundPatients : string[] = [];
+
   get localBackup(): Backup | null {
     return this.store.getBackup;
   }
@@ -262,6 +274,13 @@ export default class Daylist extends Vue {
     this.createHeaders();
     this.createRows();
     this.hash = uuidv4();
+  }
+
+  @Watch('searchValue')
+  searchValueChanged(val: string | undefined): boolean {
+    this.foundPatients = [];
+    this.searchPatients(val);
+    return val !== this.inputFields.patientTextfield;
   }
 
   mounted(): void {
@@ -497,6 +516,27 @@ export default class Daylist extends Vue {
         (abs) => new Absence(this.currentSingleDay, abs.start as unknown as Time, abs.end as unknown as Time),
       );
       this.store.setAbsencesForTherapistForDay({ absences, therapistID: event.therapistID.slice(), day: this.currentSingleDay });
+    }
+  }
+
+  private searchPatients(searchQuery : string | undefined) : void {
+    if (searchQuery && searchQuery.length > 2 && this.localBackup) {
+      this.patientsLoading = true;
+      this.localBackup.masterlist.elements.forEach((listDay) => {
+        this.foundPatients = this.foundPatients.concat(
+          listDay.appointments.filter(
+            (appointment) => appointment.patient && appointment.patient.toLowerCase().includes(searchQuery.toLowerCase()),
+          ).map((appointment) => appointment.patient),
+        );
+      });
+      this.localBackup.daylist.elements.forEach((listDay) => {
+        this.foundPatients = this.foundPatients.concat(
+          listDay.appointments.filter(
+            (appointment) => appointment.patient && appointment.patient.toLowerCase().includes(searchQuery.toLowerCase()),
+          ).map((appointment) => appointment.patient),
+        );
+      });
+      this.patientsLoading = false;
     }
   }
 
