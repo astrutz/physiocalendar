@@ -242,6 +242,7 @@ import {
   Component, Prop, Vue, Watch,
 } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
+import Util from '@/class/Util';
 import Store from '../store/backup';
 import MasterlistElement from './MasterlistElement.vue';
 import MasterlistHeader from './MasterlistHeader.vue';
@@ -572,20 +573,7 @@ export default class Masterlist extends Vue {
   private searchPatients(searchQuery : string | undefined) : void {
     if (searchQuery && searchQuery.length > 2 && this.localBackup) {
       this.patientsLoading = true;
-      this.localBackup.masterlist.elements.forEach((listDay) => {
-        this.foundPatients = this.foundPatients.concat(
-          listDay.appointments.filter(
-            (appointment) => appointment.patient && appointment.patient.toLowerCase().includes(searchQuery.toLowerCase()),
-          ).map((appointment) => appointment.patient),
-        );
-      });
-      this.localBackup.daylist.elements.forEach((listDay) => {
-        this.foundPatients = this.foundPatients.concat(
-          listDay.appointments.filter(
-            (appointment) => appointment.patient && appointment.patient.toLowerCase().includes(searchQuery.toLowerCase()),
-          ).map((appointment) => appointment.patient),
-        );
-      });
+      this.foundPatients = Util.searchPatientNames(this.localBackup, searchQuery);
       this.patientsLoading = false;
     }
   }

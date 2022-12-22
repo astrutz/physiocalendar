@@ -164,6 +164,7 @@
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
+import Util from '@/class/Util';
 import { Time, Weekday } from '@/class/Enums';
 import Printer from '@/class/Printer';
 import SingleAppointment from '@/class/SingleAppointment';
@@ -373,20 +374,7 @@ export default class MasterlistElement extends Vue {
   private searchPatients(searchQuery : string | undefined) : void {
     if (searchQuery && searchQuery.length > 2 && this.localBackup) {
       this.patientsLoading = true;
-      this.localBackup.masterlist.elements.forEach((listDay) => {
-        this.foundPatients = this.foundPatients.concat(
-          listDay.appointments.filter(
-            (appointment) => appointment.patient && appointment.patient.toLowerCase().includes(searchQuery.toLowerCase()),
-          ).map((appointment) => appointment.patient),
-        );
-      });
-      this.localBackup.daylist.elements.forEach((listDay) => {
-        this.foundPatients = this.foundPatients.concat(
-          listDay.appointments.filter(
-            (appointment) => appointment.patient && appointment.patient.toLowerCase().includes(searchQuery.toLowerCase()),
-          ).map((appointment) => appointment.patient),
-        );
-      });
+      this.foundPatients = Util.searchPatientNames(this.localBackup, searchQuery);
       this.patientsLoading = false;
     }
   }
