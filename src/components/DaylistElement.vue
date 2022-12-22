@@ -35,6 +35,7 @@
           :loading="patientsLoading"
           :items="foundPatients"
           :search-input.sync="searchValue"
+          @input="searchAppointmentsForPatient($event)"
           class="mb-4 mt-0"
           flat
           hide-no-data
@@ -235,6 +236,15 @@ export default class DaylistElement extends Vue {
     this.foundPatients = [];
     this.searchPatients(val);
     return val !== this.patientTextfield;
+  }
+
+  private searchAppointmentsForPatient(patient: string): void {
+    if (this.localBackup) {
+      let appointments: Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
+      appointments = appointments.concat(this.localBackup.masterlist.getAppointmentSeriesByPatient(patient));
+      appointments = appointments.concat(this.localBackup.masterlist.getReplacementsByPatient(patient));
+      this.appointmentsForPatient = appointments;
+    }
   }
 
   private changeAppointment(): void {

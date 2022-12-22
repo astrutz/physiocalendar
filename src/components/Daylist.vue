@@ -106,6 +106,7 @@
         <v-card-text class="pt-5">
           <v-combobox
             v-model="inputFields.patientTextfield"
+            @input="searchAppointmentsForPatient($event)"
             :loading="patientsLoading"
             :items="foundPatients"
             :search-input.sync="searchValue"
