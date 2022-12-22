@@ -2,10 +2,11 @@ import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import Daylist from '@/class/Daylist';
+import Exception from '@/class/Exception';
 import {
   JSONAbsence,
   JSONAppointmentSeries,
-  JSONBackup, JSONDaylist, JSONListSingleDay, JSONListWeekDay, JSONMasterlist, JSONSingleAppointment, JSONTherapist,
+  JSONBackup, JSONDaylist, JSONException, JSONListSingleDay, JSONListWeekDay, JSONMasterlist, JSONSingleAppointment, JSONTherapist,
 } from '@/class/JSONStructures';
 import Masterlist from '@/class/Masterlist';
 import SingleAppointment from '@/class/SingleAppointment';
@@ -67,6 +68,16 @@ function convertDaylist(daylist: Daylist): JSONDaylist {
   return { elements: listSingleDays };
 }
 
+function convertExceptions(exceptions: Exception[]) : JSONException[] {
+  return exceptions.map(
+    (exception) => ({
+      day: exception.day,
+      start: exception.start.toString(),
+      end: exception.end.toString(),
+    }),
+  );
+}
+
 function convertAbsences(absences : Absence[]) : JSONAbsence[] {
   return absences.map(
     (absence) => ({
@@ -83,7 +94,12 @@ function convertTherapists(therapists: Therapist[]): JSONTherapist[] {
       const activeSince = therapist.activeSince.getTime() === 315532800000 ? -1 : therapist.activeSince.getTime();
       const activeUntil = therapist.activeUntil.getTime() === 3471292800000 ? -1 : therapist.activeUntil.getTime();
       return {
-        name: therapist.name, id: therapist.id, activeSince, activeUntil, absences: convertAbsences(therapist.absences),
+        name: therapist.name,
+        id: therapist.id,
+        activeSince,
+        activeUntil,
+        absences: convertAbsences(therapist.absences),
+        exceptions: convertExceptions(therapist.exceptions),
       };
     },
   );

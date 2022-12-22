@@ -2,7 +2,7 @@ import Backup from '@/class/Backup';
 import Daylist from '@/class/Daylist';
 import {
   JSONAbsence,
-  JSONBackup, JSONDaylist, JSONMasterlist, JSONTherapist,
+  JSONBackup, JSONDaylist, JSONException, JSONMasterlist, JSONTherapist,
 } from '@/class/JSONStructures';
 import { Time, Weekday } from '@/class/Enums';
 import ListSingleDay from '@/class/ListSingleDay';
@@ -12,6 +12,7 @@ import Therapist from '@/class/Therapist';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import SingleAppointment from '@/class/SingleAppointment';
 import Absence from '@/class/Absence';
+import Exception from '@/class/Exception';
 
 function getListWeekDays(listWeekDaysJSON: JSONMasterlist): ListWeekDay[] {
   const listWeekDays = listWeekDaysJSON.elements.map((jsonElement) => {
@@ -57,13 +58,25 @@ function getAbsencesForTherapist(absencesJSON: JSONAbsence[]) : Absence[] {
   return absences;
 }
 
+function getExceptionsForTherapist(exceptionsJSON: JSONException[]) : Exception[] {
+  if (exceptionsJSON) {
+    const exceptions = exceptionsJSON.map(
+      (jsonElement) => new Exception(jsonElement.day, jsonElement.start as unknown as Time, jsonElement.end as unknown as Time),
+    );
+    return exceptions;
+  }
+  return [];
+}
+
 function getTherapists(therapistsJSON: JSONTherapist[]): Therapist[] {
   const therapists = therapistsJSON.map((jsonElement) => {
     // 315532800000 is "01.01.1980"
     const activeSinceDate = jsonElement.activeSince === -1 ? new Date(315532800000) : new Date(jsonElement.activeSince);
     // 3471292800000 is "01.01.2080"
     const activeUntilDate = jsonElement.activeUntil === -1 ? new Date(3471292800000) : new Date(jsonElement.activeUntil);
-    return new Therapist(jsonElement.name, jsonElement.id, activeSinceDate, activeUntilDate, getAbsencesForTherapist(jsonElement.absences));
+    return new Therapist(jsonElement.name, jsonElement.id,
+      activeSinceDate, activeUntilDate, getAbsencesForTherapist(jsonElement.absences),
+      getExceptionsForTherapist(jsonElement.exceptions));
   });
   return therapists;
 }
