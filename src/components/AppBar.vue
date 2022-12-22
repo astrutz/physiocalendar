@@ -42,6 +42,7 @@ import Menu from '@/components/Menu.vue';
 import { getModule } from 'vuex-module-decorators';
 import Appointment from '@/class/Appointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
+import SingleAppointment from '@/class/SingleAppointment';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import Store from '../store/backup';
@@ -66,20 +67,25 @@ export default class AppBar extends Vue {
   }
 
   search(): void {
+    this.searchResults = [];
     if (this.localBackup && this.searchTextfield.length > 2) {
       this.localBackup.masterlist.elements.forEach((listDay) => {
         this.searchResults = this.searchResults.concat(listDay.appointments.filter((appointment) => {
           const readableStartDate = Dateconversions.convertDateToReadableString((appointment as AppointmentSeries).startDate);
           const readableTargetDate = Dateconversions.convertDateToReadableString(new Date());
           return appointment.patient
-            && appointment.patient.toLowerCase().includes(this.searchTextfield)
-            && ((appointment as AppointmentSeries).startDate <= new Date() || readableStartDate === readableTargetDate);
+            && ((appointment as AppointmentSeries).startDate <= new Date() || readableStartDate === readableTargetDate)
+            && appointment.patient.toLowerCase().includes(this.searchTextfield);
         }));
       });
       this.localBackup.daylist.elements.forEach((listDay) => {
-        this.searchResults = this.searchResults.concat(listDay.appointments.filter(
-          (appointment) => appointment.patient && appointment.patient.toLowerCase().includes(this.searchTextfield),
-        ));
+        this.searchResults = this.searchResults.concat(listDay.appointments.filter((appointment) => {
+          const readableStartDate = Dateconversions.convertDateToReadableString((appointment as SingleAppointment).date);
+          const readableTargetDate = Dateconversions.convertDateToReadableString(new Date());
+          return appointment.patient
+            && ((appointment as SingleAppointment).date > new Date() || readableStartDate === readableTargetDate)
+            && appointment.patient.toLowerCase().includes(this.searchTextfield);
+        }));
       });
       this.showSearchResults = true;
     }
