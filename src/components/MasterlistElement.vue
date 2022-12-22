@@ -18,12 +18,20 @@
       </v-card-title>
 
       <v-card-text class="pt-5">
-        <v-text-field
-          label="Name des Patienten"
+        <v-combobox
           :value="patient"
           v-model="patientTextfield"
+          :loading="patientsLoading"
+          :items="foundPatients"
+          :search-input.sync="searchValue"
+          cache-items
+          class="mb-4 mt-0"
+          flat
+          hide-no-data
+          hide-details
           clearable
-        ></v-text-field>
+          label="Name des Patienten"
+        ></v-combobox>
 
         <v-select
           :items="getAllTimes()"
@@ -156,6 +164,7 @@
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
+import Util from '@/class/Util';
 import { Time, Weekday } from '@/class/Enums';
 import Printer from '@/class/Printer';
 import SingleAppointment from '@/class/SingleAppointment';
@@ -224,6 +233,12 @@ export default class MasterlistElement extends Vue {
 
   private holidays = holidaysJSON.days;
 
+  private patientsLoading = false;
+
+  private searchValue = '';
+
+  private foundPatients : string[] = [];
+
   get localBackup(): Backup | null {
     return this.store.getBackup;
   }
@@ -254,6 +269,13 @@ export default class MasterlistElement extends Vue {
   private dateChanged(): void {
     this.getAppointmentConflicts();
     this.startDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
+  }
+
+  @Watch('searchValue')
+  searchValueChanged(val: string | undefined): boolean {
+    this.foundPatients = [];
+    this.searchPatients(val);
+    return val !== this.patientTextfield;
   }
 
   private dateIsAllowed(dateVal: string | Date): boolean {
@@ -347,6 +369,14 @@ export default class MasterlistElement extends Vue {
       parseInt(this.interval, 10), this.appointment.cancellations, this.appointment.startDate,
     );
     printer.printAppointmentSeries();
+  }
+
+  private searchPatients(searchQuery : string | undefined) : void {
+    if (searchQuery && searchQuery.length > 2 && this.localBackup) {
+      this.patientsLoading = true;
+      this.foundPatients = Util.searchPatientNames(this.localBackup, searchQuery);
+      this.patientsLoading = false;
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this

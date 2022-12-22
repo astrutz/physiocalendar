@@ -15,27 +15,34 @@
           }"
           >{{ patient }}</span
         >
-        <span
-          v-if="appointment.startDate && isException"
-        >
-          <br><span>{{ replacementPatient }}</span>
+        <span v-if="appointment.startDate && isException">
+          <br /><span>{{ replacementPatient }}</span>
         </span>
       </button>
     </template>
 
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
-        {{ therapist }} - {{ weekday }} {{ date }} - {{ startTime }} bis {{endTime}}
+        {{ therapist }} - {{ weekday }} {{ date }} - {{ startTime }} bis
+        {{ endTime }}
       </v-card-title>
 
-      <v-card-text class="pt-5">
-        <v-text-field
+      <v-card-text class="pt-4">
+        <v-combobox
           :disabled="!!appointment.startDate"
-          label="Name des Patienten"
           :value="patient"
           v-model="patientTextfield"
+          :loading="patientsLoading"
+          :items="foundPatients"
+          :search-input.sync="searchValue"
+          @input="searchAppointmentsForPatient($event)"
+          class="mb-4 mt-0"
+          flat
+          hide-no-data
+          hide-details
           clearable
-        ></v-text-field>
+          label="Name des Patienten"
+        ></v-combobox>
 
         <v-select
           :disabled="!!appointment.startDate"
@@ -72,12 +79,12 @@
             :value="isExceptionField"
           ></v-checkbox>
           <v-text-field
-          v-if="isExceptionField"
-          label="Ersatzpatient"
-          :value="replacementPatient"
-          v-model="replacementPatientTextField"
-          clearable
-        ></v-text-field>
+            v-if="isExceptionField"
+            label="Ersatzpatient"
+            :value="replacementPatient"
+            v-model="replacementPatientTextField"
+            clearable
+          ></v-text-field>
         </div>
         <v-alert
           v-if="appointmentsForPatient.length > 0 && !appointment.startDate"
@@ -142,7 +149,7 @@
 import Appointment from '@/class/Appointment';
 import Printer from '@/class/Printer';
 import {
-  Component, Prop, Vue,
+  Component, Prop, Vue, Watch,
 } from 'vue-property-decorator';
 import { Time } from '@/class/Enums';
 import Dateconversions from '@/class/Dateconversions';
@@ -150,6 +157,7 @@ import { getModule } from 'vuex-module-decorators';
 import Backup from '@/class/Backup';
 import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
+import Util from '@/class/Util';
 import Store from '../store/backup';
 
 @Component
@@ -194,6 +202,12 @@ export default class DaylistElement extends Vue {
 
   appointmentsForPatient: Appointment[] = [];
 
+  private patientsLoading = false;
+
+  private searchValue = '';
+
+  private foundPatients : string[] = [];
+
   get localBackup(): Backup | null {
     return this.store.getBackup;
   }
@@ -215,6 +229,22 @@ export default class DaylistElement extends Vue {
         }
         return true;
       });
+    }
+  }
+
+  @Watch('searchValue')
+  searchValueChanged(val: string | undefined): boolean {
+    this.foundPatients = [];
+    this.searchPatients(val);
+    return val !== this.patientTextfield;
+  }
+
+  private searchAppointmentsForPatient(patient: string): void {
+    if (this.localBackup) {
+      let appointments: Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
+      appointments = appointments.concat(this.localBackup.masterlist.getAppointmentSeriesByPatient(patient));
+      appointments = appointments.concat(this.localBackup.masterlist.getReplacementsByPatient(patient));
+      this.appointmentsForPatient = appointments;
     }
   }
 
@@ -289,6 +319,14 @@ export default class DaylistElement extends Vue {
     printer.printSingleAppointment(this.appointmentsForPatient);
   }
 
+  private searchPatients(searchQuery : string | undefined) : void {
+    if (searchQuery && searchQuery.length > 2 && this.localBackup) {
+      this.patientsLoading = true;
+      this.foundPatients = Util.searchPatientNames(this.localBackup, searchQuery);
+      this.patientsLoading = false;
+    }
+  }
+
   // eslint-disable-next-line class-methods-use-this
   private convertDate(date: Date): string {
     return Dateconversions.convertDateToReadableString(date);
@@ -302,7 +340,7 @@ export default class DaylistElement extends Vue {
 </script>
 
 <style scoped>
-  .cancelled {
-    text-decoration: line-through;
-  }
+.cancelled {
+  text-decoration: line-through;
+}
 </style>

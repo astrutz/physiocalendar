@@ -11,6 +11,7 @@
       single-line
       v-model="searchTextfield"
       @click:prepend="search()"
+      @keydown.enter="search()"
     ></v-text-field>
     <v-card
       v-if="showSearchResults"

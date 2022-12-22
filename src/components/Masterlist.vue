@@ -87,11 +87,18 @@
         </v-card-title>
 
         <v-card-text class="pt-5">
-          <v-text-field
-            label="Name des Patienten"
+          <v-combobox
             v-model="inputFields.patientTextfield"
+            :loading="patientsLoading"
+            :items="foundPatients"
+            :search-input.sync="searchValue"
+            class="mb-4 mt-0"
+            flat
+            hide-no-data
+            hide-details
             clearable
-          ></v-text-field>
+            label="Name des Patienten"
+          ></v-combobox>
           <v-select
             :items="getAllTimes()"
             label="Start um"
@@ -235,6 +242,7 @@ import {
   Component, Prop, Vue, Watch,
 } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
+import Util from '@/class/Util';
 import Store from '../store/backup';
 import MasterlistElement from './MasterlistElement.vue';
 import MasterlistHeader from './MasterlistHeader.vue';
@@ -289,6 +297,12 @@ export default class Masterlist extends Vue {
     [key: string]: string | Time | AppointmentSeries | Absence[]
   }[] = [{ startTimeString: '' }];
 
+  private patientsLoading = false;
+
+  private searchValue = '';
+
+  private foundPatients : string[] = [];
+
   get localBackup(): Backup | null {
     return this.store.getBackup;
   }
@@ -321,6 +335,13 @@ export default class Masterlist extends Vue {
   private dateChanged(): void {
     this.getAppointmentConflicts();
     this.inputFields.startDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.inputFields.startDateString);
+  }
+
+  @Watch('searchValue')
+  searchValueChanged(val: string | undefined): boolean {
+    this.foundPatients = [];
+    this.searchPatients(val);
+    return val !== this.inputFields.patientTextfield;
   }
 
   mounted(): void {
@@ -546,6 +567,14 @@ export default class Masterlist extends Vue {
         (abs) => new Absence(this.currentWeekDay, abs.start as unknown as Time, abs.end as unknown as Time),
       );
       this.store.setAbsencesForTherapistForDay({ absences, therapistID: event.therapistID.slice(), day: this.currentWeekDay });
+    }
+  }
+
+  private searchPatients(searchQuery : string | undefined) : void {
+    if (searchQuery && searchQuery.length > 2 && this.localBackup) {
+      this.patientsLoading = true;
+      this.foundPatients = Util.searchPatientNames(this.localBackup, searchQuery);
+      this.patientsLoading = false;
     }
   }
 
