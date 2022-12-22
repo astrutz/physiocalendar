@@ -1,6 +1,7 @@
 import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import { Weekday } from '@/class/Enums';
+import Exception from '@/class/Exception';
 import { JSONBackup } from '@/class/JSONStructures';
 import SingleAppointment from '@/class/SingleAppointment';
 import Therapist from '@/class/Therapist';
@@ -102,7 +103,7 @@ class StoreBackup extends VuexModule {
   }
 
   @Action
-  public addCancellation({ date, patient, appointment }: { date: string, patient: string, appointment: AppointmentSeries }) : void {
+  public addCancellation({ date, patient, appointment }: { date: string, patient: string, appointment: AppointmentSeries }): void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
       localBackup.masterlist.addCancellation(date, patient, appointment);
@@ -112,7 +113,7 @@ class StoreBackup extends VuexModule {
   }
 
   @Action
-  public changeCancellation({ date, patient, appointment }: { date: string, patient: string, appointment: AppointmentSeries }) : void {
+  public changeCancellation({ date, patient, appointment }: { date: string, patient: string, appointment: AppointmentSeries }): void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
       localBackup.masterlist.changeCancellation(date, patient, appointment);
@@ -122,7 +123,7 @@ class StoreBackup extends VuexModule {
   }
 
   @Action
-  public deleteCancellation({ date, appointment }: { date: string, appointment: AppointmentSeries }) : void {
+  public deleteCancellation({ date, appointment }: { date: string, appointment: AppointmentSeries }): void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
       localBackup.masterlist.removeCancellation(date, appointment);
@@ -135,7 +136,7 @@ class StoreBackup extends VuexModule {
   public addTherapist({ name, id }: { name: string, id: string }): void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
-      localBackup.therapists.push(new Therapist(name, id, new Date(), new Date(3471292800000), []));
+      localBackup.therapists.push(new Therapist(name, id, new Date(), new Date(3471292800000), [], []));
       this.setBackup(localBackup);
       this.saveBackup();
     }
@@ -175,6 +176,23 @@ class StoreBackup extends VuexModule {
         let newAbsences = foundTherapist.absences.filter((abs) => abs.day !== day);
         newAbsences = newAbsences.concat(absences);
         localBackup.therapists[localBackup.therapists.indexOf(foundTherapist)].absences = newAbsences;
+      }
+      this.setBackup(localBackup);
+      this.saveBackup();
+    }
+  }
+
+  @Action
+  public setExceptionsForTherapistForDay(
+    { exceptions, therapistID, day }: { exceptions: Exception[], therapistID: string, day: Weekday | string },
+  ): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      const foundTherapist = localBackup.therapists.find((therapist) => therapist.id === therapistID);
+      if (foundTherapist) {
+        let newExceptions = foundTherapist.exceptions.filter((abs) => abs.day !== day);
+        newExceptions = newExceptions.concat(exceptions);
+        localBackup.therapists[localBackup.therapists.indexOf(foundTherapist)].exceptions = newExceptions;
       }
       this.setBackup(localBackup);
       this.saveBackup();

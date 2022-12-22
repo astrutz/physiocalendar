@@ -21,6 +21,7 @@
                 :masterlistAbsences="
                   header.absences.filter((abs) => !abs.day.includes('.'))
                 "
+                :exceptions="header.exceptions"
                 :date="currentSingleDay"
                 :key="`${hash}-${header.id}`"
                 @absencesChanged="saveAbsences($event)"
@@ -205,6 +206,7 @@ import {
 } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
 import Util from '@/class/Util';
+import Exception from '@/class/Exception';
 import Store from '../store/backup';
 import DaylistElement from './DaylistElement.vue';
 import DaylistHeader from './DaylistHeader.vue';
@@ -243,9 +245,9 @@ export default class Daylist extends Vue {
 
   hash = uuidv4();
 
-  private headers: { text: string, value: string, id: string, absences: Absence[], align: string }[] = [
+  private headers: { text: string, value: string, id: string, absences: Absence[], exceptions: Exception[], align: string }[] = [
     {
-      text: '', value: 'startTime', id: '', absences: [], align: '',
+      text: '', value: 'startTime', id: '', absences: [], exceptions: [], align: '',
     },
   ];
 
@@ -305,10 +307,18 @@ export default class Daylist extends Vue {
         absences: therapist.absences.filter(
           (abs) => abs.day === this.currentSingleDay || abs.day === Dateconversions.getWeekdayForDate(currentSingleDate),
         ),
+        exceptions: therapist.exceptions.filter(
+          (exc) => exc.day === this.currentSingleDay,
+        ),
         align: 'center',
       }));
       this.headers = [{
-        text: '', value: 'startTime', id: '', absences: [new Absence('a', Time['7:00'], Time['7:00'])], align: '',
+        text: '',
+        value: 'startTime',
+        id: '',
+        absences: [new Absence('a', Time['7:00'], Time['7:00'])],
+        exceptions: [new Exception('a', Time['7:00'], Time['7:00'])],
+        align: '',
       }].concat(therapistHeaders);
     }
   }
@@ -503,7 +513,11 @@ export default class Daylist extends Vue {
     if (therapist) {
       therapist.absences.forEach((abs) => {
         if (parseInt(Time[abs.start], 10) <= rowIndex && parseInt(Time[abs.end], 10) >= rowIndex + 1) {
-          hasAbsence = true;
+          if (!therapist.exceptions.find(
+            (exc) => parseInt(Time[exc.start], 10) <= rowIndex && parseInt(Time[exc.end], 10) >= rowIndex + 1,
+          )) {
+            hasAbsence = true;
+          }
         } else if (abs.end.toString() === '20:50' && rowIndex === 83) {
           hasAbsence = true;
         }
@@ -512,12 +526,17 @@ export default class Daylist extends Vue {
     return hasAbsence;
   }
 
-  private saveAbsences(event: { absences: [{ start: string, end: string }], therapistID: string }): void {
+  private saveAbsences(event: { absences: [{ start: string, end: string }], masterlistAbsences: [{ start: string, end: string }],
+    exceptions: [{ start: string, end: string }], therapistID: string }): void {
     if (this.localBackup) {
       const absences = event.absences.map(
         (abs) => new Absence(this.currentSingleDay, abs.start as unknown as Time, abs.end as unknown as Time),
       );
       this.store.setAbsencesForTherapistForDay({ absences, therapistID: event.therapistID.slice(), day: this.currentSingleDay });
+      const exceptions = event.exceptions.map(
+        (exc) => new Exception(this.currentSingleDay, exc.start as unknown as Time, exc.end as unknown as Time),
+      );
+      this.store.setExceptionsForTherapistForDay({ exceptions, therapistID: event.therapistID.slice(), day: this.currentSingleDay });
     }
   }
 

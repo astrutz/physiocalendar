@@ -13,12 +13,54 @@
               <v-alert type="info">
                 Für diesen Therapeuten sind Abwesenheiten in der Stammliste
                 vorhanden:
-                <p v-for="absence in masterlistAbsences" :key="absence.start" style="margin-bottom: 0px">
-                  {{absence.day}} - {{ absence.start }} bis {{ absence.end }}
+                <p
+                  v-for="(absence) in masterlistAbsences"
+                  :key="absence.start"
+                  style="margin-bottom: 0px"
+                >
+                  <v-btn title="Ausnahme hinzufügen" icon @click="addException(absence)"
+                    ><v-icon>mdi-account-star</v-icon></v-btn
+                  >
+                  {{ absence.day }} - {{ absence.start }} bis {{ absence.end }}
                 </p>
               </v-alert>
             </v-col>
           </v-row>
+          <h3 v-if="newExceptions.length > 0">Neue Ausnahmen</h3>
+          <v-row
+            v-for="(exception, index) in newExceptions"
+            :key="`${exception.start}-${exception.end}-${index}`"
+          >
+            <v-col>
+              <v-select
+                :items="exception.times"
+                :value="exception.start"
+                v-model="newExceptions[index].start"
+                label="Von"
+              ></v-select>
+            </v-col>
+            <v-col>
+              <v-select
+                :items="exception.times"
+                :value="exception.end"
+                v-model="newExceptions[index].end"
+                label="Bis"
+              ></v-select>
+            </v-col>
+            <v-col cols="1">
+              <v-btn
+                icon
+                color="primary"
+                @click="
+                  newExceptions = newExceptions.filter((abs, i) => i !== index)
+                "
+                style="margin-top: 12px"
+              >
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </v-col>
+          </v-row>
+          <h3 v-if="newAbsences.length > 0">Neue Abwesenheiten</h3>
           <v-row
             v-for="(absence, index) in newAbsences"
             :key="`${absence.start}-${absence.end}-${index}`"
@@ -52,13 +94,16 @@
               </v-btn>
             </v-col>
           </v-row>
-          <v-btn
-            icon
-            color="primary"
-            @click="newAbsences.push({ start: null, end: null })"
-          >
-            <v-icon>mdi-clock-plus-outline</v-icon>
-          </v-btn>
+          <v-row>
+            <v-col>
+              <v-btn
+                color="primary"
+                @click="newAbsences.push({ start: null, end: null })"
+              >
+                Abwesenheit hinzufügen
+              </v-btn>
+            </v-col>
+          </v-row>
         </v-card-text>
         <v-divider></v-divider>
 
@@ -83,6 +128,7 @@
 </template>
 
 <script lang="ts">
+import Absence from '@/class/Absence';
 import Dateconversions from '@/class/Dateconversions';
 import { Time } from '@/class/Enums';
 import { Component, Prop, Vue } from 'vue-property-decorator';
@@ -97,6 +143,8 @@ export default class DaylistHeader extends Vue {
 
   @Prop() readonly absences!: { start: Time, end: Time }[];
 
+  @Prop() readonly exceptions!: { start: Time, end: Time }[];
+
   @Prop() readonly masterlistAbsences!: { start: Time, end: Time }[];
 
   private absenceType = Dateconversions.convertReadableStringToDate(this.date).getDay() === 6 ? 'Anwesenheiten' : 'Abwesenheiten';
@@ -105,19 +153,42 @@ export default class DaylistHeader extends Vue {
 
   newAbsences = JSON.parse(JSON.stringify(this.absences)) as { start: Time, end: Time }[];
 
+  newExceptions : { start: Time, end: Time, times: string[] }[] = [];
+
   absenceDialog = false;
+
+  mounted() : void {
+    this.resetInputs();
+  }
 
   resetInputs(): void {
     this.newAbsences = JSON.parse(JSON.stringify(this.absences)) as { start: Time, end: Time }[];
+    this.newExceptions = this.exceptions.map((exc) => ({
+      start: exc.start,
+      end: exc.end,
+      times: this.times.slice(this.times.indexOf(exc.start.toString()), this.times.indexOf(exc.end.toString()) + 1),
+    }));
     this.absenceDialog = false;
   }
 
   submitAbsences(): void {
     const absencesToBeSubmitted = this.newAbsences.filter((abs) => abs.start !== null && abs.end !== null);
+    const exceptionsToBeSubmitted = this.newExceptions.filter((abs) => abs.start !== null && abs.end !== null);
+
     this.$emit('absencesChanged', {
-      absences: absencesToBeSubmitted, therapistID: this.therapistID.slice(),
+      exceptions: exceptionsToBeSubmitted,
+      absences: absencesToBeSubmitted,
+      therapistID: this.therapistID.slice(),
     });
     this.resetInputs();
+  }
+
+  addException(absence : Absence): void {
+    this.newExceptions.push({
+      start: absence.start,
+      end: absence.end,
+      times: this.times.slice(this.times.indexOf(absence.start.toString()), this.times.indexOf(absence.end.toString()) + 1),
+    });
   }
 }
 
