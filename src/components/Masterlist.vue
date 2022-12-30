@@ -340,6 +340,7 @@ export default class Masterlist extends Vue {
   @Watch('searchValue')
   searchValueChanged(val: string | undefined): boolean {
     this.foundPatients = [];
+    this.inputFields.patientTextfield = val || this.inputFields.patientTextfield;
     this.searchPatients(val);
     return val !== this.inputFields.patientTextfield;
   }

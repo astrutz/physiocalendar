@@ -326,6 +326,7 @@ export default class Daylist extends Vue {
   searchValueChanged(val: string | undefined): boolean {
     this.foundPatients = [];
     this.searchPatients(val);
+    this.inputFields.patientTextfield = val || this.inputFields.patientTextfield;
     return val !== this.inputFields.patientTextfield;
   }
 
