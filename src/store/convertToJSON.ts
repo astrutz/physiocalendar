@@ -53,6 +53,9 @@ function convertSingleAppointments(appointments: SingleAppointment[]): JSONSingl
         startTime: appointment.startTime.toString(),
         endTime: appointment.endTime.toString(),
         comment: appointment.comment,
+        isHotair: appointment.isHotair,
+        isUltrasonic: appointment.isUltrasonic,
+        isElectric: appointment.isElectric,
       }
     ),
   );

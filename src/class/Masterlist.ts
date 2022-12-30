@@ -139,6 +139,9 @@ export default class Masterlist {
               appointment.endTime,
               '',
               Dateconversions.convertReadableStringToDate(cancellation.date),
+              false,
+              false,
+              false,
             ));
           }
         });

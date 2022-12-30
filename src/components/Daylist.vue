@@ -46,6 +46,18 @@
                   row[header.value] &&
                   row[header.value].patient &&
                   row[header.value].isBWO,
+                'cell-hotair':
+                  row[header.value] &&
+                  row[header.value].patient &&
+                  row[header.value].isHotair,
+                'cell-ultrasonic':
+                  row[header.value] &&
+                  row[header.value].patient &&
+                  row[header.value].isUltrasonic,
+                'cell-electric':
+                  row[header.value] &&
+                  row[header.value].patient &&
+                  row[header.value].isElectric,
                 'cell-absence':
                   header.text !== '' && hasAbsenceInTime(header.id, rowIndex),
                 'cell-saturday':
@@ -86,6 +98,9 @@
                 :isException="row[header.value].startDate
                  ? row[header.value].cancellations.some((c) => c.date === currentSingleDay) : false"
                 :replacementPatient="row[header.value].startDate ? getReplacementPatient(row[header.value].cancellations) : ''"
+                :isHotair="row[header.value].startDate ? false : row[header.value].isHotair"
+                :isUltrasonic="row[header.value].startDate ? false : row[header.value].isUltrasonic"
+                :isElectric="row[header.value].startDate ? false : row[header.value].isElectric"
                 :startTime="row.startTime"
                 :endTime="row[header.value].endTime"
                 :appointment="row[header.value]"
@@ -137,6 +152,27 @@
             clearable
           ></v-text-field>
 
+          <v-row>
+            <v-col>
+              <v-checkbox
+                label="Heißluft"
+                v-model="inputFields.isHotairField"
+              ></v-checkbox>
+            </v-col>
+            <v-col>
+              <v-checkbox
+                label="Ultraschall"
+                v-model="inputFields.isUltrasonicField"
+              ></v-checkbox>
+            </v-col>
+            <v-col>
+              <v-checkbox
+                label="Elektro"
+                v-model="inputFields.isElectricField"
+              ></v-checkbox>
+            </v-col>
+          </v-row>
+
           <v-alert v-if="appointmentsForPatient.length > 0" type="info">
             Unter diesem Namen wurden weitere Termine gefunden:
             <div
@@ -177,7 +213,10 @@
                 patient: inputFields.patientTextfield,
                 startTime: inputFields.startTimeSelect,
                 endTime: inputFields.endTimeSelect,
-                comment: inputFields.commentTextfield
+                comment: inputFields.commentTextfield,
+                isHotair: inputFields.isHotairField,
+                isUltrasonic: inputFields.isUltrasonicField,
+                isElectric: inputFields.isElectricField,
               });
               createDialog = false;
             "
@@ -230,6 +269,9 @@ export default class Daylist extends Vue {
     startTimeSelect: '',
     endTimeSelect: '',
     commentTextfield: '',
+    isHotairField: false,
+    isUltrasonicField: false,
+    isElectricField: false,
   }
 
   selectedAppointment = {
@@ -399,6 +441,9 @@ export default class Daylist extends Vue {
       startTimeSelect: '',
       endTimeSelect: '',
       commentTextfield: '',
+      isHotairField: false,
+      isUltrasonicField: false,
+      isElectricField: false,
     };
 
     this.selectedAppointment = {
@@ -423,6 +468,7 @@ export default class Daylist extends Vue {
   private addAppointment(
     event: {
       therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
+      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
     },
   ): void {
     const appointment = new SingleAppointment(
@@ -433,6 +479,9 @@ export default class Daylist extends Vue {
       event.endTime as unknown as Time,
       event.comment,
       Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+      event.isHotair,
+      event.isUltrasonic,
+      event.isElectric,
     );
     if (this.localBackup) {
       this.store.addSingleAppointment(appointment);
@@ -443,6 +492,7 @@ export default class Daylist extends Vue {
   private changeAppointment(
     event: {
       therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
+      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
     },
   ): void {
     const appointment = new SingleAppointment(
@@ -453,6 +503,9 @@ export default class Daylist extends Vue {
       event.endTime as unknown as Time,
       event.comment,
       Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+      event.isHotair,
+      event.isUltrasonic,
+      event.isElectric,
       event.id,
     );
     if (this.localBackup) {
@@ -463,6 +516,7 @@ export default class Daylist extends Vue {
   private deleteAppointment(
     event: {
       therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
+      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
     },
   ): void {
     if (this.localBackup) {
@@ -474,6 +528,9 @@ export default class Daylist extends Vue {
         event.endTime as unknown as Time,
         event.comment,
         Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+        event.isHotair,
+        event.isUltrasonic,
+        event.isElectric,
         event.id,
       );
       this.store.deleteSingleAppointment(appointment);
@@ -625,6 +682,18 @@ td:hover {
 
 .cell-bwo {
   background-color: yellow;
+}
+
+.cell-hotair {
+  background-color: rgb(228, 150, 5);
+}
+
+.cell-ultrasonic {
+  background-color: lightskyblue;
+}
+
+.cell-electric {
+  background-color: rgb(255, 61, 61);
 }
 
 .cell-absence {

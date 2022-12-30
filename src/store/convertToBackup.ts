@@ -37,7 +37,8 @@ function getListSingleDays(listSingleDaysJSON: JSONDaylist): ListSingleDay[] {
       (jsonAppointment) => new SingleAppointment(
         jsonAppointment.therapist, jsonAppointment.therapistID,
         jsonAppointment.patient, jsonAppointment.startTime as unknown as Time,
-        jsonAppointment.endTime as unknown as Time, jsonAppointment.comment, date,
+        jsonAppointment.endTime as unknown as Time, jsonAppointment.comment,
+        date, jsonAppointment.isHotair, jsonAppointment.isUltrasonic, jsonAppointment.isElectric,
       ),
     );
     return new ListSingleDay(appointments, date);
