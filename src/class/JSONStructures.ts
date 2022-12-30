@@ -38,6 +38,9 @@ export interface JSONSingleAppointment {
   startTime: string,
   endTime: string,
   comment: string,
+  isHotair: boolean,
+  isUltrasonic: boolean,
+  isElectric: boolean
 }
 
 export interface JSONListSingleDay {

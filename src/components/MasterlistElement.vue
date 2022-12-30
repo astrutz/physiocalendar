@@ -274,6 +274,7 @@ export default class MasterlistElement extends Vue {
   @Watch('searchValue')
   searchValueChanged(val: string | undefined): boolean {
     this.foundPatients = [];
+    this.patientTextfield = val || this.patientTextfield;
     this.searchPatients(val);
     return val !== this.patientTextfield;
   }

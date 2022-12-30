@@ -68,6 +68,33 @@
           clearable
         ></v-text-field>
 
+        <v-row>
+          <v-col>
+            <v-checkbox
+              :disabled="!!appointment.startDate"
+              label="Heißluft"
+              v-model="isHotairField"
+              :value="isHotairField"
+            ></v-checkbox>
+          </v-col>
+          <v-col>
+            <v-checkbox
+              :disabled="!!appointment.startDate"
+              label="Ultraschall"
+              v-model="isUltrasonicField"
+              :value="isUltrasonicField"
+            ></v-checkbox>
+          </v-col>
+          <v-col>
+            <v-checkbox
+              :disabled="!!appointment.startDate"
+              label="Elektro"
+              v-model="isElectricField"
+              :value="isElectricField"
+            ></v-checkbox>
+          </v-col>
+        </v-row>
+
         <div v-if="!!appointment.startDate">
           <v-alert type="warning"
             >Dieser Termin wurde aus der Stammliste generiert und kann daher
@@ -184,6 +211,12 @@ export default class DaylistElement extends Vue {
 
   @Prop() readonly weekday!: string;
 
+  @Prop() readonly isHotair!: boolean;
+
+  @Prop() readonly isUltrasonic!: boolean;
+
+  @Prop() readonly isElectric!: boolean;
+
   store = getModule(Store);
 
   private dialogIsOpen = false;
@@ -197,6 +230,12 @@ export default class DaylistElement extends Vue {
   private commentTextfield = this.appointment.comment || '';
 
   private isExceptionField = !!this.isException;
+
+  private isHotairField = !!this.isHotair;
+
+  private isUltrasonicField = !!this.isUltrasonic;
+
+  private isElectricField = !!this.isElectric;
 
   private replacementPatientTextField = this.replacementPatient;
 
@@ -235,6 +274,7 @@ export default class DaylistElement extends Vue {
   @Watch('searchValue')
   searchValueChanged(val: string | undefined): boolean {
     this.foundPatients = [];
+    this.patientTextfield = val || this.patientTextfield;
     this.searchPatients(val);
     return val !== this.patientTextfield;
   }
@@ -281,6 +321,9 @@ export default class DaylistElement extends Vue {
           endTime: this.endTimeSelect,
           comment: this.commentTextfield,
           id: this.id,
+          isHotair: this.isHotairField,
+          isUltrasonic: this.isUltrasonicField,
+          isElectric: this.isElectricField,
         });
       }
     } else {
@@ -292,6 +335,9 @@ export default class DaylistElement extends Vue {
         endTime: this.endTimeSelect,
         comment: this.commentTextfield,
         id: this.id,
+        isHotair: this.isHotairField,
+        isUltrasonic: this.isUltrasonicField,
+        isElectric: this.isElectricField,
       });
     }
   }
@@ -304,6 +350,9 @@ export default class DaylistElement extends Vue {
       startTime: this.startTimeSelect,
       endTime: this.endTimeSelect,
       comment: this.commentTextfield,
+      isHotair: this.isHotairField,
+      isUltrasonic: this.isUltrasonicField,
+      isElectric: this.isElectricField,
     });
   }
 
