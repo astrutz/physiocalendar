@@ -105,13 +105,55 @@
             v-model="isExceptionField"
             :value="isExceptionField"
           ></v-checkbox>
-          <v-text-field
-            v-if="isExceptionField"
-            label="Ersatzpatient"
-            :value="replacementPatient"
-            v-model="replacementPatientTextField"
-            clearable
-          ></v-text-field>
+          <center>
+          <v-btn v-if="isExceptionField"
+          color="warning"
+          @click="addReplacementPatient()"
+          text
+          >
+          Ersatzpatient hinzufügen +
+          </v-btn>
+         </center>
+        <center v-if="isExceptionField">
+          <li v-for= "replacementPatient in replacementPatients" :key="replacementPatient">
+            <v-row>
+              <v-text-field
+                label="Ersatzpatient"
+                :value="replacementPatient"
+                v-model="replacementPatientTextField"
+                clearable
+              >{{ replacementPatient }}</v-text-field>
+              <v-select
+               :disabled="false"
+               :items="getAllTimes()"
+               label="Start um"
+               v-model="startTimeSelect"
+               :value="appointment.startTime"
+              ></v-select>
+              <v-select
+               :disabled="false"
+               :items="getAllTimes()"
+               label="Ende um"
+               v-model="endTimeSelect"
+               :value="appointment.endTime"
+              ></v-select>
+              <v-text-field
+               :disabled="false"
+               label="Bemerkungen"
+               :value="appointment.comment"
+               v-model="commentTextfield"
+               clearable
+              ></v-text-field>
+              <v-btn
+              color="error"
+              @click="removeReplacementPatient(replacementPatient.indexOf(replacementPatient))"
+              text
+              >
+              Eintrag Löschen
+              </v-btn>
+            </v-row>
+          </li>
+        </center>
         </div>
         <v-alert
           v-if="appointmentsForPatient.length > 0 && !appointment.startDate"
@@ -192,6 +234,8 @@ export default class DaylistElement extends Vue {
   @Prop() readonly patient!: string;
 
   @Prop() readonly startTime!: string;
+
+  @Prop() readonly replacementPatients: string[] = [];
 
   @Prop() readonly endTime!: string;
 
@@ -354,6 +398,15 @@ export default class DaylistElement extends Vue {
       isUltrasonic: this.isUltrasonicField,
       isElectric: this.isElectricField,
     });
+  }
+
+  private addReplacementPatient(): void {
+    this.replacementPatients.push('Test1');
+    console.log(this.replacementPatients);
+  }
+
+  private removeReplacementPatient(posElement: number): void {
+    this.replacementPatients[posElement] = '';
   }
 
   private printAppointment(): void {
