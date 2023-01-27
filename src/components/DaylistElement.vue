@@ -115,44 +115,44 @@
           </v-btn>
          </center>
         <center v-if="isExceptionField">
-          <li v-for= "replacementPatient in replacementPatients" :key="replacementPatient">
+        <li v-for= "Appointment in replacementAppointments" :key="Appointment">
             <v-row>
               <v-text-field
                 label="Ersatzpatient"
-                :value="replacementPatient"
-                v-model="replacementPatientTextField"
+                v-model="patientTextField1"
+                :value="Appointment.patient"
                 clearable
-              >{{ replacementPatient }}</v-text-field>
+              ></v-text-field>
               <v-select
                :disabled="false"
                :items="getAllTimes()"
                label="Start um"
-               v-model="startTimeSelect"
-               :value="appointment.startTime"
+               v-model="startTimeSelect1"
+               :value="Appointment.startTime"
               ></v-select>
               <v-select
                :disabled="false"
                :items="getAllTimes()"
                label="Ende um"
-               v-model="endTimeSelect"
-               :value="appointment.endTime"
+               v-model="endTimeSelect1"
+               :value="Appointment.endTime"
               ></v-select>
               <v-text-field
                :disabled="false"
                label="Bemerkungen"
-               :value="appointment.comment"
-               v-model="commentTextfield"
+               :value="Appointment.comment"
+               v-model="commentTextfield1"
                clearable
               ></v-text-field>
-              <v-btn
-              color="error"
-              @click="removeReplacementPatient(replacementPatient.indexOf(replacementPatient))"
-              text
-              >
-              Eintrag Löschen
-              </v-btn>
             </v-row>
           </li>
+          <v-btn
+              color="error"
+              @click="removeReplacementAppointments()"
+              text
+              >
+              Einträge Löschen
+              </v-btn>
         </center>
         </div>
         <v-alert
@@ -233,11 +233,15 @@ import Store from '../store/backup';
 export default class DaylistElement extends Vue {
   @Prop() readonly patient!: string;
 
+  @Prop() readonly patient1!: string;
+
   @Prop() readonly startTime!: string;
 
-  @Prop() readonly replacementPatients: string[] = [];
+  @Prop() readonly startTime1!: string;
 
   @Prop() readonly endTime!: string;
+
+  @Prop() readonly endTime1!: string;
 
   @Prop() readonly date!: string;
 
@@ -249,7 +253,11 @@ export default class DaylistElement extends Vue {
 
   @Prop() readonly replacementPatient!: string;
 
+  @Prop() readonly replacementPatient1!: string;
+
   @Prop() readonly appointment!: Appointment;
+
+  @Prop() replacementAppointments: Appointment[] = [];
 
   @Prop() readonly id!: string;
 
@@ -266,6 +274,14 @@ export default class DaylistElement extends Vue {
   private dialogIsOpen = false;
 
   private patientTextfield = this.patient;
+
+  private patientTextField1 = this.patient1;
+
+  private startTimeSelect1 = this.startTime1;
+
+  private endTimeSelect1 = this.endTime1;
+
+  private commentTextfield1 = this.appointment.comment || '';
 
   private startTimeSelect = this.startTime;
 
@@ -401,12 +417,11 @@ export default class DaylistElement extends Vue {
   }
 
   private addReplacementPatient(): void {
-    this.replacementPatients.push('Test1');
-    console.log(this.replacementPatients);
+    this.replacementAppointments.push(new Appointment('test', ' ', ' ', Time['17:20'], Time['17:30'], 'test'));
   }
 
-  private removeReplacementPatient(posElement: number): void {
-    this.replacementPatients[posElement] = '';
+  private removeReplacementAppointments(): void {
+    this.replacementAppointments = [];
   }
 
   private printAppointment(): void {

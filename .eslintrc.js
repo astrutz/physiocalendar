@@ -16,7 +16,7 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'linebreak-style': 'off',
     'max-len': ['error', { code: 140 }],
-    "no-shadow": "off",
-    "@typescript-eslint/no-shadow": ["error"]
+    'no-shadow': 'off',
+    '@typescript-eslint/no-shadow': ['error'],
   },
 };
