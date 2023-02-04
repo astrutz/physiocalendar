@@ -86,12 +86,14 @@
                 v-else-if="row[header.value] && row[header.value].patient"
                 :key="`${hash}-${row[header.value].therapistID}-${row.startTime}`"
                 @appointmentAdded="addAppointment($event)"
+                @repAppointmentAdded="addRepAppointment($event)"
                 @appointmentChanged="changeAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
                 @exceptionAdded="addException($event)"
                 @exceptionChanged="changeException($event)"
                 @exceptionDeleted="deleteException($event)"
                 :patient="row[header.value].patient"
+                :patient1="row[header.value].patient1"
                 :id="row[header.value].id"
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
@@ -101,8 +103,13 @@
                 :isHotair="row[header.value].startDate ? false : row[header.value].isHotair"
                 :isUltrasonic="row[header.value].startDate ? false : row[header.value].isUltrasonic"
                 :isElectric="row[header.value].startDate ? false : row[header.value].isElectric"
+                :isHotair1="row[header.value].startDate ? false : row[header.value].isHotair1"
+                :isUltrasonic1="row[header.value].startDate ? false : row[header.value].isUltrasonic1"
+                :isElectric1="row[header.value].startDate ? false : row[header.value].isElectric1"
                 :startTime="row.startTime"
+                :startTime1="row.startTime1"
                 :endTime="row[header.value].endTime"
+                :endTime1="row[header.value].endTime1"
                 :appointment="row[header.value]"
                 :date="row[header.value].startDate ? `seit ${convertDateToString(row[header.value].startDate)}` : currentSingleDay"
                 :weekday="weekday"
@@ -131,7 +138,7 @@
             hide-no-data
             hide-details
             clearable
-            label="Name des Patienten"
+            label="Name des Patienten 1"
           ></v-combobox>
 
           <v-select
@@ -214,6 +221,7 @@
                 startTime: inputFields.startTimeSelect,
                 endTime: inputFields.endTimeSelect,
                 comment: inputFields.commentTextfield,
+                id: '',
                 isHotair: inputFields.isHotairField,
                 isUltrasonic: inputFields.isUltrasonicField,
                 isElectric: inputFields.isElectricField,
@@ -488,6 +496,30 @@ export default class Daylist extends Vue {
       this.store.addSingleAppointment(appointment);
     }
     this.resetInputs();
+  }
+
+  private addRepAppointment(
+    event: {
+      therapist1: string, therapistID1: string, patient1: string, startTime1: string, endTime1: string, comment1: string, id1: string,
+      isHotair1: boolean, isUltrasonic1: boolean, isElectric1: boolean,
+    },
+  ): void {
+    const appointment = new SingleAppointment(
+      event.therapist1,
+      event.therapistID1,
+      event.patient1,
+      event.startTime1 as unknown as Time,
+      event.endTime1 as unknown as Time,
+      event.comment1,
+      Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+      event.isHotair1,
+      event.isUltrasonic1,
+      event.isElectric1,
+    );
+    if (this.localBackup) {
+      console.log(appointment);
+      this.store.addSingleAppointment(appointment);
+    }
   }
 
   private changeAppointment(

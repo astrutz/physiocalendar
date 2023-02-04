@@ -16,6 +16,12 @@ export default class Appointment {
 
   comment: string;
 
+  // macht keinen Sinn an der Stelle abe rum die Fehler zu bereinigen
+
+  date: Date;
+
+  weekday: string;
+
   constructor(
     therapist : string,
     therapistID : string,
@@ -24,6 +30,8 @@ export default class Appointment {
     endTime: Time,
     comment: string,
     id? : string,
+    date?: Date,
+    weekday?: string,
   ) {
     this.id = id || uuidv4();
     this.therapist = therapist;
@@ -32,6 +40,8 @@ export default class Appointment {
     this.startTime = startTime;
     this.endTime = endTime;
     this.comment = comment;
+    this.date = date || new Date('01.01.1975');
+    this.weekday = weekday || '';
   }
 
   // eslint-disable-next-line class-methods-use-this

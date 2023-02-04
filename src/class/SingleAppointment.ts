@@ -4,11 +4,15 @@ import { Time } from './Enums';
 export default class SingleAppointment extends Appointment {
   date : Date;
 
+  weekdays: string[] = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
   isHotair : boolean;
 
   isUltrasonic : boolean;
 
   isElectric : boolean;
+
+  weekday : string;
 
   constructor(
     therapist : string,
@@ -25,6 +29,7 @@ export default class SingleAppointment extends Appointment {
   ) {
     super(therapist, therapistID, patient, startTime, endTime, comment, id);
     this.date = date;
+    this.weekday = this.weekdays[date.getDay()];
     this.isHotair = isHotair;
     this.isUltrasonic = isUltrasonic;
     this.isElectric = isElectric;
