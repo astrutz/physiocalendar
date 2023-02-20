@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import Cancellation from './Cancellation';
 import { Time } from './Enums';
 
 export default class Appointment {
@@ -20,6 +21,8 @@ export default class Appointment {
 
   date: Date;
 
+  cancellations: Cancellation[];
+
   weekday: string;
 
   constructor(
@@ -32,6 +35,7 @@ export default class Appointment {
     id? : string,
     date?: Date,
     weekday?: string,
+    cancellations?: Cancellation[],
   ) {
     this.id = id || uuidv4();
     this.therapist = therapist;
@@ -42,6 +46,7 @@ export default class Appointment {
     this.comment = comment;
     this.date = date || new Date('01.01.1975');
     this.weekday = weekday || '';
+    this.cancellations = cancellations || [];
   }
 
   // eslint-disable-next-line class-methods-use-this

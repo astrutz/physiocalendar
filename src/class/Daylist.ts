@@ -116,6 +116,7 @@ export default class Daylist {
     if (currentDay && appointmentToBeChanged) {
       appointmentToBeChanged.patient = appointment.patient;
       appointmentToBeChanged.startTime = appointment.startTime;
+      appointmentToBeChanged.endTime = appointment.endTime;
       const newAppointments = currentDay.appointments.filter(
         (filterAppointment) => filterAppointment.id !== appointment.id,
       );

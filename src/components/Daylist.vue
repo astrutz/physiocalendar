@@ -64,11 +64,7 @@
                   convertStringToDate(currentSingleDay).getDay() === 6 && !(typeof row[header.value] === 'string' &&
                   row[header.value].includes(':'))
               }"
-              @click="
-                row[header.value] === ''
-                  ? openCreateDialog(header.value, header.id, row.startTime)
-                  : {}
-              "
+              @click="openCreateDialog(header.value, header.id, row.startTime)"
             >
               <span
                 v-if="
@@ -93,26 +89,30 @@
                 @exceptionChanged="changeException($event)"
                 @exceptionDeleted="deleteException($event)"
                 :patient="row[header.value].patient"
-                :patient1="row[header.value].patient1"
                 :id="row[header.value].id"
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
                 :isException="row[header.value].startDate
                  ? row[header.value].cancellations.some((c) => c.date === currentSingleDay) : false"
-                :replacementPatient="row[header.value].startDate ? getReplacementPatient(row[header.value].cancellations) : ''"
+                :replacementPatient="row[header.value].startDate ? getPatient1(row[header.value].cancellations) : ''"
                 :isHotair="row[header.value].startDate ? false : row[header.value].isHotair"
                 :isUltrasonic="row[header.value].startDate ? false : row[header.value].isUltrasonic"
                 :isElectric="row[header.value].startDate ? false : row[header.value].isElectric"
+                :startTime="row.startTime"
+                :endTime="row[header.value].endTime"
+                :patient1="row[header.value].startDate ? getPatient1(row[header.value].cancellations) : ''"
+                :startTime1="row[header.value].startDate ? getStartTime1(row[header.value].cancellations) : ''"
+                :endTime1="row[header.value].startDate ? getEndTime1(row[header.value].cancellations) : ''"
+                :comment1="row[header.value].startDate ? getComment1(row[header.value].cancellations) : ''"
                 :isHotair1="row[header.value].startDate ? false : row[header.value].isHotair1"
                 :isUltrasonic1="row[header.value].startDate ? false : row[header.value].isUltrasonic1"
                 :isElectric1="row[header.value].startDate ? false : row[header.value].isElectric1"
-                :startTime="row.startTime"
-                :startTime1="row.startTime1"
-                :endTime="row[header.value].endTime"
-                :endTime1="row[header.value].endTime1"
+                :reqOnePatient="row[header.value].cancellations ? true : false"
+                :isSingleApp="row[header.value] && row[header.value].patient && !row[header.value].startDate"
                 :appointment="row[header.value]"
                 :date="row[header.value].startDate ? `seit ${convertDateToString(row[header.value].startDate)}` : currentSingleDay"
                 :weekday="weekday"
+
               />
             </td>
           </tr>
@@ -138,7 +138,7 @@
             hide-no-data
             hide-details
             clearable
-            label="Name des Patienten 1"
+            label="Name des Patienten"
           ></v-combobox>
 
           <v-select
@@ -309,6 +309,14 @@ export default class Daylist extends Vue {
 
   private searchValue = '';
 
+  private patient1 = '';
+
+  private startTime1 = '';
+
+  private endTime1 = '';
+
+  private comment1 = '';
+
   private foundPatients : string[] = [];
 
   get localBackup(): Backup | null {
@@ -474,7 +482,7 @@ export default class Daylist extends Vue {
     }
   }
 
-  private addAppointment(
+  public addAppointment(
     event: {
       therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
       isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
@@ -541,7 +549,13 @@ export default class Daylist extends Vue {
       event.isElectric,
       event.id,
     );
+    console.log('speichern einzel Termin');
+    console.log(appointment);
     if (this.localBackup) {
+      // this.patient1 = this.getPatient1(appointment.cancellations);
+      // this.startTime1 = this.getStartTime1(appointment.cancellations);
+      // this.endTime1 = this.getEndTime1(appointment.cancellations);
+      // this.comment1 = this.getComment1(appointment.cancellations);
       this.store.changeSingleAppointment(appointment);
     }
   }
@@ -575,6 +589,7 @@ export default class Daylist extends Vue {
       this.store.addCancellation({
         date: this.currentSingleDay, patient: event.patient, appointment: event.appointment,
       });
+      console.log(event.appointment);
     }
   }
 
@@ -592,9 +607,44 @@ export default class Daylist extends Vue {
     }
   }
 
-  private getReplacementPatient(cancellations : Cancellation[]) : string {
+  private getPatient1(cancellations : Cancellation[]) : string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    return cancellation?.patient || '';
+    const arr = cancellation?.patient.split(',');
+    if (arr) {
+      const patient1 = arr[0];
+      return patient1;
+    }
+    return '';
+  }
+
+  private getStartTime1(cancellations : Cancellation[]) : string {
+    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
+    const arr = cancellation?.patient.split(',');
+    if (arr) {
+      const startTime1 = arr[1];
+      return startTime1;
+    }
+    return '';
+  }
+
+  private getEndTime1(cancellations : Cancellation[]) : string {
+    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
+    const arr = cancellation?.patient.split(',');
+    if (arr) {
+      const endTime1 = arr[2];
+      return endTime1;
+    }
+    return '';
+  }
+
+  private getComment1(cancellations : Cancellation[]) : string {
+    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
+    const arr = cancellation?.patient.split(',');
+    if (arr) {
+      const comment1 = arr[3];
+      return comment1;
+    }
+    return '';
   }
 
   private hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {

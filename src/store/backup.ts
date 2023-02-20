@@ -33,6 +33,15 @@ class StoreBackup extends VuexModule {
   @Action
   public async saveBackup(importedBackup?: string): Promise<void> {
     if (this.backup) {
+      // leere Einträge löschen
+      this.backup.daylist.elements.forEach((element) => {
+        element.appointments.forEach((app) => {
+          if (app.patient === '') {
+            console.log('leerer Termin ' || app.id);
+            this.deleteSingleAppointment(app as SingleAppointment);
+          }
+        });
+      });
       try {
         const backupJSON = importedBackup ? JSON.parse(importedBackup) : convertToJSON(this.backup);
         await axios.put('http://localhost:4000/backup', backupJSON);
@@ -56,6 +65,7 @@ class StoreBackup extends VuexModule {
   public changeSingleAppointment(appointment: SingleAppointment): void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
+      console.log(appointment);
       localBackup.daylist.changeAppointment(appointment);
       this.setBackup(localBackup);
       this.saveBackup();

@@ -52,7 +52,7 @@ export default class Dateconversions {
   }
 
   static getAllTimes(): string[] {
-    const times = [];
+    const times = [''];
     for (let i = 7; i < 21; i += 1) {
       const hour = i.toString();
       times.push(`${hour}:00`, `${hour}:10`, `${hour}:20`, `${hour}:30`, `${hour}:40`, `${hour}:50`);

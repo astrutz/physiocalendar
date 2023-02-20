@@ -16,7 +16,7 @@
           >{{ patient }}</span
         >
         <span v-if="appointment.startTime && isException">
-          <br /><span>{{ replacementPatient }}</span>
+          <br /><span>{{ patient1 }} {{ startTime1 }} - {{ endTime1 }}</span>
         </span>
       </button>
     </template>
@@ -29,7 +29,7 @@
 
       <v-card-text class="pt-4">
         <v-combobox
-          :disabled="!!appointment.startTime"
+          :disabled="!isSingleAppointment"
           :value="patient"
           v-model="patientTextfield"
           :loading="patientsLoading"
@@ -45,7 +45,7 @@
         ></v-combobox>
 
         <v-select
-          :disabled="!!appointment.startTime"
+          :disabled="!isSingleAppointment"
           :items="getAllTimes()"
           label="Start um"
           v-model="startTimeSelect"
@@ -53,7 +53,7 @@
         ></v-select>
 
         <v-select
-          :disabled="!!appointment.startTime"
+          :disabled="!isSingleAppointment"
           :items="getAllTimes()"
           label="Ende um"
           v-model="endTimeSelect"
@@ -61,7 +61,7 @@
         ></v-select>
 
         <v-text-field
-          :disabled="!!appointment.startTime"
+          :disabled="!isSingleAppointment"
           label="Sonstige Bemerkungen"
           :value="appointment.comment"
           v-model="commentTextfield"
@@ -71,7 +71,7 @@
         <v-row>
           <v-col>
             <v-checkbox
-              :disabled="!!appointment.startTime"
+              :disabled="!isSingleAppointment"
               label="Heißluft"
               v-model="isHotairField"
               :value="isHotairField"
@@ -79,7 +79,7 @@
           </v-col>
           <v-col>
             <v-checkbox
-              :disabled="!!appointment.startTime"
+              :disabled="!isSingleAppointment"
               label="Ultraschall"
               v-model="isUltrasonicField"
               :value="isUltrasonicField"
@@ -87,14 +87,14 @@
           </v-col>
           <v-col>
             <v-checkbox
-              :disabled="!!appointment.startTime"
+              :disabled="!isSingleAppointment"
               label="Elektro"
               v-model="isElectricField"
               :value="isElectricField"
             ></v-checkbox>
           </v-col>
         </v-row>
-        <div v-if="!!appointment.startTime">
+        <div v-if="!isSingleAppointment">
           <v-row no-gutters>
           <v-col cols="8">
           <v-alert type="warning"
@@ -121,42 +121,28 @@
           >
           +1 Ersatz Termin
           </v-btn>
-          <v-btn v-if="isExceptionField"
+          <v-btn v-if="false"
           color="warning"
           @click="addTwoRepPatient()"
           text
           >
           +2 Ersatz Termin
-          </v-btn>
-          <v-btn v-if="isExceptionField"
-          color="primary"
-          @click="addRepAppointment()"
-          text
-          >
-          Ersatz Termin(e) speichern
-          </v-btn>
-          <v-btn v-if="isExceptionField"
-              color="error"
-              @click="removeReplacementAppointments()"
-              text
-              >
-              Einträge Löschen
-          </v-btn>
+         </v-btn>
          </center>
-        <center v-if="isExceptionField">
-        <div v-if="requireOnePatient">
+        <center>
+        <div v-if="isExceptionField && requireOnePatient">
           <v-row>
               <v-text-field
                 label="Ersatzpatient"
                 v-model="patientTextField1"
-                :value="patientTextField1"
+                :value="patient1"
                 clearable
               ></v-text-field>
               <v-text-field
                :disabled="false"
                label="Bemerkungen"
                :value="commentTextfield1"
-               v-model="commentTextfield1"
+               v-model="commentTextfield"
                clearable
               ></v-text-field>
               </v-row>
@@ -166,14 +152,14 @@
                :items="getAllTimes()"
                label="Start um"
                v-model="startTimeSelect1"
-               :value="startTimeSelect1"
+               :value="startTimeSelect"
               ></v-select>
               <v-select
                :disabled="false"
                :items="getAllTimes()"
                label="Ende um"
                v-model="endTimeSelect1"
-               :value="endTimeSelect1"
+               :value="endTimeSelect"
               ></v-select>
               </v-row>
               <v-row>
@@ -200,6 +186,15 @@
               v-model="isElectricField1"
               :value="isElectricField1"
               ></v-checkbox>
+              </v-col>
+              <v-col>
+                <v-btn v-if="isExceptionField"
+              color="error"
+              @click="deleteReplacementAppointment1()"
+              text
+              >
+              Ersatz Termin Löschen
+              </v-btn>
               </v-col>
               </v-row>
             </div>
@@ -228,7 +223,7 @@
 
       <v-card-actions>
         <v-btn
-          color="error"
+          color="normal"
           text
           @click="
             patientTextfield = patient;
@@ -239,7 +234,16 @@
         </v-btn>
         <v-spacer></v-spacer>
         <v-btn
-          v-if="patient !== '' && !appointment.startTime"
+          v-if="isSingleAppointment"
+          color="error"
+          text
+          @click="deleteSingleAppointment()"
+        >
+          Einzeltermin löschen
+        </v-btn>
+        <v-spacer></v-spacer>
+        <v-btn
+          v-if="true"
           color="primary"
           @click="printAppointment()"
           text
@@ -293,6 +297,8 @@ export default class DaylistElement extends Vue {
 
   @Prop() readonly endTime1!: string;
 
+  @Prop() readonly comment1!: string;
+
   @Prop() readonly date!: string;
 
   @Prop() readonly therapist!: string;
@@ -302,8 +308,6 @@ export default class DaylistElement extends Vue {
   @Prop() readonly isException!: boolean;
 
   @Prop() readonly replacementPatient!: string;
-
-  @Prop() readonly replacementPatient1!: string;
 
   @Prop() readonly appointment!: Appointment;
 
@@ -323,6 +327,10 @@ export default class DaylistElement extends Vue {
 
   @Prop() readonly isElectric1!: boolean;
 
+  @Prop() readonly isSingleApp!: boolean;
+
+  @Prop() readonly reqOnePatient!: boolean;
+
   store = getModule(Store);
 
   public dialogIsOpen = false;
@@ -341,7 +349,7 @@ export default class DaylistElement extends Vue {
 
   public commentTextfield = this.appointment.comment || '';
 
-  public commentTextfield1 = this.appointment.comment || '';
+  public commentTextfield1 = this.comment1 || '';
 
   public isExceptionField = !!this.isException;
 
@@ -361,9 +369,11 @@ export default class DaylistElement extends Vue {
 
   appointmentsForPatient: Appointment[] = [];
 
-  public requireOnePatient = false;
+  public requireOnePatient = !!this.reqOnePatient;
 
   public requireTwoPatient = false;
+
+  public isSingleAppointment = !!this.isSingleApp;
 
   public patientsLoading = false;
 
@@ -415,24 +425,38 @@ export default class DaylistElement extends Vue {
   public changeAppointment(): void {
     if (this.patientTextfield !== '' && this.patientTextfield !== null) {
       if ((this.appointment as AppointmentSeries).startTime) {
+        // eslint-disable-next-line
+        const patientKey = this.patientTextField1 + ','
+          // eslint-disable-next-line
+          + this.startTimeSelect1 + ',' + this.endTimeSelect1 + ',' + this.commentTextfield1;
+          // TODO eventuell eher über speichern ersatztermin > rückgabe Appointment id >
+          // appointment id ins Patient Feld schreiben daraus dann die daten für Ersatztermin ziehen
         if (this.isExceptionField !== this.isException) {
           if (this.isExceptionField) {
+            console.log('Serien Termin fällt aus');
             this.$emit('exceptionAdded', {
               isException: this.isExceptionField,
-              patient: this.replacementPatientTextField,
+              patient: patientKey,
               appointment: this.appointment as AppointmentSeries,
             });
           } else {
+            console.log('Serien Termin fällt nicht aus');
             this.$emit('exceptionDeleted', {
               isException: this.isExceptionField,
-              patient: this.replacementPatientTextField,
+              patient: this.patientTextField1,
               appointment: this.appointment as AppointmentSeries,
             });
           }
-        } else if (this.replacementPatient !== this.replacementPatientTextField) {
+        } else if (this.isExceptionField === this.isException && this.patient1 !== '') {
+          (this.appointment as AppointmentSeries).cancellations.forEach((cancellation) => {
+            console.log(cancellation.patient);
+          });
+          console.log('speichern Serien Termin');
+          console.log(patientKey);
+          debugger;
           this.$emit('exceptionChanged', {
             isException: this.isExceptionField,
-            patient: this.replacementPatientTextField,
+            patient: patientKey,
             appointment: this.appointment as AppointmentSeries,
           });
         }
@@ -449,6 +473,8 @@ export default class DaylistElement extends Vue {
           isUltrasonic: this.isUltrasonicField,
           isElectric: this.isElectricField,
         });
+        console.log('speichern');
+        if (this.patient1 !== '') this.addRepAppointment();
       }
     } else {
       this.$emit('appointmentDeleted', {
@@ -481,18 +507,6 @@ export default class DaylistElement extends Vue {
   }
 
   public addRepAppointment(): void {
-    /* this.$emit('repAppointmentAdded', {
-      patient1: this.patient1,
-      therapist1: this.therapist,
-      therapistID1: this.therapistID,
-      startTime1: this.startTimeSelect1,
-      endTime1: this.endTimeSelect1,
-      comment1: this.commentTextfield1,
-      isHotair1: this.isHotairField1,
-      isUltrasonic1: this.isUltrasonicField1,
-      isElectric1: this.isElectricField1,
-    });
-     */
     this.$emit('repAppointmentAdded', {
       patient1: this.patientTextField1,
       therapist1: this.therapist,
@@ -521,7 +535,31 @@ export default class DaylistElement extends Vue {
     this.requireTwoPatient = true;
   }
 
-  public removeReplacementAppointments(): void {
+  public deleteSingleAppointment(): void {
+    // eslint no-alert: "error"
+    // eslint-disable-next-line no-restricted-globals
+    if (window.confirm('Soll dieser Termin wirklich unwiederruflich gelöscht werden?')) {
+    // löschen eines single appointments
+      this.$emit('appointmentDeleted', {
+        patient: this.patient,
+        therapist: this.therapist,
+        therapistID: this.therapistID,
+        startTime: this.startTimeSelect,
+        endTime: this.endTimeSelect,
+        comment: this.commentTextfield,
+        id: this.id,
+        isHotair: this.isHotairField,
+        isUltrasonic: this.isUltrasonicField,
+        isElectric: this.isElectricField,
+      });
+      this.requireOnePatient = false;
+      this.requireTwoPatient = false;
+      this.dialogIsOpen = false;
+    }
+  }
+
+  public deleteReplacementAppointment1(): void {
+    // To do: löschen rep appointment see delete Appointment
     this.requireOnePatient = false;
     this.requireTwoPatient = false;
   }
