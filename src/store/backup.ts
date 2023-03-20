@@ -37,7 +37,6 @@ class StoreBackup extends VuexModule {
       this.backup.daylist.elements.forEach((element) => {
         element.appointments.forEach((app) => {
           if (app.patient === '') {
-            console.log('leerer Termin ' || app.id);
             this.deleteSingleAppointment(app as SingleAppointment);
           }
         });

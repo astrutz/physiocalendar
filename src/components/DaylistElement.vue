@@ -445,27 +445,28 @@ export default class DaylistElement extends Vue {
           // appointment id ins Patient Feld schreiben daraus dann die daten für Ersatztermin ziehen
         if (this.isExceptionField !== this.isException) {
           if (this.isExceptionField) {
-            console.log('Serien Termin fällt aus');
+            // Serien Termin fällt aus
             this.$emit('exceptionAdded', {
               isException: this.isExceptionField,
               patient: patientKey,
               appointment: this.appointment as AppointmentSeries,
             });
+            // this.addRepAppointment();
           } else {
-            console.log('Serien Termin fällt nicht aus');
+            // Serien Termin fällt nicht aus
             this.$emit('exceptionDeleted', {
               isException: this.isExceptionField,
               patient: this.patientTextField1,
               appointment: this.appointment as AppointmentSeries,
             });
           }
-        } else if (this.isExceptionField === this.isException && this.patient1 !== '') {
+        } else if (this.isExceptionField === this.isException) {
           (this.appointment as AppointmentSeries).cancellations.forEach((cancellation) => {
-            console.log(cancellation.patient);
+            // console.log(cancellation.patient);
           });
           debugger;
-          console.log('speichern Serien Termin');
-          console.log(patientKey);
+          // speichern Serien Termin
+          // console.log(patientKey);
           this.$emit('exceptionChanged', {
             isException: this.isExceptionField,
             patient: patientKey,
@@ -533,8 +534,7 @@ export default class DaylistElement extends Vue {
   }
 
   public deleteSingleAppointment(): void {
-    // eslint no-alert: "error"
-    // eslint-disable-next-line no-restricted-globals
+    /* eslint-disable */
     if (window.confirm('Soll dieser Termin wirklich unwiederruflich gelöscht werden?')) {
     // löschen eines single appointments
       this.$emit('appointmentDeleted', {
