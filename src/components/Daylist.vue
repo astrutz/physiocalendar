@@ -104,9 +104,9 @@
                 :startTime1="row[header.value].startDate ? getStartTime1(row[header.value].cancellations) : ''"
                 :endTime1="row[header.value].startDate ? getEndTime1(row[header.value].cancellations) : ''"
                 :comment1="row[header.value].startDate ? getComment1(row[header.value].cancellations) : ''"
-                :isHotair1="row[header.value].startDate ? false : row[header.value].isHotair1"
-                :isUltrasonic1="row[header.value].startDate ? false : row[header.value].isUltrasonic1"
-                :isElectric1="row[header.value].startDate ? false : row[header.value].isElectric1"
+                :isHotair1="getIsHotair1(row[header.value].cancellations) === 'true' ? true : false"
+                :isUltrasonic1="getIsUltrasonic1(row[header.value].cancellations) === 'true' ? true : false"
+                :isElectric1="getIsElectric1(row[header.value].cancellations) === 'true' ? true : false"
                 :reqOnePatient="row[header.value].cancellations ? true : false"
                 :isSingleApp="row[header.value] && row[header.value].patient && !row[header.value].startDate"
                 :appointment="row[header.value]"
@@ -609,7 +609,7 @@ export default class Daylist extends Vue {
 
   private getPatient1(cancellations : Cancellation[]) : string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(',');
+    const arr = cancellation?.patient.split(';');
     if (arr) {
       const patient1 = arr[0];
       return patient1;
@@ -619,7 +619,7 @@ export default class Daylist extends Vue {
 
   private getStartTime1(cancellations : Cancellation[]) : string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(',');
+    const arr = cancellation?.patient.split(';');
     if (arr) {
       const startTime1 = arr[1];
       return startTime1;
@@ -629,7 +629,7 @@ export default class Daylist extends Vue {
 
   private getEndTime1(cancellations : Cancellation[]) : string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(',');
+    const arr = cancellation?.patient.split(';');
     if (arr) {
       const endTime1 = arr[2];
       return endTime1;
@@ -637,9 +637,39 @@ export default class Daylist extends Vue {
     return '';
   }
 
+  private getIsHotair1(cancellations : Cancellation[]) : string {
+    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
+    const arr = cancellation?.patient.split(';');
+    if (arr) {
+      const isHotair1 = arr[4];
+      return isHotair1;
+    }
+    return 'false';
+  }
+
+  private getIsUltrasonic1(cancellations : Cancellation[]) : string {
+    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
+    const arr = cancellation?.patient.split(';');
+    if (arr) {
+      const isUltrasonic1 = arr[5];
+      return isUltrasonic1;
+    }
+    return 'false';
+  }
+
+  private getIsElectric1(cancellations : Cancellation[]) : string {
+    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
+    const arr = cancellation?.patient.split(';');
+    if (arr) {
+      const isElectric1 = arr[6];
+      return isElectric1;
+    }
+    return 'false';
+  }
+
   private getComment1(cancellations : Cancellation[]) : string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(',');
+    const arr = cancellation?.patient.split(';');
     if (arr) {
       const comment1 = arr[3];
       return comment1;

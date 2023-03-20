@@ -116,10 +116,9 @@
           <center>
           <v-btn v-if="isExceptionField"
           color="warning"
-          @click="addOneRepPatient()"
           text
           >
-          +1 Ersatz Termin
+          Ersatz Termin
           </v-btn>
           <v-btn v-if="false"
           color="warning"
@@ -139,23 +138,20 @@
                 clearable
               ></v-text-field>
               <v-text-field
-               :disabled="false"
                label="Bemerkungen"
-               :value="commentTextfield1"
-               v-model="commentTextfield"
+               :value="comment1"
+               v-model="commentTextfield1"
                clearable
               ></v-text-field>
               </v-row>
               <v-row>
               <v-select
-               :disabled="false"
                :items="getAllTimes()"
                label="Start um"
                v-model="startTimeSelect1"
                :value="startTimeSelect"
               ></v-select>
               <v-select
-               :disabled="false"
                :items="getAllTimes()"
                label="Ende um"
                v-model="endTimeSelect1"
@@ -423,12 +419,28 @@ export default class DaylistElement extends Vue {
   }
 
   public changeAppointment(): void {
-    if (this.patientTextfield !== '' && this.patientTextfield !== null) {
+    if ((this.appointment as AppointmentSeries).startTime) {
+      console.log('speichern einzel Termin');
+      this.$emit('appointmentChanged', {
+        patient: this.patientTextfield,
+        therapist: this.therapist,
+        therapistID: this.therapistID,
+        startTime: this.startTimeSelect,
+        endTime: this.endTimeSelect,
+        comment: this.commentTextfield,
+        id: this.id,
+        isHotair: this.isHotairField,
+        isUltrasonic: this.isUltrasonicField,
+        isElectric: this.isElectricField,
+      });
+      // if (this.patient1 !== '') this.addRepAppointment();
+    }
+    if (this.patientTextfield !== null) {
       if ((this.appointment as AppointmentSeries).startTime) {
         // eslint-disable-next-line
-        const patientKey = this.patientTextField1 + ','
+        const patientKey = this.patientTextField1 + ';'
           // eslint-disable-next-line
-          + this.startTimeSelect1 + ',' + this.endTimeSelect1 + ',' + this.commentTextfield1;
+          + this.startTimeSelect1 + ';' + this.endTimeSelect1 + ';' + this.commentTextfield1 + ';' + (this.isHotairField1 ? 'true' : 'false') + ';' + (this.isUltrasonicField1 ? 'true' : 'false') + ';' + (this.isElectricField1 ? 'true' : 'false');
           // TODO eventuell eher über speichern ersatztermin > rückgabe Appointment id >
           // appointment id ins Patient Feld schreiben daraus dann die daten für Ersatztermin ziehen
         if (this.isExceptionField !== this.isException) {
@@ -451,30 +463,15 @@ export default class DaylistElement extends Vue {
           (this.appointment as AppointmentSeries).cancellations.forEach((cancellation) => {
             console.log(cancellation.patient);
           });
+          debugger;
           console.log('speichern Serien Termin');
           console.log(patientKey);
-          debugger;
           this.$emit('exceptionChanged', {
             isException: this.isExceptionField,
             patient: patientKey,
             appointment: this.appointment as AppointmentSeries,
           });
         }
-      } else {
-        this.$emit('appointmentChanged', {
-          patient: this.patientTextfield,
-          therapist: this.therapist,
-          therapistID: this.therapistID,
-          startTime: this.startTimeSelect,
-          endTime: this.endTimeSelect,
-          comment: this.commentTextfield,
-          id: this.id,
-          isHotair: this.isHotairField,
-          isUltrasonic: this.isUltrasonicField,
-          isElectric: this.isElectricField,
-        });
-        console.log('speichern');
-        if (this.patient1 !== '') this.addRepAppointment();
       }
     } else {
       this.$emit('appointmentDeleted', {
@@ -514,9 +511,9 @@ export default class DaylistElement extends Vue {
       startTime1: this.startTimeSelect1,
       endTime1: this.endTimeSelect1,
       comment1: this.commentTextfield1,
-      isHotair1: false,
-      isUltrasonic1: false,
-      isElectric1: false,
+      isHotair1: this.isHotairField1,
+      isUltrasonic1: this.isUltrasonicField1,
+      isElectric1: this.isElectricField1,
     });
   }
 
@@ -562,6 +559,13 @@ export default class DaylistElement extends Vue {
     // To do: löschen rep appointment see delete Appointment
     this.requireOnePatient = false;
     this.requireTwoPatient = false;
+    this.patientTextField1 = '';
+    this.commentTextfield1 = '';
+    this.startTimeSelect1 = this.startTimeSelect;
+    this.endTimeSelect1 = this.endTimeSelect;
+    this.isHotairField1 = false;
+    this.isUltrasonicField1 = false;
+    this.isElectricField1 = false;
   }
 
   public printAppointment(): void {
