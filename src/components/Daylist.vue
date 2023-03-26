@@ -94,19 +94,39 @@
                 :therapistID="row[header.value].therapistID"
                 :isException="row[header.value].startDate
                  ? row[header.value].cancellations.some((c) => c.date === currentSingleDay) : false"
-                :replacementPatient="row[header.value].startDate ? getPatient1(row[header.value].cancellations) : ''"
                 :isHotair="row[header.value].startDate ? false : row[header.value].isHotair"
                 :isUltrasonic="row[header.value].startDate ? false : row[header.value].isUltrasonic"
                 :isElectric="row[header.value].startDate ? false : row[header.value].isElectric"
                 :startTime="row.startTime"
                 :endTime="row[header.value].endTime"
-                :patient1="row[header.value].startDate ? getPatient1(row[header.value].cancellations) : ''"
-                :startTime1="row[header.value].startDate ? getStartTime1(row[header.value].cancellations) : ''"
-                :endTime1="row[header.value].startDate ? getEndTime1(row[header.value].cancellations) : ''"
-                :comment1="row[header.value].startDate ? getComment1(row[header.value].cancellations) : ''"
-                :isHotair1="getIsHotair1(row[header.value].cancellations) === 'true' ? true : false"
-                :isUltrasonic1="getIsUltrasonic1(row[header.value].cancellations) === 'true' ? true : false"
-                :isElectric1="getIsElectric1(row[header.value].cancellations) === 'true' ? true : false"
+                :patient1="row[header.value].startDate ? getPatient(row[header.value].cancellations,1) : ''"
+                :startTime1="row[header.value].startDate ? getStartTime(row[header.value].cancellations,1) : ''"
+                :endTime1="row[header.value].startDate ? getEndTime(row[header.value].cancellations,1) : ''"
+                :comment1="row[header.value].startDate ? getComment(row[header.value].cancellations,1) : ''"
+                :isHotair1="getIsHotair(row[header.value].cancellations,1) === 'true' ? true : false"
+                :isUltrasonic1="getIsUltrasonic(row[header.value].cancellations,1) === 'true' ? true : false"
+                :isElectric1="getIsElectric(row[header.value].cancellations,1) === 'true' ? true : false"
+                :patient2="row[header.value].startDate ? getPatient(row[header.value].cancellations,2) : ''"
+                :startTime2="row[header.value].startDate ? getStartTime(row[header.value].cancellations,2) : ''"
+                :endTime2="row[header.value].startDate ? getEndTime(row[header.value].cancellations,2) : ''"
+                :comment2="row[header.value].startDate ? getComment(row[header.value].cancellations,2) : ''"
+                :isHotair2="getIsHotair(row[header.value].cancellations,2) === 'true' ? true : false"
+                :isUltrasonic2="getIsUltrasonic(row[header.value].cancellations,2) === 'true' ? true : false"
+                :isElectric2="getIsElectric(row[header.value].cancellations,2) === 'true' ? true : false"
+                :patient3="row[header.value].startDate ? getPatient(row[header.value].cancellations,3) : ''"
+                :startTime3="row[header.value].startDate ? getStartTime(row[header.value].cancellations,3) : ''"
+                :endTime3="row[header.value].startDate ? getEndTime(row[header.value].cancellations,3) : ''"
+                :comment3="row[header.value].startDate ? getComment(row[header.value].cancellations,3) : ''"
+                :isHotair3="getIsHotair(row[header.value].cancellations,3) === 'true' ? true : false"
+                :isUltrasonic3="getIsUltrasonic(row[header.value].cancellations,3) === 'true' ? true : false"
+                :isElectric3="getIsElectric(row[header.value].cancellations,3) === 'true' ? true : false"
+                :patient4="row[header.value].startDate ? getPatient(row[header.value].cancellations,4) : ''"
+                :startTime4="row[header.value].startDate ? getStartTime(row[header.value].cancellations,4) : ''"
+                :endTime4="row[header.value].startDate ? getEndTime(row[header.value].cancellations,4) : ''"
+                :comment4="row[header.value].startDate ? getComment(row[header.value].cancellations,4) : ''"
+                :isHotair4="getIsHotair(row[header.value].cancellations,4) === 'true' ? true : false"
+                :isUltrasonic4="getIsUltrasonic(row[header.value].cancellations,4) === 'true' ? true : false"
+                :isElectric4="getIsElectric(row[header.value].cancellations,4) === 'true' ? true : false"
                 :reqOnePatient="row[header.value].cancellations ? true : false"
                 :isSingleApp="row[header.value] && row[header.value].patient && !row[header.value].startDate"
                 :appointment="row[header.value]"
@@ -607,72 +627,142 @@ export default class Daylist extends Vue {
     }
   }
 
-  private getPatient1(cancellations : Cancellation[]) : string {
+  private getPatient(cancellations: Cancellation[], number: number): string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
     const arr = cancellation?.patient.split(';');
     if (arr) {
-      const patient1 = arr[0];
-      return patient1;
+      switch (number) {
+        case 1:
+          return arr[0];
+        case 2:
+          return arr[7];
+        case 3:
+          return arr[14];
+        case 4:
+          return arr[21];
+        default:
+          return '';
+      }
     }
     return '';
   }
 
-  private getStartTime1(cancellations : Cancellation[]) : string {
+  private getStartTime(cancellations: Cancellation[], number: number): string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
     const arr = cancellation?.patient.split(';');
     if (arr) {
-      const startTime1 = arr[1];
-      return startTime1;
+      switch (number) {
+        case 1:
+          return arr[1];
+        case 2:
+          return arr[8];
+        case 3:
+          return arr[15];
+        case 4:
+          return arr[22];
+        default:
+          return '';
+      }
     }
     return '';
   }
 
-  private getEndTime1(cancellations : Cancellation[]) : string {
+  private getEndTime(cancellations: Cancellation[], number: number): string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
     const arr = cancellation?.patient.split(';');
     if (arr) {
-      const endTime1 = arr[2];
-      return endTime1;
+      switch (number) {
+        case 1:
+          return arr[2];
+        case 2:
+          return arr[9];
+        case 3:
+          return arr[16];
+        case 4:
+          return arr[23];
+        default:
+          return '';
+      }
     }
     return '';
   }
 
-  private getIsHotair1(cancellations : Cancellation[]) : string {
+  private getComment(cancellations: Cancellation[], number: number): string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
     const arr = cancellation?.patient.split(';');
     if (arr) {
-      const isHotair1 = arr[4];
-      return isHotair1;
+      switch (number) {
+        case 1:
+          return arr[3];
+        case 2:
+          return arr[10];
+        case 3:
+          return arr[17];
+        case 4:
+          return arr[24];
+        default:
+          return '';
+      }
     }
-    return 'false';
+    return '';
   }
 
-  private getIsUltrasonic1(cancellations : Cancellation[]) : string {
+  private getIsHotair(cancellations: Cancellation[], number: number): string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
     const arr = cancellation?.patient.split(';');
     if (arr) {
-      const isUltrasonic1 = arr[5];
-      return isUltrasonic1;
+      switch (number) {
+        case 1:
+          return arr[4];
+        case 2:
+          return arr[11];
+        case 3:
+          return arr[18];
+        case 4:
+          return arr[25];
+        default:
+          return '';
+      }
     }
-    return 'false';
+    return '';
   }
 
-  private getIsElectric1(cancellations : Cancellation[]) : string {
+  private getIsUltrasonic(cancellations: Cancellation[], number: number): string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
     const arr = cancellation?.patient.split(';');
     if (arr) {
-      const isElectric1 = arr[6];
-      return isElectric1;
+      switch (number) {
+        case 1:
+          return arr[5];
+        case 2:
+          return arr[12];
+        case 3:
+          return arr[19];
+        case 4:
+          return arr[26];
+        default:
+          return '';
+      }
     }
-    return 'false';
+    return '';
   }
 
-  private getComment1(cancellations : Cancellation[]) : string {
+  private getIsElectric(cancellations: Cancellation[], number: number): string {
     const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
     const arr = cancellation?.patient.split(';');
     if (arr) {
-      const comment1 = arr[3];
-      return comment1;
+      switch (number) {
+        case 1:
+          return arr[6];
+        case 2:
+          return arr[13];
+        case 3:
+          return arr[20];
+        case 4:
+          return arr[27];
+        default:
+          return '';
+      }
     }
     return '';
   }
