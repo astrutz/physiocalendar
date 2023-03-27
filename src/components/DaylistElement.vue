@@ -832,63 +832,67 @@ export default class DaylistElement extends Vue {
   }
 
   public addRepAppointment(number: number): void {
-  let patient, startTimeSelect, endTimeSelect, commentTextfield, isHotairField, isUltrasonicField, isElectricField;
+    let patient;
+    let startTimeSelect;
+    let endTimeSelect;
+    let commentTextfield;
+    let isHotairField;
+    let isUltrasonicField;
+    let isElectricField;
+    switch (number) {
+      case 1:
+        patient = this.patientTextField1;
+        startTimeSelect = this.startTimeSelect1;
+        endTimeSelect = this.endTimeSelect1;
+        commentTextfield = this.commentTextfield1;
+        isHotairField = this.isHotairField1;
+        isUltrasonicField = this.isUltrasonicField1;
+        isElectricField = this.isElectricField1;
+        break;
+      case 2:
+        patient = this.patientTextField2;
+        startTimeSelect = this.startTimeSelect2;
+        endTimeSelect = this.endTimeSelect2;
+        commentTextfield = this.commentTextfield2;
+        isHotairField = this.isHotairField2;
+        isUltrasonicField = this.isUltrasonicField2;
+        isElectricField = this.isElectricField2;
+        break;
+      case 3:
+        patient = this.patientTextField3;
+        startTimeSelect = this.startTimeSelect3;
+        endTimeSelect = this.endTimeSelect3;
+        commentTextfield = this.commentTextfield3;
+        isHotairField = this.isHotairField3;
+        isUltrasonicField = this.isUltrasonicField3;
+        isElectricField = this.isElectricField3;
+        break;
+      case 4:
+        patient = this.patientTextField4;
+        startTimeSelect = this.startTimeSelect4;
+        endTimeSelect = this.endTimeSelect4;
+        commentTextfield = this.commentTextfield4;
+        isHotairField = this.isHotairField4;
+        isUltrasonicField = this.isUltrasonicField4;
+        isElectricField = this.isElectricField4;
+        break;
+      default:
+        console.error(`Invalid number parameter: ${number}`);
+        return;
+    }
 
-  switch (number) {
-    case 1:
-      patient = this.patientTextField1;
-      startTimeSelect = this.startTimeSelect1;
-      endTimeSelect = this.endTimeSelect1;
-      commentTextfield = this.commentTextfield1;
-      isHotairField = this.isHotairField1;
-      isUltrasonicField = this.isUltrasonicField1;
-      isElectricField = this.isElectricField1;
-      break;
-    case 2:
-      patient = this.patientTextField2;
-      startTimeSelect = this.startTimeSelect2;
-      endTimeSelect = this.endTimeSelect2;
-      commentTextfield = this.commentTextfield2;
-      isHotairField = this.isHotairField2;
-      isUltrasonicField = this.isUltrasonicField2;
-      isElectricField = this.isElectricField2;
-      break;
-    case 3:
-      patient = this.patientTextField3;
-      startTimeSelect = this.startTimeSelect3;
-      endTimeSelect = this.endTimeSelect3;
-      commentTextfield = this.commentTextfield3;
-      isHotairField = this.isHotairField3;
-      isUltrasonicField = this.isUltrasonicField3;
-      isElectricField = this.isElectricField3;
-      break;
-    case 4:
-      patient = this.patientTextField4;
-      startTimeSelect = this.startTimeSelect4;
-      endTimeSelect = this.endTimeSelect4;
-      commentTextfield = this.commentTextfield4;
-      isHotairField = this.isHotairField4;
-      isUltrasonicField = this.isUltrasonicField4;
-      isElectricField = this.isElectricField4;
-      break;
-    default:
-      console.error(`Invalid number parameter: ${number}`);
-      return;
+    this.$emit('repAppointmentAdded', {
+      [`patient${number}`]: patient,
+      [`therapist${number}`]: this.therapist,
+      [`therapistID${number}`]: this.therapistID,
+      [`startTime${number}`]: startTimeSelect,
+      [`endTime${number}`]: endTimeSelect,
+      [`comment${number}`]: commentTextfield,
+      [`isHotair${number}`]: isHotairField,
+      [`isUltrasonic${number}`]: isUltrasonicField,
+      [`isElectric${number}`]: isElectricField,
+    });
   }
-
-  this.$emit('repAppointmentAdded', {
-    [`patient${number}`]: patient,
-    [`therapist${number}`]: this.therapist,
-    [`therapistID${number}`]: this.therapistID,
-    [`startTime${number}`]: startTimeSelect,
-    [`endTime${number}`]: endTimeSelect,
-    [`comment${number}`]: commentTextfield,
-    [`isHotair${number}`]: isHotairField,
-    [`isUltrasonic${number}`]: isUltrasonicField,
-    [`isElectric${number}`]: isElectricField,
-  });
-}
-
 
   public addTwoRepPatient(): void {
     this.requireTwoPatient = true;
