@@ -223,7 +223,6 @@ export default class Masterlist {
       const cancellation = newAppointment.cancellations.find((c) => c.date === date);
       if (cancellation) {
         cancellation.patient = patient;
-        debugger;
         const newCancellations = newAppointment.cancellations.filter((c) => c.date !== date);
         newCancellations.push(cancellation);
         newAppointment.cancellations = newCancellations;
