@@ -329,14 +329,6 @@ export default class Daylist extends Vue {
 
   private searchValue = '';
 
-  private patient1 = '';
-
-  private startTime1 = '';
-
-  private endTime1 = '';
-
-  private comment1 = '';
-
   private foundPatients : string[] = [];
 
   get localBackup(): Backup | null {
@@ -532,21 +524,39 @@ export default class Daylist extends Vue {
       isHotair1: boolean, isUltrasonic1: boolean, isElectric1: boolean,
     },
   ): void {
-    const appointment = new SingleAppointment(
-      event.therapist1,
-      event.therapistID1,
-      event.patient1,
-      event.startTime1 as unknown as Time,
-      event.endTime1 as unknown as Time,
-      event.comment1,
-      Dateconversions.convertReadableStringToDate(this.currentSingleDay),
-      event.isHotair1,
-      event.isUltrasonic1,
-      event.isElectric1,
+    const appointmentId = this.getSingleAppointmentIdByParams(
+      event.patient1, event.startTime1, event.endTime1,
     );
-    if (this.localBackup) {
-      console.log(appointment);
-      this.store.addSingleAppointment(appointment);
+    if (appointmentId !== '') {
+      this.changeAppointmentById(appointmentId, {
+        patient: event.patient1,
+        therapist: event.therapist1,
+        therapistID: event.therapistID1,
+        startTime: event.startTime1,
+        endTime: event.endTime1,
+        comment: event.comment1,
+        id: appointmentId,
+        isHotair: event.isHotair1,
+        isUltrasonic: event.isUltrasonic1,
+        isElectric: event.isElectric1,
+      });
+    } else {
+      const appointment = new SingleAppointment(
+        event.therapist1,
+        event.therapistID1,
+        event.patient1,
+        event.startTime1 as unknown as Time,
+        event.endTime1 as unknown as Time,
+        event.comment1,
+        Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+        event.isHotair1,
+        event.isUltrasonic1,
+        event.isElectric1,
+      );
+      if (this.localBackup) {
+        console.log(appointment);
+        this.store.addSingleAppointment(appointment);
+      }
     }
   }
 
@@ -572,11 +582,44 @@ export default class Daylist extends Vue {
     console.log('speichern einzel Termin');
     console.log(appointment);
     if (this.localBackup) {
-      // this.patient1 = this.getPatient1(appointment.cancellations);
-      // this.startTime1 = this.getStartTime1(appointment.cancellations);
-      // this.endTime1 = this.getEndTime1(appointment.cancellations);
-      // this.comment1 = this.getComment1(appointment.cancellations);
       this.store.changeSingleAppointment(appointment);
+    }
+  }
+  
+  private getAppointmentById(id: string): SingleAppointment | undefined {
+    let appointments: Appointment[] = [];
+    appointments = [];
+    return appointments[0]; // appointments.find(appointment => appointment.id === id) as SingleAppointment;
+  }
+
+  private changeAppointmentById(
+    appointment_id: string,
+    event: {
+      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
+      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
+    },
+  ): void {
+    const appointment = this.getAppointmentById(appointment_id);
+    console.log('speichern einzel Termin');
+    if (appointment) {
+    const updatedAppointment = new SingleAppointment(
+      event.therapist,
+      event.therapistID,
+      event.patient,
+      event.startTime as unknown as Time,
+      event.endTime as unknown as Time,
+      event.comment,
+      appointment.date,
+      event.isHotair,
+      event.isUltrasonic,
+      event.isElectric,
+      appointment.id,
+    );
+    console.log('speichern einzel Termin by id');
+    console.log(updatedAppointment);
+    if (this.localBackup) {
+      this.store.changeSingleAppointment(updatedAppointment);
+    }
     }
   }
 
@@ -763,6 +806,30 @@ export default class Daylist extends Vue {
         default:
           return '';
       }
+    }
+    return '';
+  }
+
+  private getSingleAppointmentIdByParams( 
+    patient: string,
+    startTime: string,
+    endTime: string
+  ): string {
+  const appointments = this.searchAppointmentsForPatient(patient); 
+  for (const appointment of appointments) {
+    const appointmentStartTime = Dateconversions.convertDateToReadableString(
+      appointment.startTime
+    );
+    const appointmentEndTime = Dateconversions.convertDateToReadableString(
+      appointment.endTime
+    );
+    if (
+      appointmentStartTime === startTime
+      && appointmentEndTime === endTime
+      && appointment.date.getTime() === date.getTime()
+    ) {
+      return appointment.id;
+    }
     }
     return '';
   }

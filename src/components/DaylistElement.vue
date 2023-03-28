@@ -789,11 +789,19 @@ export default class DaylistElement extends Vue {
             });
           }
         } else if (this.isExceptionField === this.isException) {
-          (this.appointment as AppointmentSeries).cancellations.forEach((cancellation) => {
-            // console.log(cancellation.patient);
-          });
           // speichern Serien Termin
-          // console.log(patientKey);
+          if (this.patientTextField1 !== '') {
+            this.addRepAppointment(1);
+          }
+          if (this.patientTextField2 !== '') {
+            this.addRepAppointment(2);
+          }
+          if (this.patientTextField3 !== '') {
+            this.addRepAppointment(3);
+          }
+          if (this.patientTextField4 !== '') {
+            this.addRepAppointment(4);
+          }
           this.$emit('exceptionChanged', {
             isException: this.isExceptionField,
             patient: patientKey,
