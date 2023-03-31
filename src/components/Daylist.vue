@@ -32,9 +32,11 @@
         <tbody>
           <tr v-for="(row, rowIndex) in rows" :key="row.name">
             <td
-              v-for="header in headers.filter(header => header === '' || row[header.value] != undefined)"
+              v-for="header, headerIndex in headers.filter(header => header === '' || row[header.value] != undefined)"
               :key="header.value"
+              :id="`cell_${rowIndex}_${headerIndex}`"
               :rowspan="calculateRowspan(row[header.value])"
+              :isException="isCellException(row[header.value],`cell_${rowIndex}_${headerIndex}`)"
               :class="{
                 'text-center': true,
                 'hour-begin': rowIndex % 6 === 0,
@@ -99,34 +101,6 @@
                 :isElectric="row[header.value].startDate ? false : row[header.value].isElectric"
                 :startTime="row.startTime"
                 :endTime="row[header.value].endTime"
-                :patient1="row[header.value].startDate ? getPatient(row[header.value].cancellations,1) : ''"
-                :startTime1="row[header.value].startDate ? getStartTime(row[header.value].cancellations,1) : ''"
-                :endTime1="row[header.value].startDate ? getEndTime(row[header.value].cancellations,1) : ''"
-                :comment1="row[header.value].startDate ? getComment(row[header.value].cancellations,1) : ''"
-                :isHotair1="getIsHotair(row[header.value].cancellations,1) === 'true' ? true : false"
-                :isUltrasonic1="getIsUltrasonic(row[header.value].cancellations,1) === 'true' ? true : false"
-                :isElectric1="getIsElectric(row[header.value].cancellations,1) === 'true' ? true : false"
-                :patient2="row[header.value].startDate ? getPatient(row[header.value].cancellations,2) : ''"
-                :startTime2="row[header.value].startDate ? getStartTime(row[header.value].cancellations,2) : ''"
-                :endTime2="row[header.value].startDate ? getEndTime(row[header.value].cancellations,2) : ''"
-                :comment2="row[header.value].startDate ? getComment(row[header.value].cancellations,2) : ''"
-                :isHotair2="getIsHotair(row[header.value].cancellations,2) === 'true' ? true : false"
-                :isUltrasonic2="getIsUltrasonic(row[header.value].cancellations,2) === 'true' ? true : false"
-                :isElectric2="getIsElectric(row[header.value].cancellations,2) === 'true' ? true : false"
-                :patient3="row[header.value].startDate ? getPatient(row[header.value].cancellations,3) : ''"
-                :startTime3="row[header.value].startDate ? getStartTime(row[header.value].cancellations,3) : ''"
-                :endTime3="row[header.value].startDate ? getEndTime(row[header.value].cancellations,3) : ''"
-                :comment3="row[header.value].startDate ? getComment(row[header.value].cancellations,3) : ''"
-                :isHotair3="getIsHotair(row[header.value].cancellations,3) === 'true' ? true : false"
-                :isUltrasonic3="getIsUltrasonic(row[header.value].cancellations,3) === 'true' ? true : false"
-                :isElectric3="getIsElectric(row[header.value].cancellations,3) === 'true' ? true : false"
-                :patient4="row[header.value].startDate ? getPatient(row[header.value].cancellations,4) : ''"
-                :startTime4="row[header.value].startDate ? getStartTime(row[header.value].cancellations,4) : ''"
-                :endTime4="row[header.value].startDate ? getEndTime(row[header.value].cancellations,4) : ''"
-                :comment4="row[header.value].startDate ? getComment(row[header.value].cancellations,4) : ''"
-                :isHotair4="getIsHotair(row[header.value].cancellations,4) === 'true' ? true : false"
-                :isUltrasonic4="getIsUltrasonic(row[header.value].cancellations,4) === 'true' ? true : false"
-                :isElectric4="getIsElectric(row[header.value].cancellations,4) === 'true' ? true : false"
                 :reqOnePatient="row[header.value].cancellations ? true : false"
                 :isSingleApp="row[header.value] && row[header.value].patient && !row[header.value].startDate"
                 :appointment="row[header.value]"
@@ -263,7 +237,6 @@ import { v4 as uuidv4 } from 'uuid';
 import Appointment from '@/class/Appointment';
 import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
-import Cancellation from '@/class/Cancellation';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import { Time } from '@/class/Enums';
@@ -313,6 +286,8 @@ export default class Daylist extends Vue {
 
   appointmentsForPatient: Appointment[] = [];
 
+   cellsToUpdate: { id: string, isException: boolean }[] = [];
+
   hash = uuidv4();
 
   private headers: { text: string, value: string, id: string, absences: Absence[], exceptions: Exception[], align: string }[] = [
@@ -328,14 +303,6 @@ export default class Daylist extends Vue {
   private patientsLoading = false;
 
   private searchValue = '';
-
-  private patient1 = '';
-
-  private startTime1 = '';
-
-  private endTime1 = '';
-
-  private comment1 = '';
 
   private foundPatients : string[] = [];
 
@@ -461,7 +428,66 @@ export default class Daylist extends Vue {
     });
   }
 
+  public checkIsExceptionAndUpdateRowspan(): void {
+    const tdElements = document.querySelectorAll('td[id^="cell_"]');
+    tdElements.forEach(({ id }) => {
+      const appointment = this.getCellAppointment(id);
+      if (appointment) {
+        const isException = this.isCellException(appointment, id);
+        if (isException) {
+          console.log(id, isException);
+          this.setRowspanTdId(id, 1);
+        }
+      }
+    });
+  }
+
+  private getCellAppointment(id: string): AppointmentSeries | SingleAppointment | undefined {
+    const [rowIndex, headerIndex] = id.split('_').slice(1).map(Number);
+    if (this.rows[rowIndex][this.headers[headerIndex]?.value] !== undefined) {
+      const appointment = this.rows[rowIndex][this.headers[headerIndex]?.value];
+      return (appointment instanceof AppointmentSeries || appointment instanceof SingleAppointment) ? appointment : undefined;
+    }
+    return undefined;
+  }
+
+  public isCellException(appointment : string | AppointmentSeries | SingleAppointment, pId: string): boolean {
+    if (typeof appointment === 'string') {
+      return false;
+    }
+    if (!appointment || appointment.cancellations.length === 0) {
+      return false;
+    }
+    const match = appointment.cancellations.find((cancellation) => cancellation.date === this.currentSingleDay);
+    if (match) {
+      return true;
+    }
+    return false;
+  }
+
+  setRowspanTdId = (id: string, rowspan: number) => {
+    const td = document.getElementById(id);
+    debugger;
+    if (td) {
+      td.setAttribute('rowspan', rowspan.toString());
+    }
+  }
+
   private openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
+    this.selectedAppointment.therapist = therapist;
+    this.selectedAppointment.therapistID = therapistID;
+    this.selectedAppointment.startTime = startTime;
+    const times = this.getAllTimes();
+    const i = times.indexOf(startTime);
+    this.inputFields.startTimeSelect = startTime;
+    this.inputFields.endTimeSelect = i + 2 < times.length - 1 ? times[i + 2] : times[times.length - 1];
+    debugger;
+    console.log(this.rows);
+    this.checkIsExceptionAndUpdateRowspan();
+    this.createDialog = true;
+  }
+
+  private openCreateDialog1(therapist: string, therapistID: string, startTime: string, cellId: string): void {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
     this.selectedAppointment.startTime = startTime;
@@ -545,7 +571,6 @@ export default class Daylist extends Vue {
       event.isElectric1,
     );
     if (this.localBackup) {
-      console.log(appointment);
       this.store.addSingleAppointment(appointment);
     }
   }
@@ -572,10 +597,6 @@ export default class Daylist extends Vue {
     console.log('speichern einzel Termin');
     console.log(appointment);
     if (this.localBackup) {
-      // this.patient1 = this.getPatient1(appointment.cancellations);
-      // this.startTime1 = this.getStartTime1(appointment.cancellations);
-      // this.endTime1 = this.getEndTime1(appointment.cancellations);
-      // this.comment1 = this.getComment1(appointment.cancellations);
       this.store.changeSingleAppointment(appointment);
     }
   }
@@ -625,146 +646,6 @@ export default class Daylist extends Vue {
     if (this.localBackup) {
       this.store.deleteCancellation({ date: this.currentSingleDay, appointment: event.appointment });
     }
-  }
-
-  private getPatient(cancellations: Cancellation[], number: number): string {
-    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(';');
-    if (arr) {
-      switch (number) {
-        case 1:
-          return arr[0];
-        case 2:
-          return arr[7];
-        case 3:
-          return arr[14];
-        case 4:
-          return arr[21];
-        default:
-          return '';
-      }
-    }
-    return '';
-  }
-
-  private getStartTime(cancellations: Cancellation[], number: number): string {
-    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(';');
-    if (arr) {
-      switch (number) {
-        case 1:
-          return arr[1];
-        case 2:
-          return arr[8];
-        case 3:
-          return arr[15];
-        case 4:
-          return arr[22];
-        default:
-          return '';
-      }
-    }
-    return '';
-  }
-
-  private getEndTime(cancellations: Cancellation[], number: number): string {
-    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(';');
-    if (arr) {
-      switch (number) {
-        case 1:
-          return arr[2];
-        case 2:
-          return arr[9];
-        case 3:
-          return arr[16];
-        case 4:
-          return arr[23];
-        default:
-          return '';
-      }
-    }
-    return '';
-  }
-
-  private getComment(cancellations: Cancellation[], number: number): string {
-    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(';');
-    if (arr) {
-      switch (number) {
-        case 1:
-          return arr[3];
-        case 2:
-          return arr[10];
-        case 3:
-          return arr[17];
-        case 4:
-          return arr[24];
-        default:
-          return '';
-      }
-    }
-    return '';
-  }
-
-  private getIsHotair(cancellations: Cancellation[], number: number): string {
-    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(';');
-    if (arr) {
-      switch (number) {
-        case 1:
-          return arr[4];
-        case 2:
-          return arr[11];
-        case 3:
-          return arr[18];
-        case 4:
-          return arr[25];
-        default:
-          return '';
-      }
-    }
-    return '';
-  }
-
-  private getIsUltrasonic(cancellations: Cancellation[], number: number): string {
-    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(';');
-    if (arr) {
-      switch (number) {
-        case 1:
-          return arr[5];
-        case 2:
-          return arr[12];
-        case 3:
-          return arr[19];
-        case 4:
-          return arr[26];
-        default:
-          return '';
-      }
-    }
-    return '';
-  }
-
-  private getIsElectric(cancellations: Cancellation[], number: number): string {
-    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(';');
-    if (arr) {
-      switch (number) {
-        case 1:
-          return arr[6];
-        case 2:
-          return arr[13];
-        case 3:
-          return arr[20];
-        case 4:
-          return arr[27];
-        default:
-          return '';
-      }
-    }
-    return '';
   }
 
   private hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
@@ -957,6 +838,6 @@ th:hover {
 
 .create-appointment {
   width: 100%;
-  height: 100%;
+  height: 50%;
 }
 </style>
