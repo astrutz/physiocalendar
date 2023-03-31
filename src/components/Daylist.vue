@@ -101,6 +101,7 @@
                 :isElectric="row[header.value].startDate ? false : row[header.value].isElectric"
                 :startTime="row.startTime"
                 :endTime="row[header.value].endTime"
+                :patient1="row[header.value].startDate ? getPatient(row[header.value].cancellations,1) : ''"
                 :reqOnePatient="row[header.value].cancellations ? true : false"
                 :isSingleApp="row[header.value] && row[header.value].patient && !row[header.value].startDate"
                 :appointment="row[header.value]"
@@ -237,6 +238,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Appointment from '@/class/Appointment';
 import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
+import Cancellation from '@/class/Cancellation';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import { Time } from '@/class/Enums';
@@ -304,6 +306,8 @@ export default class Daylist extends Vue {
 
   private searchValue = '';
 
+  private patient1 = '';
+
   private foundPatients : string[] = [];
 
   get localBackup(): Backup | null {
@@ -316,6 +320,7 @@ export default class Daylist extends Vue {
     this.createRows();
     this.hash = uuidv4();
     this.weekday = Dateconversions.getWeekdayStringForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
+    this.checkIsExceptionAndUpdateRowspan();
   }
 
   @Watch('localBackup')
@@ -338,6 +343,7 @@ export default class Daylist extends Vue {
     this.createRows();
     this.hash = uuidv4();
     this.weekday = Dateconversions.getWeekdayStringForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
+    this.checkIsExceptionAndUpdateRowspan();
   }
 
   private createHeaders(): void {
@@ -428,15 +434,37 @@ export default class Daylist extends Vue {
     });
   }
 
-  public checkIsExceptionAndUpdateRowspan(): void {
+  public checkIsExceptionAndUpdateRowspan1(): void {
     const tdElements = document.querySelectorAll('td[id^="cell_"]');
+    const cellsToUpdate: { id: string, isException: boolean }[] = [];
     tdElements.forEach(({ id }) => {
       const appointment = this.getCellAppointment(id);
       if (appointment) {
         const isException = this.isCellException(appointment, id);
-        if (isException) {
-          console.log(id, isException);
-          this.setRowspanTdId(id, 1);
+        cellsToUpdate.push({ id, isException });
+      }
+    });
+    const exceptionCells = cellsToUpdate.filter((cell) => cell.isException);
+    console.log(exceptionCells);
+    exceptionCells.forEach((cell) => {
+      this.setRowspanTdId(cell.id, 1);
+    });
+  }
+
+  public checkIsExceptionAndUpdateRowspan(): void {
+    const tdElements = document.querySelectorAll('td');
+    tdElements.forEach(({ id, classList }) => {
+      const appointment = this.getCellAppointment(id);
+      if (appointment) {
+        const td = document.getElementById(id);
+        if (td) {
+          // const isFilled = classList.contains('cell-filled');
+          // const hasAbsence = classList.contains('cell-absence');
+          const isException = td.getAttribute('isexception') === 'true';
+          if (isException) {
+            console.log(td);
+            td.setAttribute('rowspan', '1');
+          }
         }
       }
     });
@@ -467,27 +495,12 @@ export default class Daylist extends Vue {
 
   setRowspanTdId = (id: string, rowspan: number) => {
     const td = document.getElementById(id);
-    debugger;
     if (td) {
       td.setAttribute('rowspan', rowspan.toString());
     }
   }
 
   private openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
-    this.selectedAppointment.therapist = therapist;
-    this.selectedAppointment.therapistID = therapistID;
-    this.selectedAppointment.startTime = startTime;
-    const times = this.getAllTimes();
-    const i = times.indexOf(startTime);
-    this.inputFields.startTimeSelect = startTime;
-    this.inputFields.endTimeSelect = i + 2 < times.length - 1 ? times[i + 2] : times[times.length - 1];
-    debugger;
-    console.log(this.rows);
-    this.checkIsExceptionAndUpdateRowspan();
-    this.createDialog = true;
-  }
-
-  private openCreateDialog1(therapist: string, therapistID: string, startTime: string, cellId: string): void {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
     this.selectedAppointment.startTime = startTime;
@@ -552,29 +565,6 @@ export default class Daylist extends Vue {
     this.resetInputs();
   }
 
-  private addRepAppointment(
-    event: {
-      therapist1: string, therapistID1: string, patient1: string, startTime1: string, endTime1: string, comment1: string, id1: string,
-      isHotair1: boolean, isUltrasonic1: boolean, isElectric1: boolean,
-    },
-  ): void {
-    const appointment = new SingleAppointment(
-      event.therapist1,
-      event.therapistID1,
-      event.patient1,
-      event.startTime1 as unknown as Time,
-      event.endTime1 as unknown as Time,
-      event.comment1,
-      Dateconversions.convertReadableStringToDate(this.currentSingleDay),
-      event.isHotair1,
-      event.isUltrasonic1,
-      event.isElectric1,
-    );
-    if (this.localBackup) {
-      this.store.addSingleAppointment(appointment);
-    }
-  }
-
   private changeAppointment(
     event: {
       therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
@@ -594,47 +584,9 @@ export default class Daylist extends Vue {
       event.isElectric,
       event.id,
     );
-    console.log('speichern einzel Termin');
-    console.log(appointment);
+    this.checkIsExceptionAndUpdateRowspan();
     if (this.localBackup) {
       this.store.changeSingleAppointment(appointment);
-    }
-  }
-  
-  private getAppointmentById(id: string): SingleAppointment | undefined {
-    let appointments: Appointment[] = [];
-    appointments = [];
-    return appointments[0]; // appointments.find(appointment => appointment.id === id) as SingleAppointment;
-  }
-
-  private changeAppointmentById(
-    appointment_id: string,
-    event: {
-      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
-      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
-    },
-  ): void {
-    const appointment = this.getAppointmentById(appointment_id);
-    console.log('speichern einzel Termin');
-    if (appointment) {
-    const updatedAppointment = new SingleAppointment(
-      event.therapist,
-      event.therapistID,
-      event.patient,
-      event.startTime as unknown as Time,
-      event.endTime as unknown as Time,
-      event.comment,
-      appointment.date,
-      event.isHotair,
-      event.isUltrasonic,
-      event.isElectric,
-      appointment.id,
-    );
-    console.log('speichern einzel Termin by id');
-    console.log(updatedAppointment);
-    if (this.localBackup) {
-      this.store.changeSingleAppointment(updatedAppointment);
-    }
     }
   }
 
@@ -683,6 +635,15 @@ export default class Daylist extends Vue {
     if (this.localBackup) {
       this.store.deleteCancellation({ date: this.currentSingleDay, appointment: event.appointment });
     }
+  }
+
+  private getPatient(cancellations: Cancellation[]): string {
+    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
+    const arr = cancellation?.patient.split(';');
+    if (arr) {
+      return arr[0];
+    }
+    return '';
   }
 
   private hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {

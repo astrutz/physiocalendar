@@ -15,6 +15,12 @@
           }"
           >{{ patient }}
         </span>
+          <span v-if="!isSingleAppointment && patient1 !== ''">
+          <br />
+            <span>
+              {{ patient1 }}
+            </span>
+          </span>
       </button>
     </template>
 
@@ -110,6 +116,14 @@
          </center>
          </v-col>
         </v-row>
+        <v-row v-if="isException">
+              <v-text-field
+                label="Ersatzpatient 1"
+                v-model="patientTextField1"
+                :value="patient1"
+                clearable
+              ></v-text-field>
+        </v-row>
         </div>
         <v-alert
           v-if="appointmentsForPatient.length > 0 && !appointment.startTime"
@@ -198,6 +212,8 @@ import Store from '../store/backup';
 export default class DaylistElement extends Vue {
   @Prop({ default: '' }) readonly patient!: string;
 
+  @Prop({ default: '' }) readonly patient1!: string;
+
   @Prop({ default: '' }) readonly startTime!: string;
 
   @Prop({ default: '' }) readonly endTime!: string;
@@ -235,6 +251,8 @@ export default class DaylistElement extends Vue {
   public dialogIsOpen = false;
 
   public patientTextfield = this.patient;
+
+  public patientTextField1 = this.patient1;
 
   public startTimeSelect = this.startTime;
 
@@ -331,7 +349,7 @@ export default class DaylistElement extends Vue {
             // Serien Termin fällt aus
             this.$emit('exceptionAdded', {
               isException: this.isExceptionField,
-              patient: '',
+              patient: this.patientTextField1,
               appointment: this.appointment as AppointmentSeries,
             });
             const button = document.querySelector('.button-element');
@@ -343,27 +361,14 @@ export default class DaylistElement extends Vue {
             // Serien Termin fällt nicht aus
             this.$emit('exceptionDeleted', {
               isException: this.isExceptionField,
-              patient: '',
+              patient: this.patientTextField1,
               appointment: this.appointment as AppointmentSeries,
             });
           }
         } else if (this.isExceptionField === this.isException) {
-          // speichern Serien Termin
-          if (this.patientTextField1 !== '') {
-            this.addRepAppointment(1);
-          }
-          if (this.patientTextField2 !== '') {
-            this.addRepAppointment(2);
-          }
-          if (this.patientTextField3 !== '') {
-            this.addRepAppointment(3);
-          }
-          if (this.patientTextField4 !== '') {
-            this.addRepAppointment(4);
-          }
           this.$emit('exceptionChanged', {
             isException: this.isExceptionField,
-            patient: '',
+            patient: this.patientTextField1,
             appointment: this.appointment as AppointmentSeries,
           });
         }
