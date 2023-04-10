@@ -35,7 +35,7 @@
               v-for="header, headerIndex in headers.filter(header => header === '' || row[header.value] != undefined)"
               :key="header.value"
               :id="`cell_${rowIndex}_${headerIndex}`"
-              :rowspan="calculateRowspan(row[header.value])"
+              :rowspan="calculateRowspan(row[header.value],isCellException(row[header.value],`cell_${rowIndex}_${headerIndex}`))"
               :isException="isCellException(row[header.value],`cell_${rowIndex}_${headerIndex}`)"
               :class="{
                 'text-center': true,
@@ -101,7 +101,7 @@
                 :isElectric="row[header.value].startDate ? false : row[header.value].isElectric"
                 :startTime="row.startTime"
                 :endTime="row[header.value].endTime"
-                :patient1="row[header.value].startDate ? getPatient(row[header.value].cancellations,1) : ''"
+                :patient1="row[header.value].startDate ? getPatient(row[header.value].cancellations) : ''"
                 :reqOnePatient="row[header.value].cancellations ? true : false"
                 :isSingleApp="row[header.value] && row[header.value].patient && !row[header.value].startDate"
                 :appointment="row[header.value]"
@@ -315,12 +315,19 @@ export default class Daylist extends Vue {
   }
 
   @Watch('currentSingleDay')
-  currentSingleDayChanged(): void {
+  async currentSingleDayChanged(): Promise<void> {
     this.createHeaders();
     this.createRows();
     this.hash = uuidv4();
     this.weekday = Dateconversions.getWeekdayStringForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
-    this.checkIsExceptionAndUpdateRowspan();
+    try {
+      // Wait for 1 second before checking for exceptions
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // this.checkIsExceptionAndUpdateRowspan();
+      // Daylist.removeOverflowingCells();
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   @Watch('localBackup')
@@ -343,7 +350,6 @@ export default class Daylist extends Vue {
     this.createRows();
     this.hash = uuidv4();
     this.weekday = Dateconversions.getWeekdayStringForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
-    this.checkIsExceptionAndUpdateRowspan();
   }
 
   private createHeaders(): void {
@@ -416,6 +422,52 @@ export default class Daylist extends Vue {
       });
       this.rows.push(newRow);
     });
+    // this.checkIsExceptionAndUpdateRowspan();
+  }
+
+  private createRows1(): void {
+    type TableRow = {
+      [key: string]: string | Time | SingleAppointment | AppointmentSeries
+    }
+
+    const startTimes = Object.values(Time).filter((startTime): startTime is string => startTime.toString().includes(':'));
+    const emptyRows = startTimes.map((startTime) => ({
+      startTimeString: startTime.toString(),
+      startTime: startTime as unknown as Time,
+    }));
+
+    this.rows = [];
+
+    emptyRows.forEach((row) => {
+      const newRow: TableRow = {
+        startTimeString: row.startTimeString,
+        startTime: row.startTime,
+      };
+      this.headers.forEach((header) => {
+        if (header.text !== '') {
+          const singleAppointment = this.localBackup?.daylist.searchAppointment(
+            header.id, this.currentSingleDay, row.startTime as Time,
+          );
+          if (singleAppointment !== undefined) {
+            // numRows -= singleAppointment.rowspan;
+            newRow[header.text] = singleAppointment;
+          } else {
+            const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
+            const weekday = Dateconversions.getWeekdayForDate(currentSingleDate);
+            if (weekday) {
+              const masterAppointment = this.localBackup?.masterlist.searchAppointmentForDaylist(
+                header.id, weekday, row.startTime as Time, currentSingleDate,
+              );
+              newRow[header.text] = masterAppointment || '';
+            } else {
+              newRow[header.text] = '';
+            }
+          }
+        }
+      });
+      this.rows.push(newRow);
+    });
+    // this.checkIsExceptionAndUpdateRowspan();
   }
 
   private hasOngoingAppointments(therapist : string, time: Time) : boolean {
@@ -455,7 +507,7 @@ export default class Daylist extends Vue {
     const tdElements = document.querySelectorAll('td');
     tdElements.forEach(({ id, classList }) => {
       const appointment = this.getCellAppointment(id);
-      if (appointment) {
+      if (true) {
         const td = document.getElementById(id);
         if (td) {
           // const isFilled = classList.contains('cell-filled');
@@ -470,9 +522,70 @@ export default class Daylist extends Vue {
     });
   }
 
+  private static insertMissingTds1(): void {
+    const table = document.querySelector('table');
+    if (!table) return;
+    const { rows } = table;
+    const headerRow = table.querySelector('tr');
+    if (!headerRow) return;
+    const columnCount = headerRow.cells.length;
+    for (let i = 0; i < rows.length; i += 1) {
+      for (let j = 0; j < columnCount; j += 1) {
+        const cellId = `cell_${i}_${j}`;
+        if (!document.getElementById(cellId)) {
+          const newRow = table.rows[i];
+          const newCell = newRow.insertCell(j);
+          newCell.id = cellId;
+          newCell.setAttribute('rowspan', '1');
+          newCell.classList.add('cell-absence');
+        }
+      }
+    }
+  }
+
+  private static insertMissingTds(): void {
+    const table = document.querySelector('table');
+    if (!table) return;
+    const { rows } = table;
+    const headerRow = table.querySelector('tr');
+    if (!headerRow) return;
+    const { length: columnCount } = headerRow.cells;
+    const cellsToAdd: { row: number; column: number }[] = [];
+    for (let i = 0; i < rows.length; i += 1) {
+      for (let j = 0; j < columnCount; j += 1) {
+        const cellId = `cell_${i}_${j}`;
+        if (!document.getElementById(cellId)) {
+          console.log(cellId);
+          cellsToAdd.push({ row: i, column: j });
+        }
+      }
+    }
+    debugger;
+    cellsToAdd.forEach(({ row, column }) => {
+      const newRow = table.rows[row];
+      const newCell = newRow.insertCell(column);
+      newCell.id = `cell_${row}_${column}`;
+      newCell.setAttribute('rowspan', '1');
+      newCell.classList.add('cell-absence');
+    });
+  }
+
+  private static insertMissingCell(row: HTMLTableRowElement, index: number, colspan: number): void {
+    const { cells } = row;
+    if (cells.length < index + 1 || cells[index].getAttribute('colspan') !== String(colspan)) {
+      const newCell = row.insertCell(index);
+      newCell.setAttribute('colspan', String(colspan));
+      newCell.setAttribute('id', `cell_${row.rowIndex - 1}_${index}`);
+    }
+  }
+
   private getCellAppointment(id: string): AppointmentSeries | SingleAppointment | undefined {
     const [rowIndex, headerIndex] = id.split('_').slice(1).map(Number);
-    if (this.rows[rowIndex][this.headers[headerIndex]?.value] !== undefined) {
+    // if (this.rows && this.headers && this.headers[headerIndex] && this.rows[rowIndex][this.headers[headerIndex]?.value] !== undefined) {
+    //  const appointment = this.rows[rowIndex][this.headers[headerIndex]?.value];
+    //  return (appointment instanceof AppointmentSeries || appointment instanceof SingleAppointment) ? appointment : undefined;
+    // }
+    if (this.rows[rowIndex] !== undefined) {
       const appointment = this.rows[rowIndex][this.headers[headerIndex]?.value];
       return (appointment instanceof AppointmentSeries || appointment instanceof SingleAppointment) ? appointment : undefined;
     }
@@ -497,6 +610,54 @@ export default class Daylist extends Vue {
     const td = document.getElementById(id);
     if (td) {
       td.setAttribute('rowspan', rowspan.toString());
+    }
+  }
+
+  public static removeOverflowingCells1(): void {
+    const table = document.querySelector('table');
+    if (!table) return;
+    const { rows } = table;
+    const headerRow = table.querySelector('tr');
+    if (!headerRow) return;
+    const { cells: headerCells } = headerRow;
+    const therapistHeaderCell = Array.from(headerCells).find((cell) => cell.textContent === 'Therapeut');
+    const therapistHeaderCellIndex = therapistHeaderCell ? therapistHeaderCell.cellIndex : -1;
+    for (let i = rows.length - 1; i >= 0; i -= 1) {
+      const row = rows[i];
+      const { cells } = row;
+      if (therapistHeaderCellIndex === -1) {
+        if (cells.length > 11) {
+          for (let j = cells.length - 1; j >= 11; j -= 1) {
+            row.deleteCell(j);
+          }
+        }
+      } else if (cells.length > therapistHeaderCellIndex + 1) {
+        for (let j = cells.length - 1; j > therapistHeaderCellIndex + 1; j -= 1) {
+          row.deleteCell(j);
+        }
+      }
+    }
+  }
+
+  private static removeOverflowingCells(): void {
+    const table = document.getElementById('daylist-table');
+    const therapistHeaders = table?.querySelectorAll('.therapist-header');
+    if (!therapistHeaders || therapistHeaders.length === 0) {
+      // No therapist headers, so remove all cells in the row
+      const row = table?.querySelector('thead tr');
+      if (row) {
+        const cellsToRemove = row.querySelectorAll('td:nth-child(n+11)');
+        cellsToRemove.forEach((cell) => {
+          cell.remove();
+        });
+      }
+    } else {
+      // At least one therapist header, so only remove cells with index >= 11
+      const cellsToRemove = table?.querySelectorAll('td:nth-child(n+11)');
+      if (!cellsToRemove) return;
+      cellsToRemove.forEach((cell) => {
+        cell.remove();
+      });
     }
   }
 
@@ -584,7 +745,6 @@ export default class Daylist extends Vue {
       event.isElectric,
       event.id,
     );
-    this.checkIsExceptionAndUpdateRowspan();
     if (this.localBackup) {
       this.store.changeSingleAppointment(appointment);
     }
@@ -638,12 +798,21 @@ export default class Daylist extends Vue {
   }
 
   private getPatient(cancellations: Cancellation[]): string {
-    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    const arr = cancellation?.patient.split(';');
-    if (arr) {
-      return arr[0];
+    if (cancellations.length === 0) {
+      return '';
     }
-    return '';
+    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
+    if (!cancellation || cancellation.patient === '' || cancellation.patient === null) {
+      return '';
+    }
+    const arr = cancellation.patient.split(';');
+    let patientName = '';
+    arr.forEach((p) => {
+      if (p.trim()) {
+        patientName += `${p.trim()}; `;
+      }
+    });
+    return patientName;
   }
 
   private hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
@@ -690,6 +859,17 @@ export default class Daylist extends Vue {
   // eslint-disable-next-line class-methods-use-this
   private calculateRowspan(appointment : string | AppointmentSeries | SingleAppointment) : number {
     if (typeof appointment === 'string') {
+      return 1;
+    }
+    return appointment.calculateLength();
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private calculateRowspan1(appointment : string | AppointmentSeries | SingleAppointment, isException : boolean) : number {
+    if (typeof appointment === 'string') {
+      return 1;
+    }
+    if (isException) {
       return 1;
     }
     return appointment.calculateLength();
