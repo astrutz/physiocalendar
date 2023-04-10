@@ -1,29 +1,62 @@
 <template>
   <v-dialog persistent v-model="dialogIsOpen" width="800">
     <template v-slot:activator="{ on, attrs }">
-      <button
-        type="button"
-        @click="dialogIsOpen = true"
-        v-bind="attrs"
-        v-on="on"
-      >
-        <span
+      <div class="appointment-wrapper">
+      <span v-if="!isException"
+          :class="{
+            textcenter: !isException,
+          }"
+          >
+          <span>
+            <button
+            type="button"
+            @click="dialogIsOpen = true"
+            v-bind="attrs"
+            v-on="on">
+            {{ patient }}
+            </button>
+          </span>
+        </span>
+        <span v-if="isException"
           :class="{
             appointmentSeries: appointment.startDate,
-            cancelled: appointment.startTime && isException,
-            isException: appointment.startTime && isException,
+            textcenter: !isException,
           }"
-          >{{ patient }}
-        </span>
-          <span v-if="!isSingleAppointment && patient1 !== ''">
-          <br />
-            <span>
-              {{ patient1 }}
-            </span>
+          >
+          <span>
+            <button
+            :class="{
+            cancelled: isException,
+            exception: isException,
+            textcenter: !isException,
+            }"
+            type="button"
+            @click="dialogIsOpen = true"
+            v-bind="attrs"
+            v-on="on">
+            {{ patient }}
+            </button>
           </span>
-      </button>
+          <span>
+            <button v-if="isException" class="add-replacement">
+            +
+            </button>
+          </span>
+        </span>
+      </div>
+      <div class="replacements" v-if="replacementAppointments.length > 0">
+            <ul>
+            <li v-for="appointment in replacementAppointments" :key="appointment.id">
+              <button class="listentry"
+              type="button"
+              @click="openDialog(appointment)"
+              >
+                {{ appointment.patient }} {{ appointment.startTime }} - {{ appointment.endTime }}
+             </button>
+            </li>
+            </ul>
+        </div>
     </template>
-
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
         {{ therapist }} - {{ weekday }} {{ date }} - {{ startTime }} bis
@@ -210,6 +243,8 @@ import Store from '../store/backup';
 
 @Component
 export default class DaylistElement extends Vue {
+  @Prop({ default: '' }) readonly currDate!: string;
+
   @Prop({ default: '' }) readonly patient!: string;
 
   @Prop({ default: '' }) readonly patient1!: string;
@@ -250,6 +285,8 @@ export default class DaylistElement extends Vue {
 
   public dialogIsOpen = false;
 
+  public currentDate = Dateconversions.convertReadableStringToDate(this.currDate);
+
   public patientTextfield = this.patient;
 
   public patientTextField1 = this.patient1;
@@ -271,6 +308,8 @@ export default class DaylistElement extends Vue {
   public showReplacementPatient1= true;
 
   appointmentsForPatient: Appointment[] = [];
+
+  replacementAppointments: Appointment[] = [];
 
   public requireOnePatient = !!this.reqOnePatient;
 
@@ -305,6 +344,10 @@ export default class DaylistElement extends Vue {
         }
         return true;
       });
+      if (this.isException) {
+        this.fetchReplacementAppointments(this.appointment.therapistID, this.currentDate, this.appointment.startTime,
+          this.appointment.endTime);
+      }
     }
   }
 
@@ -323,6 +366,19 @@ export default class DaylistElement extends Vue {
       appointments = appointments.concat(this.localBackup.masterlist.getReplacementsByPatient(patient));
       this.appointmentsForPatient = appointments;
     }
+  }
+
+  public fetchReplacementAppointments(therapistId: string, currentDate: Date, startTime: Time, endTime: Time): void {
+    if (this.localBackup) {
+      console.log(currentDate);
+      const singleAppointments = this.localBackup.daylist.getSingleAppointmentsByDateAndTimeframe(therapistId,
+        currentDate, startTime, endTime);
+      this.replacementAppointments = singleAppointments;
+    }
+  }
+
+  public openDialog(appointment) {
+    this.$emit('openDialog', appointment);
   }
 
   public changeAppointment(): void {
@@ -483,13 +539,62 @@ ul {
 .is-ultrasonic {
   background-color: lightskyblue;
 }
-.button-element {
-    width: 100%;
-    height: 100%;
-  }
-  
-  .button-element-exception {
-    width: 100%;
-    height: 10%;
-  }
+
+.textcenter {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+}
+
+.exception {
+  font-size: 10px;
+  height: 20px;
+  vertical-align: center;
+  line-height: 20px;
+  padding-top: 0;
+}
+
+.add-replacement {
+  font-size: 10px;
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 20px;
+  height: 20px;
+  vertical-align: stretch;
+  line-height: 20px;
+  padding-top: 0;
+  border: 1px solid black;
+  display: inline;
+}
+
+.replacements {
+  font-size: 10px;
+  width: 20px;
+  height: 20px;
+  vertical-align: stretch;
+  line-height: 20px;
+  padding-top: 0;
+  display: inline;
+  border: 1px solid black;
+}
+
+.listentry {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border: 1px solid black;
+}
+
+.appointmentSeries {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  text-align: center;
+}
+
+.appointment-wrapper {
+  height: 20px;
+  display: flex;
+  align-items: center;
+}
 </style>

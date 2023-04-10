@@ -29,6 +29,20 @@ export default class Daylist {
     return undefined;
   }
 
+  public getSingleAppointmentsByDateAndTimeframe(therapistId: string, date: Date, startTime: Time, endTime: Time): SingleAppointment[] {
+    const listday = this.findListday(date);
+    if (listday) {
+      const appointments = listday.appointments.filter((appointment) => appointment.therapistID === therapistId
+        && appointment.startTime >= startTime
+        && appointment.endTime <= endTime);
+      console.log(appointments);
+      if (appointments.length > 0) {
+        return appointments as SingleAppointment[];
+      }
+    }
+    return [];
+  }
+
   getSingleAppointmentsByPatient(patient: string): SingleAppointment[] {
     const currentSearchDate = new Date();
     const endDate = new Date();
