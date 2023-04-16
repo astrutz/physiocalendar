@@ -1,10 +1,9 @@
 <template>
   <v-dialog persistent v-model="dialogIsOpen" width="800">
     <template v-slot:activator="{ on, attrs }">
-      <div class="appointment-wrapper">
       <span v-if="!isException"
           :class="{
-            textcenter: !isException,
+            textcenter: true,
           }"
           >
           <span>
@@ -23,12 +22,13 @@
             textcenter: !isException,
           }"
           >
-          <span>
+          <div class="elementrow">
+            <span>
             <button
             :class="{
             cancelled: isException,
             exception: isException,
-            textcenter: !isException,
+            textcenter: false,
             }"
             type="button"
             @click="dialogIsOpen = true"
@@ -42,20 +42,38 @@
             +
             </button>
           </span>
-        </span>
-      </div>
-      <div class="replacements" v-if="replacementAppointments.length > 0">
-            <ul>
+          </div>
+          <div v-if="patient1 !== ''" class="ersatzpatientrow">
+            <span>
+            <button
+            :class="{
+            textcenter: true,
+            }"
+            type="button"
+            @click="dialogIsOpen = true"
+            v-bind="attrs"
+            v-on="on">
+             Info: {{ patient1 }}
+            </button>>
+          </span>
+          </div>
+          <div class="replacements" v-if="replacementAppointments.length > 0">
+          <ul>
             <li v-for="appointment in replacementAppointments" :key="appointment.id">
-              <button class="listentry"
+              <button :class="{
+                listentry: true,
+                ishotair: appointment.isHotair,
+                isultrasonic: appointment.isUltrasonic,
+                iselectric: appointment.isElectric,
+              }"
               type="button"
               @click="openDialog(appointment)"
-              >
-                {{ appointment.patient }} {{ appointment.startTime }} - {{ appointment.endTime }}
+              >{{ appointment.patient }} {{ appointment.startTime }} - {{ appointment.endTime }}
              </button>
             </li>
-            </ul>
+          </ul>
         </div>
+        </span>
     </template>
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
@@ -370,15 +388,15 @@ export default class DaylistElement extends Vue {
 
   public fetchReplacementAppointments(therapistId: string, currentDate: Date, startTime: Time, endTime: Time): void {
     if (this.localBackup) {
-      console.log(currentDate);
       const singleAppointments = this.localBackup.daylist.getSingleAppointmentsByDateAndTimeframe(therapistId,
         currentDate, startTime, endTime);
       this.replacementAppointments = singleAppointments;
     }
   }
 
-  public openDialog(appointment) {
-    this.$emit('openDialog', appointment);
+  public openDialog(appointment: SingleAppointment) {
+    console.log('Dialog öffnen:', appointment.patient);
+    this.$emit('openDialog', { appointment });
   }
 
   public changeAppointment(): void {
@@ -528,15 +546,15 @@ ul {
   margin: 0;
   padding: 0;
 }
-.is-hotair {
+.ishotair {
   background-color: rgb(228, 150, 5);
 }
 
-.is-electric {
+.iselectric {
   background-color: rgb(255, 61, 61);
 }
 
-.is-ultrasonic {
+.isultrasonic {
   background-color: lightskyblue;
 }
 
@@ -549,6 +567,7 @@ ul {
 .exception {
   font-size: 10px;
   height: 20px;
+  overflow: hidden;
   vertical-align: center;
   line-height: 20px;
   padding-top: 0;
@@ -560,7 +579,6 @@ ul {
   margin-right: 5px;
   width: 20px;
   height: 20px;
-  vertical-align: stretch;
   line-height: 20px;
   padding-top: 0;
   border: 1px solid black;
@@ -569,13 +587,11 @@ ul {
 
 .replacements {
   font-size: 10px;
-  width: 20px;
+  width: 100%px;
   height: 20px;
-  vertical-align: stretch;
   line-height: 20px;
-  padding-top: 0;
-  display: inline;
-  border: 1px solid black;
+  margin-top: 10px;
+  display: block;
 }
 
 .listentry {
@@ -588,13 +604,24 @@ ul {
   width: 100%;
   height: 100%;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   text-align: center;
 }
 
-.appointment-wrapper {
+.elementrow {
   height: 20px;
   display: flex;
+  flex-direction: row;
   align-items: center;
+}
+.ersatzpatientrow {
+  margin-top: 5px;
+  height: 20px;
+  font-size: 10px;
+  display: flex;
+  overflow: hidden;
+  flex-direction: row;
+  align-items: left;
+  border: 1px solid black;
 }
 </style>

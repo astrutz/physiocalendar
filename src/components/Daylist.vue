@@ -35,7 +35,7 @@
               v-for="header, headerIndex in headers.filter(header => header === '' || row[header.value] != undefined)"
               :key="header.value"
               :id="`cell_${rowIndex}_${headerIndex}`"
-              :rowspan="calculateRowspan(row[header.value],isCellException(row[header.value],`cell_${rowIndex}_${headerIndex}`))"
+              :rowspan="calculateRowspan(row[header.value])"
               :isException="isCellException(row[header.value],`cell_${rowIndex}_${headerIndex}`)"
               :class="{
                 'text-center': true,
@@ -84,7 +84,6 @@
                 v-else-if="row[header.value] && row[header.value].patient"
                 :key="`${hash}-${row[header.value].therapistID}-${row.startTime}`"
                 @appointmentAdded="addAppointment($event)"
-                @repAppointmentAdded="addRepAppointment($event)"
                 @appointmentChanged="changeAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
                 @exceptionAdded="addException($event)"
@@ -116,6 +115,123 @@
         </tbody>
       </template>
     </v-simple-table>
+    <v-dialog v-model="openSingleAppointmentDialog" width="800">
+      <v-card>
+        <v-card-title class="text-h5 grey lighten-2">
+          {{ selectedAppointment.therapist }} - {{ weekday }} {{ currentSingleDay }} -
+          {{ selectedAppointment.startTime }}
+        </v-card-title>
+
+        <v-card-text class="pt-5">
+          <v-combobox
+            v-model="singleAppointmentToOpen.patient"
+            @input="searchAppointmentsForPatient($event)"
+            :loading="patientsLoading"
+            :items="foundPatients"
+            :search-input.sync="searchValue"
+            class="mb-4 mt-0"
+            flat
+            hide-no-data
+            hide-details
+            clearable
+            label="Name des Patienten"
+          ></v-combobox>
+
+          <v-select
+          :disabled="true"
+          :items="getAllTimes()"
+          label="Start um"
+          v-model="singleAppointmentToOpen.startTime"
+          :value="singleAppointmentToOpen.startTime"
+          ></v-select>
+
+          <v-select
+          :disabled="true"
+          :items="getAllTimes()"
+          label="Ende um"
+          v-model="singleAppointmentToOpen.endTime"
+          :value="singleAppointmentToOpen.endTime"
+          ></v-select>
+
+          <v-text-field
+            label="Sonstige Bemerkungen"
+            v-model="singleAppointmentToOpen.comment"
+            clearable
+          ></v-text-field>
+
+          <v-row>
+            <v-col>
+              <v-checkbox
+                label="Heißluft"
+                v-model="singleAppointmentToOpen.isHotair"
+              ></v-checkbox>
+            </v-col>
+            <v-col>
+              <v-checkbox
+                label="Ultraschall"
+                v-model="singleAppointmentToOpen.isUltrasonic"
+              ></v-checkbox>
+            </v-col>
+            <v-col>
+              <v-checkbox
+                label="Elektro"
+                v-model="singleAppointmentToOpen.isElectric"
+              ></v-checkbox>
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-btn
+            color="normal"
+            text
+            @click="
+              openSingleAppointmentDialog = false;
+              resetSingleAppointmentToOpen();"
+          >
+            Abbrechen
+          </v-btn>
+          <v-btn
+          color="error"
+          text
+          @click="
+            deleteSingleAppointment(singleAppointmentToOpen);
+            resetSingleAppointmentToOpen();"
+          >
+            Einzeltermin löschen
+          </v-btn>
+          <v-btn
+          v-if="true"
+          color="primary"
+          @click="printAppointment()"
+          text
+          >
+            Drucken
+          </v-btn>
+          <v-btn
+            color="primary"
+            button
+            @click="
+              changeSingleAppointment({
+                therapist: selectedAppointment.therapist,
+                therapistID: selectedAppointment.therapistID,
+                patient: singleAppointmentToOpen.patient,
+                comment: singleAppointmentToOpen.comment,
+                id: singleAppointmentToOpen.id,
+                isHotair: singleAppointmentToOpen.isHotair,
+                isUltrasonic: singleAppointmentToOpen.isUltrasonic,
+                isElectric: singleAppointmentToOpen.isElectric,
+              });
+              openSingleAppointmentDialog = false;
+              resetSingleAppointmentToOpen();
+            "
+          >
+            Speichern
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-dialog v-model="createDialog" width="600">
       <v-card>
         <v-card-title class="text-h5 grey lighten-2">
@@ -176,7 +292,6 @@
               ></v-checkbox>
             </v-col>
           </v-row>
-
           <v-alert v-if="appointmentsForPatient.length > 0" type="info">
             Unter diesem Namen wurden weitere Termine gefunden:
             <div
@@ -199,7 +314,6 @@
             color="error"
             text
             @click="
-              resetInputs();
               createDialog = false;
             "
           >
@@ -241,6 +355,7 @@ import Appointment from '@/class/Appointment';
 import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Cancellation from '@/class/Cancellation';
+import Printer from '@/class/Printer';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import { Time } from '@/class/Enums';
@@ -267,6 +382,8 @@ export default class Daylist extends Vue {
 
   createDialog = false;
 
+  openSingleAppointmentDialog = false;
+
   weekday = '';
 
   inputFields = {
@@ -279,18 +396,31 @@ export default class Daylist extends Vue {
     isElectricField: false,
   }
 
+  public singleAppointmentToOpen: SingleAppointment = new SingleAppointment('',
+    '',
+    '',
+    Dateconversions.timeFromString('07:00'),
+    Dateconversions.timeFromString('07:00'),
+    '',
+    new Date(),
+    false,
+    false,
+    false,
+    '');
+
   selectedAppointment = {
     therapist: '',
     therapistID: '',
     startTime: '7:00',
     day: this.currentSingleDay,
+    patient: '',
   };
 
   store = getModule(Store);
 
   appointmentsForPatient: Appointment[] = [];
 
-   cellsToUpdate: { id: string, isException: boolean }[] = [];
+  cellsToUpdate: { id: string, isException: boolean }[] = [];
 
   hash = uuidv4();
 
@@ -424,7 +554,6 @@ export default class Daylist extends Vue {
       });
       this.rows.push(newRow);
     });
-    // this.checkIsExceptionAndUpdateRowspan();
   }
 
   private hasOngoingAppointments(therapist : string, time: Time) : boolean {
@@ -490,28 +619,6 @@ export default class Daylist extends Vue {
     }
   }
 
-  private static removeOverflowingCells(): void {
-    const table = document.getElementById('daylist-table');
-    const therapistHeaders = table?.querySelectorAll('.therapist-header');
-    if (!therapistHeaders || therapistHeaders.length === 0) {
-      // No therapist headers, so remove all cells in the row
-      const row = table?.querySelector('thead tr');
-      if (row) {
-        const cellsToRemove = row.querySelectorAll('td:nth-child(n+11)');
-        cellsToRemove.forEach((cell) => {
-          cell.remove();
-        });
-      }
-    } else {
-      // At least one therapist header, so only remove cells with index >= 11
-      const cellsToRemove = table?.querySelectorAll('td:nth-child(n+11)');
-      if (!cellsToRemove) return;
-      cellsToRemove.forEach((cell) => {
-        cell.remove();
-      });
-    }
-  }
-
   private openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
     this.selectedAppointment.therapist = therapist;
     this.selectedAppointment.therapistID = therapistID;
@@ -520,7 +627,32 @@ export default class Daylist extends Vue {
     const i = times.indexOf(startTime);
     this.inputFields.startTimeSelect = startTime;
     this.inputFields.endTimeSelect = i + 2 < times.length - 1 ? times[i + 2] : times[times.length - 1];
-    this.createDialog = true;
+    if (this.singleAppointmentToOpen.patient !== '') {
+      this.createDialog = false;
+    } else {
+      this.createDialog = true;
+    }
+  }
+
+  private showDialog(event: { appointment: SingleAppointment}): void {
+    const { appointment } = event;
+    console.log(event.appointment);
+    this.selectedAppointment.therapist = appointment.therapist;
+    this.selectedAppointment.therapistID = appointment.therapistID;
+    this.selectedAppointment.startTime = Dateconversions.stringFromTime(appointment.startTime);
+    this.singleAppointmentToOpen.date = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
+    this.singleAppointmentToOpen.id = appointment.id;
+    this.singleAppointmentToOpen.startTime = appointment.startTime;
+    this.singleAppointmentToOpen.patient = appointment.patient;
+    this.singleAppointmentToOpen.endTime = appointment.endTime;
+    this.singleAppointmentToOpen.comment = appointment.comment;
+    this.singleAppointmentToOpen.isHotair = appointment.isHotair;
+    this.singleAppointmentToOpen.isUltrasonic = appointment.isUltrasonic;
+    this.singleAppointmentToOpen.isElectric = appointment.isElectric;
+    if (this.createDialog) {
+      this.createDialog = false;
+    }
+    this.openSingleAppointmentDialog = true;
   }
 
   private resetInputs(): void {
@@ -535,6 +667,7 @@ export default class Daylist extends Vue {
     };
 
     this.selectedAppointment = {
+      patient: '',
       therapist: '',
       therapistID: '',
       startTime: '7:00',
@@ -542,6 +675,20 @@ export default class Daylist extends Vue {
     };
 
     this.appointmentsForPatient = [];
+  }
+
+  private resetSingleAppointmentToOpen(): void {
+    this.singleAppointmentToOpen = new SingleAppointment('',
+      '',
+      '',
+      Dateconversions.timeFromString('07:00'),
+      Dateconversions.timeFromString('07:00'),
+      '',
+      new Date(),
+      false,
+      false,
+      false,
+      '');
   }
 
   private searchAppointmentsForPatient(patient: string): void {
@@ -601,6 +748,31 @@ export default class Daylist extends Vue {
     }
   }
 
+  private changeSingleAppointment(
+    event: {
+      therapist: string, therapistID: string, patient: string, comment: string, id: string,
+      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
+    },
+  ): void {
+    const appointment = new SingleAppointment(
+      event.therapist,
+      event.therapistID,
+      event.patient,
+      this.singleAppointmentToOpen.startTime as unknown as Time,
+      this.singleAppointmentToOpen.endTime as unknown as Time,
+      event.comment,
+      Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+      event.isHotair,
+      event.isUltrasonic,
+      event.isElectric,
+      event.id,
+    );
+    if (this.localBackup) {
+      this.store.changeSingleAppointment(appointment);
+      this.resetInputs();
+    }
+  }
+
   private deleteAppointment(
     event: {
       therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
@@ -625,12 +797,23 @@ export default class Daylist extends Vue {
     }
   }
 
+  private deleteSingleAppointment(appointment: SingleAppointment): void {
+    /* eslint-disable */
+    if (window.confirm('Soll dieser Termin wirklich unwiederruflich gelöscht werden?')) {
+      if (this.localBackup) {
+        this.store.deleteSingleAppointment(appointment);
+        console.log('gelöschter einzeltermin: ');
+        console.log(appointment);
+        this.openSingleAppointmentDialog = false;
+      }
+    }
+  }
+
   private addException(event: { isException: boolean, patient: string, appointment: AppointmentSeries }): void {
     if (this.localBackup) {
       this.store.addCancellation({
         date: this.currentSingleDay, patient: event.patient, appointment: event.appointment,
       });
-      console.log(event.appointment);
     }
   }
 
@@ -640,20 +823,6 @@ export default class Daylist extends Vue {
         date: this.currentSingleDay, patient: event.patient, appointment: event.appointment,
       });
     }
-  }
-
-  private showDialog(event: { appointment: Appointment}): void {
-    const { appointment } = event;
-    console.log(event.appointment);
-    // this.selectedAppointment.patient = 'test123';
-    this.selectedAppointment.therapist = 'Torben';// event.appointment.therapist;
-    this.selectedAppointment.therapistID = '87bfde40-9560-47ce-bbe5-6dfbc499cf08';// event.appointment.therapistID;
-    this.selectedAppointment.startTime = '10:10';// Dateconversions.stringFromTime(event.appointment.startTime);
-    const times = this.getAllTimes();
-    const i = times.indexOf('10:10');
-    this.inputFields.startTimeSelect = '10:10'; // Dateconversions.stringFromTime(event.appointment.startTime);
-    this.inputFields.endTimeSelect = '10:20'; // i + 2 < times.length - 1 ? times[i + 2] : times[times.length - 1];
-    this.createDialog = true;
   }
 
   private deleteException(event: { isException: boolean, patient: string, appointment: AppointmentSeries }): void {
@@ -721,20 +890,23 @@ export default class Daylist extends Vue {
     }
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  private calculateRowspan(appointment : string | AppointmentSeries | SingleAppointment) : number {
-    if (typeof appointment === 'string') {
-      return 1;
-    }
-    return appointment.calculateLength();
+  public printAppointment(): void {
+    const printer = new Printer(
+      this.singleAppointmentToOpen.patient,
+      this.selectedAppointment.therapist,
+      this.singleAppointmentToOpen.startTime,
+      this.singleAppointmentToOpen.endTime,
+      Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+      0,
+    );
+    this.appointmentsForPatient = [];
+    this.searchAppointmentsForPatient(this.singleAppointmentToOpen.patient);
+    printer.printSingleAppointment(this.appointmentsForPatient);
   }
 
   // eslint-disable-next-line class-methods-use-this
-  private calculateRowspan1(appointment : string | AppointmentSeries | SingleAppointment, isException : boolean) : number {
+  private calculateRowspan(appointment : string | AppointmentSeries | SingleAppointment) : number {
     if (typeof appointment === 'string') {
-      return 1;
-    }
-    if (isException) {
       return 1;
     }
     return appointment.calculateLength();
