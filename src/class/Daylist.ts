@@ -33,9 +33,10 @@ export default class Daylist {
     const listday = this.findListday(date);
     if (listday) {
       const appointments = listday.appointments.filter((appointment) => appointment.therapistID === therapistId
-        && appointment.startTime >= startTime
-        && appointment.endTime <= endTime);
+        && Time[appointment.startTime] >= Time[startTime]
+        && Time[appointment.endTime] <= Time[endTime]);
       if (appointments.length > 0) {
+        debugger;
         return appointments as SingleAppointment[];
       }
     }
