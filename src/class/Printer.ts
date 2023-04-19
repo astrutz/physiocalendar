@@ -50,6 +50,9 @@ export default class Printer {
     const singleAppointments: SingleAppointment[] = appointmentsForPatient.filter(
       (appointment) => appointment instanceof SingleAppointment,
     ) as SingleAppointment[];
+    singleAppointments.push(
+      new SingleAppointment(this.therapist, '', this.patient, this.startTime, this.endTime, '', this.day as Date, false, false, false),
+    );
     singleAppointments.sort((appointment1, appointment2) => {
       if (appointment1.date > appointment2.date) {
         return 1;
@@ -68,6 +71,13 @@ export default class Printer {
     let i = 0;
     const strs: string[] = [];
     let str = '';
+    singleAppointments.forEach((appointment1, l) => {
+      singleAppointments.forEach((appointment2, k) => {
+        if (appointment1.date === appointment2.date) {
+          singleAppointments.splice(k, 1);
+        }
+      });
+    });
     singleAppointments.forEach((appointment, j) => {
       if (i > 0 && i % this.MAX_APPOINTMENT_COUNT === 0) {
         strs.push(str);
