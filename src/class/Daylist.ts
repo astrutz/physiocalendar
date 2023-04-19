@@ -36,7 +36,6 @@ export default class Daylist {
         && Time[appointment.startTime] >= Time[startTime]
         && Time[appointment.endTime] <= Time[endTime]);
       if (appointments.length > 0) {
-        debugger;
         return appointments as SingleAppointment[];
       }
     }

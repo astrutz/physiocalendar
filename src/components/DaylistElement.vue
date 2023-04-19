@@ -616,10 +616,10 @@ ul {
 }
 .ersatzpatientrow {
   margin-top: 5px;
-  height: 20px;
+  max-height: 50px;
+  overflow: hidden;
   font-size: 10px;
   display: flex;
-  overflow: hidden;
   flex-direction: row;
   align-items: left;
   border: 1px solid black;
