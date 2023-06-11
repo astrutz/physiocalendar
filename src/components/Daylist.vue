@@ -696,6 +696,7 @@ export default class Daylist extends Vue {
       let appointments: Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
       appointments = appointments.concat(this.localBackup.masterlist.getAppointmentSeriesByPatient(patient));
       appointments = appointments.concat(this.localBackup.masterlist.getReplacementsByPatient(patient));
+      console.log(appointments);
       this.appointmentsForPatient = appointments;
     }
   }
@@ -901,6 +902,9 @@ export default class Daylist extends Vue {
     );
     this.appointmentsForPatient = [];
     this.searchAppointmentsForPatient(this.singleAppointmentToOpen.patient);
+    debugger;
+    console.log(this.appointmentsForPatient);
+    //TODO print Serientermin
     printer.printSingleAppointment(this.appointmentsForPatient);
   }
 

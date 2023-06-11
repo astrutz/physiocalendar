@@ -6,6 +6,7 @@ import { Time, Weekday } from './Enums';
 import SingleAppointment from './SingleAppointment';
 import Appointment from './Appointment';
 import Cancellation from './Cancellation';
+import AppointmentSeries from './AppointmentSeries';
 
 export default class Printer {
   patient: string;
@@ -24,7 +25,7 @@ export default class Printer {
 
   startDate: Date | undefined;
 
-  MAX_APPOINTMENT_COUNT = 10;
+  MAX_APPOINTMENT_COUNT = 12;
 
   constructor(
     patient: string,
@@ -50,9 +51,7 @@ export default class Printer {
     const singleAppointments: SingleAppointment[] = appointmentsForPatient.filter(
       (appointment) => appointment instanceof SingleAppointment,
     ) as SingleAppointment[];
-    singleAppointments.push(
-      new SingleAppointment(this.therapist, '', this.patient, this.startTime, this.endTime, '', this.day as Date, false, false, false),
-    );
+    // einzeltermine sortieren
     singleAppointments.sort((appointment1, appointment2) => {
       if (appointment1.date > appointment2.date) {
         return 1;
@@ -71,13 +70,9 @@ export default class Printer {
     let i = 0;
     const strs: string[] = [];
     let str = '';
-    singleAppointments.forEach((appointment1, l) => {
-      singleAppointments.forEach((appointment2, k) => {
-        if (appointment1.date === appointment2.date) {
-          singleAppointments.splice(k, 1);
-        }
-      });
-    });
+    if (singleAppointments.length === 0) {
+      return;
+    }
     singleAppointments.forEach((appointment, j) => {
       if (i > 0 && i % this.MAX_APPOINTMENT_COUNT === 0) {
         strs.push(str);
@@ -85,16 +80,68 @@ export default class Printer {
       }
       const dateAsString = Dateconversions.convertDateToReadableString(appointment.date);
       const weekdayReadable = Printer.getWeekday(appointment.date);
-      str += `${weekdayReadable}${dateAsString} um ${appointment.startTime}\n`;
+      str += `${weekdayReadable}${dateAsString} von ${appointment.startTime} bis ${appointment.endTime}\n`;
       i += 1;
       if (j === singleAppointments.length - 1) {
         strs.push(str);
       }
     });
+    // single Appointments drucken
     this.print(strs);
   }
 
+  printSeriesAppointment(appointmentsForPatient: Appointment[]): void {
+    console.log('Serientermine:');
+    console.log(appointmentsForPatient);
+    const seriesAppointments: AppointmentSeries[] = appointmentsForPatient.filter(
+      (appointment) => appointment instanceof AppointmentSeries,
+    ) as AppointmentSeries[];
+    if (seriesAppointments.length === 0) {
+      return;
+    }
+    const dateAsString = this.day as Weekday;
+    let str = '';
+
+    let weekdayOffset = 1;
+
+    switch (dateAsString) {
+      case Weekday.MONDAY: weekdayOffset = 1; break;
+      case Weekday.TUESDAY: weekdayOffset = 2; break;
+      case Weekday.WEDNESDAY: weekdayOffset = 3; break;
+      case Weekday.THURSDAY: weekdayOffset = 4; break;
+      case Weekday.FRIDAY: weekdayOffset = 5; break;
+      default: break;
+    }
+    let i = 0;
+    const strs: string[] = [];
+    seriesAppointments.forEach((appointment, j) => {
+      if (i > 0 && i % this.MAX_APPOINTMENT_COUNT === 0) {
+        strs.push(str);
+        str = '';
+      }
+      const { startDate, interval } = appointment;
+      const currDate = new Date(startDate);
+      // const seriesEndDate = Printer.getWeekday(currDate);
+      while (i < this.MAX_APPOINTMENT_COUNT) {
+        const holidays = holidaysJSON.days;
+        const dateString = Dateconversions.convertDateToReadableString(currDate);
+        const weekdayReadable = Printer.getWeekday(currDate);
+        const readableString = Dateconversions.convertGermanToEnglishReadableString(dateString);
+        if (!holidays.includes(readableString)
+        && !this.cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currDate))) {
+          str += `${weekdayReadable}${dateString} um ${this.startTime}\n`;
+          i += 1;
+        }
+        currDate.setDate(currDate.getDate() + interval * 7);
+      }
+      console.log([str]);
+      this.print([str]);
+    });
+  }
+
   printAppointmentSeries(): void {
+    // console.log('Serientermine:');
+    // console.log(seriesAppointments);
     const dateAsString = this.day as Weekday;
     let str = '';
 
@@ -117,7 +164,7 @@ export default class Printer {
 
     // eslint-disable-next-line no-mixed-operators
     currentSearchDate.setDate(currentSearchDate.getDate() + ((7 - currentSearchDate.getDay()) % 7 + weekdayOffset) % 7);
-
+    debugger;
     while (i < this.MAX_APPOINTMENT_COUNT) {
       const holidays = holidaysJSON.days;
       const readableString = Dateconversions.convertGermanToEnglishReadableString(

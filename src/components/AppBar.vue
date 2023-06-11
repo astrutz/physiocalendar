@@ -24,7 +24,7 @@
         <li v-for="(result, i) in searchResults" :key="`${result.id}-${i}`">
           <strong>{{ result.patient }}:</strong>
           {{
-            result.date ? getReadableDate(result.date) : `${result.weekday}s`
+            result.startDate ? `${result.weekday}s` : getReadableDate(result.date)
           }}, {{ result.startTime }} bis {{ result.endTime }} bei
           {{ result.therapist }}
         </li>
@@ -75,10 +75,11 @@ export default class AppBar extends Vue {
           const readableStartDate = Dateconversions.convertDateToReadableString((appointment as AppointmentSeries).startDate);
           const readableTargetDate = Dateconversions.convertDateToReadableString(new Date());
           return appointment.patient
-            && ((appointment as AppointmentSeries).startDate <= new Date() || readableStartDate === readableTargetDate)
+            && ((appointment as AppointmentSeries).startDate < new Date() || readableStartDate === readableTargetDate)
             && appointment.patient.toLowerCase().includes(this.searchTextfield);
         }));
       });
+      console.log(this.searchResults);
       this.localBackup.daylist.elements.forEach((listDay) => {
         this.searchResults = this.searchResults.concat(listDay.appointments.filter((appointment) => {
           const readableStartDate = Dateconversions.convertDateToReadableString((appointment as SingleAppointment).date);
@@ -88,6 +89,7 @@ export default class AppBar extends Vue {
             && appointment.patient.toLowerCase().includes(this.searchTextfield);
         }));
       });
+      console.log(this.searchResults);
       this.showSearchResults = true;
     }
   }

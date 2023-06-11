@@ -354,6 +354,9 @@ export default class DaylistElement extends Vue {
       this.appointmentsForPatient = this.appointmentsForPatient.concat(
         this.localBackup.masterlist.getReplacementsByPatient(this.patient),
       );
+      // console.log(this.patient);
+      // console.log(this.appointmentsForPatient);
+      /*
       this.appointmentsForPatient = this.appointmentsForPatient.filter((appointment) => {
         if (this.appointment instanceof SingleAppointment && appointment instanceof SingleAppointment) {
           return !(appointment.startTime === this.appointment.startTime
@@ -362,6 +365,7 @@ export default class DaylistElement extends Vue {
         }
         return true;
       });
+      */
       if (this.isException) {
         this.fetchReplacementAppointments(this.appointment.therapistID, this.currentDate, this.appointment.startTime,
           this.appointment.endTime);
@@ -382,6 +386,7 @@ export default class DaylistElement extends Vue {
       let appointments: Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
       appointments = appointments.concat(this.localBackup.masterlist.getAppointmentSeriesByPatient(patient));
       appointments = appointments.concat(this.localBackup.masterlist.getReplacementsByPatient(patient));
+      debugger;
       this.appointmentsForPatient = appointments;
     }
   }
@@ -513,6 +518,7 @@ export default class DaylistElement extends Vue {
       0,
     );
     printer.printSingleAppointment(this.appointmentsForPatient);
+    printer.printSeriesAppointment(this.appointmentsForPatient);
   }
 
   public searchPatients(searchQuery : string | undefined) : void {
