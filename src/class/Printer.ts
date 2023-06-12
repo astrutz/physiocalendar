@@ -51,6 +51,8 @@ export default class Printer {
     const singleAppointments: SingleAppointment[] = appointmentsForPatient.filter(
       (appointment) => appointment instanceof SingleAppointment,
     ) as SingleAppointment[];
+    console.log('Einzeltermine:');
+    console.log(singleAppointments);
     // einzeltermine sortieren
     singleAppointments.sort((appointment1, appointment2) => {
       if (appointment1.date > appointment2.date) {
@@ -87,40 +89,32 @@ export default class Printer {
       }
     });
     // single Appointments drucken
-    this.print(strs);
+    if (singleAppointments.length !== 0) {
+      this.print(strs);
+    }
   }
 
   printSeriesAppointment(appointmentsForPatient: Appointment[]): void {
-    console.log('Serientermine:');
-    console.log(appointmentsForPatient);
     const seriesAppointments: AppointmentSeries[] = appointmentsForPatient.filter(
       (appointment) => appointment instanceof AppointmentSeries,
     ) as AppointmentSeries[];
     if (seriesAppointments.length === 0) {
       return;
     }
-    const dateAsString = this.day as Weekday;
     let str = '';
-
-    let weekdayOffset = 1;
-
-    switch (dateAsString) {
-      case Weekday.MONDAY: weekdayOffset = 1; break;
-      case Weekday.TUESDAY: weekdayOffset = 2; break;
-      case Weekday.WEDNESDAY: weekdayOffset = 3; break;
-      case Weekday.THURSDAY: weekdayOffset = 4; break;
-      case Weekday.FRIDAY: weekdayOffset = 5; break;
-      default: break;
-    }
     let i = 0;
-    const strs: string[] = [];
     seriesAppointments.forEach((appointment, j) => {
-      if (i > 0 && i % this.MAX_APPOINTMENT_COUNT === 0) {
-        strs.push(str);
-        str = '';
+      const {
+        startDate,
+        endTime,
+        startTime,
+        interval,
+      } = appointment;
+      let currDate = startDate;
+      if (this.startDate) {
+        currDate = this.startDate;
       }
-      const { startDate, interval } = appointment;
-      const currDate = new Date(startDate);
+      // todo alle appointment Series drucken, aktuell: nur ausgewählte Serie drucken
       // const seriesEndDate = Printer.getWeekday(currDate);
       while (i < this.MAX_APPOINTMENT_COUNT) {
         const holidays = holidaysJSON.days;
@@ -129,13 +123,14 @@ export default class Printer {
         const readableString = Dateconversions.convertGermanToEnglishReadableString(dateString);
         if (!holidays.includes(readableString)
         && !this.cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currDate))) {
-          str += `${weekdayReadable}${dateString} um ${this.startTime}\n`;
+          str += `${weekdayReadable}${dateString} von ${startTime} bis ${endTime}\n`;
           i += 1;
         }
         currDate.setDate(currDate.getDate() + interval * 7);
       }
-      console.log([str]);
-      this.print([str]);
+      if (j === 0) {
+        this.print([str]);
+      }
     });
   }
 
@@ -167,12 +162,13 @@ export default class Printer {
     debugger;
     while (i < this.MAX_APPOINTMENT_COUNT) {
       const holidays = holidaysJSON.days;
-      const readableString = Dateconversions.convertGermanToEnglishReadableString(
+      const readableStringEng = Dateconversions.convertGermanToEnglishReadableString(
         Dateconversions.convertDateToReadableString(currentSearchDate),
       );
-      if (!holidays.includes(readableString)
+      const readableStringDe = Dateconversions.convertDateToReadableString(currentSearchDate);
+      if (!holidays.includes(readableStringEng)
       && !this.cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currentSearchDate))) {
-        str += `${dateAsString}, ${Dateconversions.convertDateToReadableString(currentSearchDate)} um ${this.startTime}\n`;
+        str += `${dateAsString}, ${readableStringDe} von ${this.startTime} bis ${this.endTime}\n`;
         i += 1;
       }
       currentSearchDate.setDate(currentSearchDate.getDate() + (this.interval * 7));

@@ -516,6 +516,8 @@ export default class DaylistElement extends Vue {
       this.endTime as unknown as Time,
       Dateconversions.convertReadableStringToDate(this.date),
       0,
+      undefined,
+      Dateconversions.convertReadableStringToDate(this.currDate)
     );
     printer.printSingleAppointment(this.appointmentsForPatient);
     printer.printSeriesAppointment(this.appointmentsForPatient);
