@@ -902,10 +902,8 @@ export default class Daylist extends Vue {
     );
     this.appointmentsForPatient = [];
     this.searchAppointmentsForPatient(this.singleAppointmentToOpen.patient);
-    debugger;
-    console.log(this.appointmentsForPatient);
-    //TODO print Serientermin
     printer.printSingleAppointment(this.appointmentsForPatient);
+    printer.printSeriesAppointment(this.appointmentsForPatient);
   }
 
   // eslint-disable-next-line class-methods-use-this
