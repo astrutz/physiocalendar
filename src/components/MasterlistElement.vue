@@ -366,7 +366,12 @@ export default class MasterlistElement extends Vue {
 
   private printAppointment(): void {
     const printer = new Printer(
-      this.patient, this.therapist, this.startTime as unknown as Time, this.endTime as unknown as Time, this.day,
+      this.id,
+      this.patient,
+      this.therapist,
+      this.startTime as unknown as Time,
+      this.endTime as unknown as Time,
+      this.day,
       parseInt(this.interval, 10), this.appointment.cancellations, this.appointment.startDate,
     );
     printer.printAppointmentSeries();

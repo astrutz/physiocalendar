@@ -9,6 +9,8 @@ import Cancellation from './Cancellation';
 import AppointmentSeries from './AppointmentSeries';
 
 export default class Printer {
+  id: string;
+
   patient: string;
 
   therapist: string;
@@ -28,6 +30,7 @@ export default class Printer {
   MAX_APPOINTMENT_COUNT = 12;
 
   constructor(
+    id: string,
     patient: string,
     therapist: string,
     startTime: Time,
@@ -37,6 +40,7 @@ export default class Printer {
     cancellations: Cancellation[] = [],
     startDate?: Date,
   ) {
+    this.id = id;
     this.patient = patient;
     this.therapist = therapist;
     this.startTime = startTime;
@@ -98,40 +102,41 @@ export default class Printer {
     const seriesAppointments: AppointmentSeries[] = appointmentsForPatient.filter(
       (appointment) => appointment instanceof AppointmentSeries,
     ) as AppointmentSeries[];
+
     if (seriesAppointments.length === 0) {
+      return;
+    }
+    const seriesAppointmentToPrint = seriesAppointments.find((appointment) => appointment.id === this.id);
+    if (!seriesAppointmentToPrint) {
+      console.log(`Kein Termin mit ID ${this.id} gefunden`);
       return;
     }
     let str = '';
     let i = 0;
-    seriesAppointments.forEach((appointment, j) => {
-      const {
-        startDate,
-        endTime,
-        startTime,
-        interval,
-      } = appointment;
-      let currDate = startDate;
-      if (this.startDate) {
-        currDate = this.startDate;
+    const {
+      startDate,
+      endTime,
+      startTime,
+      interval,
+      cancellations,
+    } = seriesAppointmentToPrint;
+    let currDate = startDate;
+    if (this.startDate) {
+      currDate = this.startDate;
+    }
+    while (i < this.MAX_APPOINTMENT_COUNT) {
+      const holidays = holidaysJSON.days;
+      const dateString = Dateconversions.convertDateToReadableString(currDate);
+      const weekdayReadable = Printer.getWeekday(currDate);
+      const readableString = Dateconversions.convertGermanToEnglishReadableString(dateString);
+      if (!holidays.includes(readableString)
+        && !cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currDate))) {
+        str += `${weekdayReadable}${dateString} von ${startTime} bis ${endTime}\n`;
+        i += 1;
       }
-      // todo alle appointment Series drucken, aktuell: nur ausgewählte Serie drucken
-      // const seriesEndDate = Printer.getWeekday(currDate);
-      while (i < this.MAX_APPOINTMENT_COUNT) {
-        const holidays = holidaysJSON.days;
-        const dateString = Dateconversions.convertDateToReadableString(currDate);
-        const weekdayReadable = Printer.getWeekday(currDate);
-        const readableString = Dateconversions.convertGermanToEnglishReadableString(dateString);
-        if (!holidays.includes(readableString)
-        && !this.cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currDate))) {
-          str += `${weekdayReadable}${dateString} von ${startTime} bis ${endTime}\n`;
-          i += 1;
-        }
-        currDate.setDate(currDate.getDate() + interval * 7);
-      }
-      if (j === 0) {
-        this.print([str]);
-      }
-    });
+      currDate.setDate(currDate.getDate() + interval * 7);
+    }
+    this.print([str]);
   }
 
   printAppointmentSeries(): void {

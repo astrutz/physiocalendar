@@ -893,6 +893,7 @@ export default class Daylist extends Vue {
 
   public printAppointment(): void {
     const printer = new Printer(
+      this.singleAppointmentToOpen.id,
       this.singleAppointmentToOpen.patient,
       this.selectedAppointment.therapist,
       this.singleAppointmentToOpen.startTime,
@@ -903,7 +904,7 @@ export default class Daylist extends Vue {
     this.appointmentsForPatient = [];
     this.searchAppointmentsForPatient(this.singleAppointmentToOpen.patient);
     printer.printSingleAppointment(this.appointmentsForPatient);
-    printer.printSeriesAppointment(this.appointmentsForPatient);
+    //printer.printSeriesAppointment(this.appointmentsForPatient);
   }
 
   // eslint-disable-next-line class-methods-use-this

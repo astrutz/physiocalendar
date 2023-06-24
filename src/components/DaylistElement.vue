@@ -510,6 +510,7 @@ export default class DaylistElement extends Vue {
 
   public printAppointment(): void {
     const printer = new Printer(
+      this.id,
       this.patient,
       this.therapist,
       this.startTime as unknown as Time,
@@ -519,8 +520,12 @@ export default class DaylistElement extends Vue {
       undefined,
       Dateconversions.convertReadableStringToDate(this.currDate)
     );
-    printer.printSingleAppointment(this.appointmentsForPatient);
-    printer.printSeriesAppointment(this.appointmentsForPatient);
+    if (this.isSingleAppointment) {
+      printer.printSingleAppointment(this.appointmentsForPatient);
+    }
+    else {
+      printer.printSeriesAppointment(this.appointmentsForPatient);
+    }
   }
 
   public searchPatients(searchQuery : string | undefined) : void {

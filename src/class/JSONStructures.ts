@@ -15,7 +15,8 @@ export interface JSONAppointmentSeries {
   startTime: string,
   endTime: string,
   comment: string,
-  startDate : number,
+  startDate: number,
+  endDate: number,
   isBWO : boolean,
   interval: number,
   cancellations: JSONCancellation[]

@@ -23,6 +23,7 @@ function convertAppointmentSeries(appointments: AppointmentSeries[]): JSONAppoin
         startTime: appointment.startTime.toString(),
         endTime: appointment.endTime.toString(),
         startDate: appointment.startDate.getTime(),
+        endDate: appointment.endDate.getTime(),
         isBWO: appointment.isBWO || false,
         interval: appointment.interval,
         cancellations: appointment.cancellations,

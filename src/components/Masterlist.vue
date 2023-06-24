@@ -475,7 +475,7 @@ export default class Masterlist extends Vue {
 
   private addAppointment(
     event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string,
-    startDate: Date, id: string, isBWO: boolean, interval: number },
+    startDate: Date, endDate: Date, id: string, isBWO: boolean, interval: number },
   ): void {
     const appointment = new AppointmentSeries(
       event.therapist,
@@ -488,6 +488,7 @@ export default class Masterlist extends Vue {
       event.interval,
       [],
       event.startDate,
+      event.endDate,
       uuidv4(),
       event.isBWO,
     );
@@ -500,7 +501,7 @@ export default class Masterlist extends Vue {
   private changeAppointment(
     event: {
       patient: string, therapist: string, therapistID: string, startTime: string, endTime: string, comment: string,
-      cancellations: Cancellation[], startDate: Date, id: string, isBWO: boolean, interval: number
+      cancellations: Cancellation[], startDate: Date, endDate: Date, id: string, isBWO: boolean, interval: number
     },
   ): void {
     const appointment = new AppointmentSeries(
@@ -514,6 +515,7 @@ export default class Masterlist extends Vue {
       event.interval,
       event.cancellations,
       event.startDate,
+      event.endDate,
       event.id,
       event.isBWO,
     );
@@ -525,7 +527,7 @@ export default class Masterlist extends Vue {
   private deleteAppointment(
     event: {
       patient: string, therapist: string, therapistID: string, startTime: string, endTime: string, comment: string,
-      cancellations: Cancellation[], startDate: Date, id: string, isBWO: boolean, interval: number
+      cancellations: Cancellation[], startDate: Date, endDate: Date, id: string, isBWO: boolean, interval: number
     },
   ): void {
     if (this.localBackup) {
@@ -540,6 +542,7 @@ export default class Masterlist extends Vue {
         event.interval,
         event.cancellations,
         event.startDate,
+        event.endDate,
         event.id,
         event.isBWO,
       );

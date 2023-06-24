@@ -11,6 +11,8 @@ export default class AppointmentSeries extends Appointment {
 
   startDate: Date;
 
+  endDate: Date;
+
   isBWO: boolean;
 
   constructor(
@@ -24,6 +26,7 @@ export default class AppointmentSeries extends Appointment {
     interval: number,
     cancellations: Cancellation[],
     startDate?: Date,
+    endDate?: Date,
     id?: string,
     isBWO = false,
   ) {
@@ -32,6 +35,7 @@ export default class AppointmentSeries extends Appointment {
     this.interval = interval;
     this.cancellations = cancellations;
     this.startDate = startDate || new Date();
+    this.endDate = endDate || new Date();
     this.isBWO = isBWO;
   }
 
