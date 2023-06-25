@@ -55,8 +55,6 @@ export default class Printer {
     const singleAppointments: SingleAppointment[] = appointmentsForPatient.filter(
       (appointment) => appointment instanceof SingleAppointment,
     ) as SingleAppointment[];
-    console.log('Einzeltermine:');
-    console.log(singleAppointments);
     // einzeltermine sortieren
     singleAppointments.sort((appointment1, appointment2) => {
       if (appointment1.date > appointment2.date) {
