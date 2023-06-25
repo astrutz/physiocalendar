@@ -80,16 +80,18 @@ export default class Printer {
       return;
     }
     singleAppointments.forEach((appointment, j) => {
-      if (i > 0 && i % this.MAX_APPOINTMENT_COUNT === 0) {
-        strs.push(str);
-        str = '';
-      }
-      const dateAsString = Dateconversions.convertDateToReadableString(appointment.date);
-      const weekdayReadable = Printer.getWeekday(appointment.date);
-      str += `${weekdayReadable}${dateAsString} von ${appointment.startTime} bis ${appointment.endTime}\n`;
-      i += 1;
-      if (j === singleAppointments.length - 1) {
-        strs.push(str);
+      if (this.startDate && appointment.date >= this.startDate) {
+        if (i > 0 && i % this.MAX_APPOINTMENT_COUNT === 0) {
+          strs.push(str);
+          str = '';
+        }
+        const dateAsString = Dateconversions.convertDateToReadableString(appointment.date);
+        const weekdayReadable = Printer.getWeekday(appointment.date);
+        str += `${weekdayReadable}${dateAsString} von ${appointment.startTime} bis ${appointment.endTime}\n`;
+        i += 1;
+        if (j === singleAppointments.length - 1) {
+          strs.push(str);
+        }
       }
     });
     // single Appointments drucken

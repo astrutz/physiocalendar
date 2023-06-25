@@ -19,8 +19,8 @@
       light
       elevation="24"
     >
-      <v-card-title>Suchergebnisse</v-card-title>
-      <ul class="pt-2 ml-4 mr-4 mb-4">
+    <v-card-title>Suchergebnisse</v-card-title>
+      <ul class="pt-2 ml-4 mr-4 mb-4" v-if="searchResults.length > 0">
         <li v-for="(result, i) in searchResults" :key="`${result.id}-${i}`">
           <strong>{{ result.patient }}:</strong>
           {{
@@ -29,6 +29,7 @@
           {{ result.therapist }}
         </li>
       </ul>
+      <p v-else>Keine Termine gefunden.</p>
       <v-card-actions>
         <v-btn color="primary" @click="closeSearchResults()">Schließen</v-btn>
       </v-card-actions>
@@ -70,26 +71,25 @@ export default class AppBar extends Vue {
   search(): void {
     this.searchResults = [];
     if (this.localBackup && this.searchTextfield.length > 2) {
+      const searchText = this.searchTextfield.toLowerCase();
       this.localBackup.masterlist.elements.forEach((listDay) => {
         this.searchResults = this.searchResults.concat(listDay.appointments.filter((appointment) => {
           const readableStartDate = Dateconversions.convertDateToReadableString((appointment as AppointmentSeries).startDate);
           const readableTargetDate = Dateconversions.convertDateToReadableString(new Date());
           return appointment.patient
             && ((appointment as AppointmentSeries).startDate < new Date() || readableStartDate === readableTargetDate)
-            && appointment.patient.toLowerCase().includes(this.searchTextfield);
+            && appointment.patient.toLowerCase().includes(searchText);
         }));
       });
-      console.log(this.searchResults);
       this.localBackup.daylist.elements.forEach((listDay) => {
         this.searchResults = this.searchResults.concat(listDay.appointments.filter((appointment) => {
           const readableStartDate = Dateconversions.convertDateToReadableString((appointment as SingleAppointment).date);
           const readableTargetDate = Dateconversions.convertDateToReadableString(new Date());
           return appointment.patient
             && ((appointment as SingleAppointment).date > new Date() || readableStartDate === readableTargetDate)
-            && appointment.patient.toLowerCase().includes(this.searchTextfield);
+            && appointment.patient.toLowerCase().includes(searchText);
         }));
       });
-      console.log(this.searchResults);
       this.showSearchResults = true;
     }
   }
@@ -105,7 +105,6 @@ export default class AppBar extends Vue {
     return Dateconversions.convertDateToReadableString(date);
   }
 }
-
 </script>
 
 <style>
