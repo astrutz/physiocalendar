@@ -75,9 +75,11 @@ export default class AppBar extends Vue {
       this.localBackup.masterlist.elements.forEach((listDay) => {
         this.searchResults = this.searchResults.concat(listDay.appointments.filter((appointment) => {
           const readableStartDate = Dateconversions.convertDateToReadableString((appointment as AppointmentSeries).startDate);
+          const readableEndDate = Dateconversions.convertDateToReadableString((appointment as AppointmentSeries).endDate);
           const readableTargetDate = Dateconversions.convertDateToReadableString(new Date());
           return appointment.patient
             && ((appointment as AppointmentSeries).startDate < new Date() || readableStartDate === readableTargetDate)
+            && ((appointment as AppointmentSeries).endDate > new Date() || readableEndDate === readableTargetDate)
             && appointment.patient.toLowerCase().includes(searchText);
         }));
       });

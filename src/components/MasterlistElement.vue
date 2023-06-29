@@ -107,8 +107,8 @@
           </v-menu>
         </v-row>
         <v-alert v-if="conflicts.length > 0" type="error" class="mt-4"
-          >Dieser Termin kann nicht gespeichert werden, da er mit folgenden
-          Terminen kollidiert:
+          >Dieser Termin kann gespeichert werden, kollidiert aber
+          mit folgenden Terminen:
           <ul>
             <li
               v-for="conflict in conflicts"
@@ -145,7 +145,6 @@
         </v-btn>
         <v-spacer></v-spacer>
         <v-btn
-          :disabled="conflicts.length > 0"
           color="primary"
           button
           @click="
@@ -162,6 +161,7 @@
 
 <script lang="ts">
 import AppointmentSeries from '@/class/AppointmentSeries';
+import Appointment from '@/class/Appointment';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import Util from '@/class/Util';
@@ -201,9 +201,7 @@ export default class MasterlistElement extends Vue {
 
   private appointmentPatient = this.appointment.patient;
 
-  private appointmentPatientTime = this.appointment.startTime.toString();
-
-  private appointmentTherapist = this.appointment.therapist;
+  appointmentsForPatient: Appointment[] = [];
 
   private startDate = new Date(this.appointment?.startDate.getTime());
 
@@ -372,9 +370,16 @@ export default class MasterlistElement extends Vue {
       this.startTime as unknown as Time,
       this.endTime as unknown as Time,
       this.day,
-      parseInt(this.interval, 10), this.appointment.cancellations, this.appointment.startDate,
+      parseInt(this.interval, 10),
+      this.appointment.cancellations,
+      new Date(),
     );
-    printer.printAppointmentSeries();
+    if (this.localBackup) {
+      this.appointmentsForPatient = this.appointmentsForPatient.concat(
+        this.localBackup.masterlist.getAppointmentSeriesByPatient(this.patient),
+      );
+      printer.printSeriesAppointment(this.appointmentsForPatient);
+    }
   }
 
   private searchPatients(searchQuery : string | undefined) : void {

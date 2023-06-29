@@ -115,6 +115,7 @@ export default class Printer {
     let i = 0;
     const {
       startDate,
+      endDate,
       endTime,
       startTime,
       interval,
@@ -129,54 +130,16 @@ export default class Printer {
       const dateString = Dateconversions.convertDateToReadableString(currDate);
       const weekdayReadable = Printer.getWeekday(currDate);
       const readableString = Dateconversions.convertGermanToEnglishReadableString(dateString);
-      if (!holidays.includes(readableString)
-        && !cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currDate))) {
-        str += `${weekdayReadable}${dateString} von ${startTime} bis ${endTime}\n`;
+      if (currDate < endDate) {
+        if (!holidays.includes(readableString)
+          && !cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currDate))) {
+          str += `${weekdayReadable}${dateString} von ${startTime} bis ${endTime}\n`;
+          i += 1;
+        }
+        currDate.setDate(currDate.getDate() + interval * 7);
+      } else {
         i += 1;
       }
-      currDate.setDate(currDate.getDate() + interval * 7);
-    }
-    this.print([str]);
-  }
-
-  printAppointmentSeries(): void {
-    // console.log('Serientermine:');
-    // console.log(seriesAppointments);
-    const dateAsString = this.day as Weekday;
-    let str = '';
-
-    let weekdayOffset = 1;
-
-    switch (dateAsString) {
-      case Weekday.MONDAY: weekdayOffset = 1; break;
-      case Weekday.TUESDAY: weekdayOffset = 2; break;
-      case Weekday.WEDNESDAY: weekdayOffset = 3; break;
-      case Weekday.THURSDAY: weekdayOffset = 4; break;
-      case Weekday.FRIDAY: weekdayOffset = 5; break;
-      default: break;
-    }
-
-    let i = 0;
-    let currentSearchDate = new Date();
-    if (this.startDate && this.startDate > currentSearchDate) {
-      currentSearchDate = new Date(this.startDate.getTime());
-    }
-
-    // eslint-disable-next-line no-mixed-operators
-    currentSearchDate.setDate(currentSearchDate.getDate() + ((7 - currentSearchDate.getDay()) % 7 + weekdayOffset) % 7);
-    debugger;
-    while (i < this.MAX_APPOINTMENT_COUNT) {
-      const holidays = holidaysJSON.days;
-      const readableStringEng = Dateconversions.convertGermanToEnglishReadableString(
-        Dateconversions.convertDateToReadableString(currentSearchDate),
-      );
-      const readableStringDe = Dateconversions.convertDateToReadableString(currentSearchDate);
-      if (!holidays.includes(readableStringEng)
-      && !this.cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currentSearchDate))) {
-        str += `${dateAsString}, ${readableStringDe} von ${this.startTime} bis ${this.endTime}\n`;
-        i += 1;
-      }
-      currentSearchDate.setDate(currentSearchDate.getDate() + (this.interval * 7));
     }
     this.print([str]);
   }

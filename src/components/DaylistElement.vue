@@ -486,7 +486,7 @@ export default class DaylistElement extends Vue {
     }
   }
 
-  public openDialog(appointment: SingleAppointment) {
+  public openDialog(appointment: SingleAppointment): void {
     console.log('Dialog öffnen:', appointment.patient);
     this.$emit('openDialog', { appointment });
   }
@@ -529,8 +529,6 @@ export default class DaylistElement extends Vue {
               button.classList.toggle('button-element-exception');
             }
           } else {
-            // Serien Termin fällt nicht aus
-            console.log('Termin fällt nicht mehr aus!');
             this.$emit('exceptionDeleted', {
               isException: !this.isExceptionField,
               patient: this.patientTextField1,
