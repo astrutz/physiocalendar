@@ -31,9 +31,11 @@ export default class Masterlist {
       if (Dateconversions.appointmentIsInTimeInterval(appointment, startTime, endTime)) {
         if (this.appointmentIsInDayInterval(appointment, date)) {
           const readableStartDate = Dateconversions.convertDateToReadableString(appointment.startDate);
+          const readableEndDate = Dateconversions.convertDateToReadableString(appointment.endDate);
           const readableTargetDate = Dateconversions.convertDateToReadableString(date);
           if (
-            (appointment.startDate <= date || readableStartDate === readableTargetDate)
+            (date >= appointment.startDate || readableStartDate === readableTargetDate)
+            && (date <= appointment.endDate || readableEndDate === readableTargetDate)
           ) {
             return appointment;
           }
@@ -177,9 +179,19 @@ export default class Masterlist {
     const appointmentToBeChanged = currentDay?.appointments.find(
       (searchedAppointment) => searchedAppointment.id === appointment.id,
     );
+    console.log(appointment);
     if (currentDay && appointmentToBeChanged) {
       appointmentToBeChanged.patient = appointment.patient;
       appointmentToBeChanged.startTime = appointment.startTime;
+      // falls serien Termin gespeichert werden soll
+      if (appointment.startDate) {
+        (appointmentToBeChanged as AppointmentSeries).startDate = appointment.startDate;
+        (appointmentToBeChanged as AppointmentSeries).endDate = appointment.endDate;
+        (appointmentToBeChanged as AppointmentSeries).comment = appointment.comment;
+        (appointmentToBeChanged as AppointmentSeries).interval = appointment.interval;
+        (appointmentToBeChanged as AppointmentSeries).weekday = appointment.weekday;
+        (appointmentToBeChanged as AppointmentSeries).isBWO = appointment.isBWO;
+      }
       const newAppointments = currentDay.appointments.filter(
         (filterAppointment) => filterAppointment.id !== appointment.id,
       );

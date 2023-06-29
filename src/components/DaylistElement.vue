@@ -114,8 +114,84 @@
           :value="appointment.endTime"
         ></v-select>
 
+        <v-row v-if="!isSingleAppointment">
+          <v-menu
+            v-model="startDatePickerIsOpen"
+            :close-on-content-click="false"
+            :nudge-right="40"
+            transition="scale-transition"
+            offset-y
+            min-width="auto"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-text-field
+                v-model="startDateStringFormatted"
+                label="Start Datum"
+                persistent-hint
+                prepend-icon="mdi-calendar"
+                v-bind="attrs"
+                @blur="
+                  startDateString = convertGermanToEnglishReadableString(
+                    startDateStringFormatted
+                  );
+                "
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="startDateString"
+              :allowed-dates="dateIsAllowed"
+              @input="
+                startDatePickerIsOpen = false;
+                startDate = getCombinedStartDate(startDateString);
+                startDateStringFormatted = convertEnglishToGermanReadableString(
+                  startDateString
+                );
+              "
+              locale="de-de"
+              :first-day-of-week="1"
+            ></v-date-picker>
+          </v-menu>
+          <v-menu
+            v-model="endDatePickerIsOpen"
+            :close-on-content-click="false"
+            :nudge-right="40"
+            transition="scale-transition"
+            offset-y
+            min-width="auto"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-text-field
+                v-model="endDateStringFormatted"
+                label="End Datum"
+                persistent-hint
+                prepend-icon="mdi-calendar"
+                v-bind="attrs"
+                @blur="
+                  endDateString = convertGermanToEnglishReadableString(
+                    endDateStringFormatted
+                  )
+                "
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="endDateString"
+              :allowed-dates="dateIsAllowed"
+              @input="
+                endDatePickerIsOpen = false;
+                endDate = getCombinedEndDate(endDateString);
+                endDateStringFormatted = convertEnglishToGermanReadableString(
+                  endDateString
+                );
+              "
+              locale="de-de"
+              :first-day-of-week="1"
+            ></v-date-picker>
+          </v-menu>
+        </v-row>
+
         <v-text-field
-          :disabled="!isSingleAppointment"
           label="Sonstige Bemerkungen"
           :value="appointment.comment"
           v-model="commentTextfield"
@@ -125,7 +201,6 @@
         <v-row>
           <v-col>
             <v-checkbox
-              :disabled="!isSingleAppointment"
               label="Heißluft"
               v-model="isHotairField"
               :value="isHotairField"
@@ -133,7 +208,6 @@
           </v-col>
           <v-col>
             <v-checkbox
-              :disabled="!isSingleAppointment"
               label="Ultraschall"
               v-model="isUltrasonicField"
               :value="isUltrasonicField"
@@ -141,7 +215,6 @@
           </v-col>
           <v-col>
             <v-checkbox
-              :disabled="!isSingleAppointment"
               label="Elektro"
               v-model="isElectricField"
               :value="isElectricField"
@@ -152,8 +225,8 @@
           <v-row no-gutters>
           <v-col cols="8">
           <v-alert type="warning"
-            >Dieser Termin wurde aus der Stammliste generiert und kann daher
-            nicht in der Terminliste verändert werden.
+            >Dieser Termin wurde aus der Stammliste generiert.
+            Änderungen gelten für jeden weiteren Folgetermin der Serie!
           </v-alert>
           </v-col>
           <v-col cols="1"><v-spacer>  </v-spacer></v-col>
@@ -256,6 +329,7 @@ import { getModule } from 'vuex-module-decorators';
 import Backup from '@/class/Backup';
 import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
+import holidaysJSON from '@/data/holidays.json';
 import Util from '@/class/Util';
 import Store from '../store/backup';
 
@@ -295,6 +369,10 @@ export default class DaylistElement extends Vue {
 
   @Prop({ default: false }) readonly isElectric!: boolean;
 
+  @Prop() readonly appointmentStartDate!: Date;
+
+  @Prop() readonly appointmentEndDate!: Date;
+
   @Prop() readonly isSingleApp!: boolean;
 
   @Prop() readonly reqOnePatient!: boolean;
@@ -302,6 +380,10 @@ export default class DaylistElement extends Vue {
   store = getModule(Store);
 
   public dialogIsOpen = false;
+
+  public startDatePickerIsOpen = false;
+
+  public endDatePickerIsOpen = false;
 
   public currentDate = Dateconversions.convertReadableStringToDate(this.currDate);
 
@@ -340,6 +422,24 @@ export default class DaylistElement extends Vue {
   public searchValue = '';
 
   public foundPatients : string[] = [];
+
+  public holidays = holidaysJSON.days;
+
+  public startDate = this.appointmentStartDate ? new Date(this.appointmentStartDate.getTime()) : new Date();
+
+  public startDateString: string = new Date(
+    this.startDate.getTime() - this.startDate.getTimezoneOffset() * 60000,
+  ).toISOString().substr(0, 10);
+
+  public startDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
+
+  public endDate = this.appointmentEndDate ? new Date(this.appointmentEndDate.getTime()) : new Date();
+
+  public endDateString: string = new Date(
+    this.endDate.getTime() - this.endDate.getTimezoneOffset() * 60000,
+  ).toISOString().substr(0, 10);
+
+  public endDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
 
   get localBackup(): Backup | null {
     return this.store.getBackup;
@@ -386,7 +486,6 @@ export default class DaylistElement extends Vue {
       let appointments: Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
       appointments = appointments.concat(this.localBackup.masterlist.getAppointmentSeriesByPatient(patient));
       appointments = appointments.concat(this.localBackup.masterlist.getReplacementsByPatient(patient));
-      debugger;
       this.appointmentsForPatient = appointments;
     }
   }
@@ -404,15 +503,57 @@ export default class DaylistElement extends Vue {
     this.$emit('openDialog', { appointment });
   }
 
-  public changeAppointment(): void {
-    if ((this.appointment as AppointmentSeries).startTime) {
-      console.log('speichern einzel Termin');
+  public changeAppointmentSeries(): void {
+    if ((this.appointment as AppointmentSeries).startDate) {
+      console.log('speichern Serien Termin');
       this.$emit('appointmentChanged', {
         patient: this.patientTextfield,
         therapist: this.therapist,
         therapistID: this.therapistID,
         startTime: this.startTimeSelect,
         endTime: this.endTimeSelect,
+        comment: this.commentTextfield,
+        startDate: this.startDate,
+        endDate: this.endDate,
+        cancellations: (this.appointment as AppointmentSeries).cancellations,
+        interval: (this.appointment as AppointmentSeries).interval, // parseInt(this.interval, 10),
+        id: this.id,
+        weekday: (this.appointment as AppointmentSeries).weekday,
+        isHotair: this.isHotairField,
+        isUltrasonic: this.isUltrasonicField,
+        isElectric: this.isElectricField,
+        isBWO: (this.appointment as AppointmentSeries).isBWO,
+      });
+    } else {
+      this.$emit('appointmentDeleted', {
+        patient: this.patient,
+        therapist: this.therapist,
+        therapistID: this.therapistID,
+        startTime: this.startTimeSelect,
+        endTime: this.endTimeSelect,
+        comment: this.commentTextfield,
+        id: this.id,
+        isHotair: this.isHotairField,
+        isUltrasonic: this.isUltrasonicField,
+        isElectric: this.isElectricField,
+      });
+    }
+  }
+
+  public changeAppointment(): void {
+    if (!this.isSingleAppointment) {
+      this.changeAppointmentSeries();
+    }
+    if (this.isSingleAppointment) {
+      console.log('speichern einzel Termin');
+      this.$emit('singleAppointmentChanged', {
+        patient: this.patientTextfield,
+        therapist: this.therapist,
+        therapistID: this.therapistID,
+        startTime: this.startTimeSelect,
+        endTime: this.endTimeSelect,
+        startDate: this.startDate,
+        endDate: this.endDate,
         comment: this.commentTextfield,
         id: this.id,
         isHotair: this.isHotairField,
@@ -545,6 +686,47 @@ export default class DaylistElement extends Vue {
   public getAllTimes(): string[] {
     return Dateconversions.getAllTimes();
   }
+
+  public dateIsAllowed(dateVal: string | Date): boolean {
+    if (typeof dateVal === 'string') {
+      if (this.holidays.includes(dateVal)) {
+        return false;
+      }
+      const day = this.getCombinedStartDate(dateVal).getDay();
+      return day > 0 && day < 6;
+    }
+    const readableString = Dateconversions.convertGermanToEnglishReadableString(Dateconversions.convertDateToReadableString(dateVal));
+    if (this.holidays.includes(readableString)) {
+      return false;
+    }
+    const day = dateVal.getDay();
+    return day > 0 && day < 6;
+  }
+
+  public getCombinedStartDate(dateString: string): Date {
+    const date = dateString;
+    // console.log(dateString);
+    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
+    return new Date(`${date}T04:00:00.000${offsetSuffix}`);
+  }
+
+  public getCombinedEndDate(dateString: string): Date {
+    const date = dateString;
+    // console.log(dateString);
+    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
+    return new Date(`${date}T04:00:00.000${offsetSuffix}`);
+  }
+
+  private convertGermanToEnglishReadableString(string: string): string {
+    return Dateconversions.convertGermanToEnglishReadableString(string);
+  }
+
+  private convertEnglishToGermanReadableString(string: string): string {
+    return Dateconversions.convertEnglishToGermanReadableString(string);
+  }
+
 }
 </script>
 

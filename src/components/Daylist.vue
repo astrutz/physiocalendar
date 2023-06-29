@@ -85,6 +85,7 @@
                 :key="`${hash}-${row[header.value].therapistID}-${row.startTime}`"
                 @appointmentAdded="addAppointment($event)"
                 @appointmentChanged="changeAppointment($event)"
+                @singleAppointmentChanged="changeSingleAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
                 @exceptionAdded="addException($event)"
                 @exceptionChanged="changeException($event)"
@@ -93,6 +94,7 @@
                 :currDate="currentSingleDay"
                 :patient="row[header.value].patient"
                 :id="row[header.value].id"
+                :comment="row[header.value].comment"
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
                 :isException="row[header.value].startDate
@@ -106,9 +108,10 @@
                 :reqOnePatient="row[header.value].cancellations ? true : false"
                 :isSingleApp="row[header.value] && row[header.value].patient && !row[header.value].startDate"
                 :appointment="row[header.value]"
+                :appointmentStartDate="row[header.value].startDate"
+                :appointmentEndDate="row[header.value].endDate"
                 :date="row[header.value].startDate ? `seit ${convertDateToString(row[header.value].startDate)}` : currentSingleDay"
                 :weekday="weekday"
-
               />
             </td>
           </tr>
@@ -213,7 +216,7 @@
             color="primary"
             button
             @click="
-              changeSingleAppointment({
+              changeRepSingleAppointment({
                 therapist: selectedAppointment.therapist,
                 therapistID: selectedAppointment.therapistID,
                 patient: singleAppointmentToOpen.patient,
@@ -358,7 +361,7 @@ import Cancellation from '@/class/Cancellation';
 import Printer from '@/class/Printer';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
-import { Time } from '@/class/Enums';
+import { Time, Weekday } from '@/class/Enums';
 import SingleAppointment from '@/class/SingleAppointment';
 import {
   Component, Prop, Vue, Watch,
@@ -452,14 +455,6 @@ export default class Daylist extends Vue {
     this.createRows();
     this.hash = uuidv4();
     this.weekday = Dateconversions.getWeekdayStringForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
-    try {
-      // Wait for 1 second before checking for exceptions
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // this.checkIsExceptionAndUpdateRowspan();
-      // Daylist.removeOverflowingCells();
-    } catch (err) {
-      console.error(err);
-    }
   }
 
   @Watch('localBackup')
@@ -727,7 +722,43 @@ export default class Daylist extends Vue {
 
   private changeAppointment(
     event: {
-      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
+      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, weekday: Weekday,
+      interval: number, cancellations: Cancellation[],
+      startDate: Date, endDate: Date, comment: string, id: string,
+      isBWO: boolean, isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
+    },
+  ): void {
+    if (event.endDate) {
+      // speichern SerienTermin
+      const appointment = new AppointmentSeries(
+        event.therapist,
+        event.therapistID,
+        event.patient,
+        event.startTime as unknown as Time,
+        event.endTime as unknown as Time,
+        event.comment,
+        event.isHotair,
+        event.isUltrasonic,
+        event.isElectric,
+        event.weekday,
+        event.interval,
+        event.cancellations,
+        event.startDate,
+        event.endDate,
+        event.id,
+      );
+      console.log('speichern Serien Termin Daylist');
+      console.log(appointment);
+      if (this.localBackup) {
+        this.store.changeAppointmentSeries(appointment);
+        this.resetInputs();
+      }
+    }
+  }
+
+  private changeSingleAppointment(
+    event: {
+      therapist: string, therapistID: string, patient: string, comment: string, id: string, startTime: Time, endTime: Time,
       isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
     },
   ): void {
@@ -749,7 +780,7 @@ export default class Daylist extends Vue {
     }
   }
 
-  private changeSingleAppointment(
+  private changeRepSingleAppointment(
     event: {
       therapist: string, therapistID: string, patient: string, comment: string, id: string,
       isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
