@@ -258,7 +258,7 @@ export default class Masterlist {
       const newAppointments = currentDay.appointments.filter(
         (filterAppointment) => filterAppointment.id !== appointment.id,
       );
-      newAppointments.push(appointment);
+      newAppointments.push(appointmentToBeChanged);
       currentDay.appointments = newAppointments;
     }
   }

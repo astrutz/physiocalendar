@@ -454,18 +454,6 @@ export default class DaylistElement extends Vue {
       this.appointmentsForPatient = this.appointmentsForPatient.concat(
         this.localBackup.masterlist.getReplacementsByPatient(this.patient),
       );
-      // console.log(this.patient);
-      // console.log(this.appointmentsForPatient);
-      /*
-      this.appointmentsForPatient = this.appointmentsForPatient.filter((appointment) => {
-        if (this.appointment instanceof SingleAppointment && appointment instanceof SingleAppointment) {
-          return !(appointment.startTime === this.appointment.startTime
-            && this.appointment.date === appointment.date
-            && this.appointment.therapistID === appointment.therapistID);
-        }
-        return true;
-      });
-      */
       if (this.isException) {
         this.fetchReplacementAppointments(this.appointment.therapistID, this.currentDate, this.appointment.startTime,
           this.appointment.endTime);
@@ -516,7 +504,7 @@ export default class DaylistElement extends Vue {
         startDate: this.startDate,
         endDate: this.endDate,
         cancellations: (this.appointment as AppointmentSeries).cancellations,
-        interval: (this.appointment as AppointmentSeries).interval, // parseInt(this.interval, 10),
+        interval: (this.appointment as AppointmentSeries).interval,
         id: this.id,
         weekday: (this.appointment as AppointmentSeries).weekday,
         isHotair: this.isHotairField,
@@ -524,6 +512,39 @@ export default class DaylistElement extends Vue {
         isElectric: this.isElectricField,
         isBWO: (this.appointment as AppointmentSeries).isBWO,
       });
+    }
+    if (this.patientTextfield !== null) {
+      if ((this.appointment as AppointmentSeries).startTime) {
+        // eslint-disable-next-line
+        if (this.isExceptionField !== this.isException) {
+          if (this.isExceptionField) {
+            // Serien Termin fällt aus
+            this.$emit('exceptionAdded', {
+              isException: this.isExceptionField,
+              patient: this.patientTextField1,
+              appointment: this.appointment as AppointmentSeries,
+            });
+            const button = document.querySelector('.button-element');
+            if (button) {
+              button.classList.toggle('button-element-exception');
+            }
+          } else {
+            // Serien Termin fällt nicht aus
+            console.log('Termin fällt nicht mehr aus!');
+            this.$emit('exceptionDeleted', {
+              isException: !this.isExceptionField,
+              patient: this.patientTextField1,
+              appointment: this.appointment as AppointmentSeries,
+            });
+          }
+        } else if (this.isExceptionField === this.isException) {
+          this.$emit('exceptionChanged', {
+            isException: this.isExceptionField,
+            patient: this.patientTextField1,
+            appointment: this.appointment as AppointmentSeries,
+          });
+        }
+      }
     } else {
       this.$emit('appointmentDeleted', {
         patient: this.patient,
@@ -554,52 +575,6 @@ export default class DaylistElement extends Vue {
         endTime: this.endTimeSelect,
         startDate: this.startDate,
         endDate: this.endDate,
-        comment: this.commentTextfield,
-        id: this.id,
-        isHotair: this.isHotairField,
-        isUltrasonic: this.isUltrasonicField,
-        isElectric: this.isElectricField,
-      });
-    }
-    if (this.patientTextfield !== null) {
-      if ((this.appointment as AppointmentSeries).startTime) {
-        // eslint-disable-next-line
-        if (this.isExceptionField !== this.isException) {
-          if (this.isExceptionField) {
-            // Serien Termin fällt aus
-            this.$emit('exceptionAdded', {
-              isException: this.isExceptionField,
-              patient: this.patientTextField1,
-              appointment: this.appointment as AppointmentSeries,
-            });
-            const button = document.querySelector('.button-element');
-            if (button) {
-              button.classList.toggle('button-element-exception');
-            }
-            // this.addRepAppointment();
-          } else {
-            // Serien Termin fällt nicht aus
-            this.$emit('exceptionDeleted', {
-              isException: this.isExceptionField,
-              patient: this.patientTextField1,
-              appointment: this.appointment as AppointmentSeries,
-            });
-          }
-        } else if (this.isExceptionField === this.isException) {
-          this.$emit('exceptionChanged', {
-            isException: this.isExceptionField,
-            patient: this.patientTextField1,
-            appointment: this.appointment as AppointmentSeries,
-          });
-        }
-      }
-    } else {
-      this.$emit('appointmentDeleted', {
-        patient: this.patient,
-        therapist: this.therapist,
-        therapistID: this.therapistID,
-        startTime: this.startTimeSelect,
-        endTime: this.endTimeSelect,
         comment: this.commentTextfield,
         id: this.id,
         isHotair: this.isHotairField,

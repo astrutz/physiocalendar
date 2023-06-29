@@ -859,6 +859,7 @@ export default class Daylist extends Vue {
 
   private deleteException(event: { isException: boolean, patient: string, appointment: AppointmentSeries }): void {
     if (this.localBackup) {
+      console.log(event.isException);
       this.store.deleteCancellation({ date: this.currentSingleDay, appointment: event.appointment });
     }
   }
