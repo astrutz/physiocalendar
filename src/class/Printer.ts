@@ -27,6 +27,10 @@ export default class Printer {
 
   startDate: Date | undefined;
 
+  endDate: Date | undefined;
+
+  currentSingleDay: Date | undefined;
+
   MAX_APPOINTMENT_COUNT = 12;
 
   constructor(
@@ -39,6 +43,8 @@ export default class Printer {
     interval: number,
     cancellations: Cancellation[] = [],
     startDate?: Date,
+    endDate?: Date,
+    currentSingleDay?: Date,
   ) {
     this.id = id;
     this.patient = patient;
@@ -49,6 +55,8 @@ export default class Printer {
     this.interval = interval;
     this.cancellations = cancellations;
     this.startDate = startDate;
+    this.endDate = endDate;
+    this.currentSingleDay = currentSingleDay;
   }
 
   printSingleAppointment(appointmentsForPatient: Appointment[]): void {
@@ -78,7 +86,7 @@ export default class Printer {
       return;
     }
     singleAppointments.forEach((appointment, j) => {
-      if (this.startDate && appointment.date >= this.startDate) {
+      if (this.currentSingleDay && appointment.date.getTime() >= this.currentSingleDay.getTime() - (24 * 3600000)) {
         if (i > 0 && i % this.MAX_APPOINTMENT_COUNT === 0) {
           strs.push(str);
           str = '';
@@ -120,28 +128,36 @@ export default class Printer {
       startTime,
       interval,
       cancellations,
+      weekday,
     } = seriesAppointmentToPrint;
-    let currDate = startDate;
-    if (this.startDate) {
-      currDate = this.startDate;
-    }
-    while (i < this.MAX_APPOINTMENT_COUNT) {
-      const holidays = holidaysJSON.days;
-      const dateString = Dateconversions.convertDateToReadableString(currDate);
-      const weekdayReadable = Printer.getWeekday(currDate);
-      const readableString = Dateconversions.convertGermanToEnglishReadableString(dateString);
-      if (currDate < endDate) {
-        if (!holidays.includes(readableString)
-          && !cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currDate))) {
-          str += `${weekdayReadable}${dateString} von ${startTime} bis ${endTime}\n`;
+    if (this.currentSingleDay) {
+      let currDate = startDate;
+      if (currDate < this.currentSingleDay) {
+        currDate = this.currentSingleDay;
+        const targetWeekday = Object.values(Weekday).indexOf(weekday); // Den Ziel-Wochentag als numerischen Wert erhalten
+        while (currDate.getDay() !== targetWeekday) {
+          currDate.setDate(currDate.getDate() + 1);
+        }
+        currDate.setDate(currDate.getDate() + 1);
+      }
+      while (i < this.MAX_APPOINTMENT_COUNT) {
+        const holidays = holidaysJSON.days;
+        const dateString = Dateconversions.convertDateToReadableString(currDate);
+        const weekdayReadable = Printer.getWeekday(currDate);
+        const readableString = Dateconversions.convertGermanToEnglishReadableString(dateString);
+        if (currDate.getTime() <= endDate.getTime() + (24 * 3600000)) {
+          if (!holidays.includes(readableString)
+            && !cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currDate))) {
+            str += `${weekdayReadable}${dateString} von ${startTime} bis ${endTime}\n`;
+            i += 1;
+          }
+          currDate.setDate(currDate.getDate() + interval * 7);
+        } else {
           i += 1;
         }
-        currDate.setDate(currDate.getDate() + interval * 7);
-      } else {
-        i += 1;
       }
+      this.print([str]);
     }
-    this.print([str]);
   }
 
   private print(pdfContents: string[]): void {

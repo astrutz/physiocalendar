@@ -92,6 +92,12 @@ export default class AppBar extends Vue {
             && appointment.patient.toLowerCase().includes(searchText);
         }));
       });
+      // Sortiere die Suchergebnisse nach dem Datum
+      this.searchResults.sort((a, b) => {
+        const dateA = (a instanceof AppointmentSeries) ? (a as AppointmentSeries).startDate : (a as SingleAppointment).date;
+        const dateB = (b instanceof AppointmentSeries) ? (b as AppointmentSeries).startDate : (b as SingleAppointment).date;
+        return dateA.getTime() - dateB.getTime();
+      });
       this.showSearchResults = true;
     }
   }

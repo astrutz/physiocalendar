@@ -68,6 +68,7 @@
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
                 :appointmentStartDate="row[header.value].startDate"
+                :appointmentEndDate="row[header.value].endDate"
                 :startTime="row.startTime"
                 :endTime="row[header.value].endTime"
                 :comment="row[header.value].comment"
@@ -132,7 +133,7 @@
           </v-row>
           <v-row class="pl-3">
             <v-menu
-              v-model="inputFields.menuIsOpen"
+              v-model="inputFields.startDatePickerIsOpen"
               :close-on-content-click="false"
               :nudge-right="40"
               transition="scale-transition"
@@ -142,7 +143,7 @@
               <template v-slot:activator="{ on, attrs }">
                 <v-text-field
                   v-model="inputFields.startDateStringFormatted"
-                  label="Startdatum"
+                  label="Start Datum"
                   persistent-hint
                   prepend-icon="mdi-calendar"
                   v-bind="attrs"
@@ -163,16 +164,60 @@
                   }
                 "
                 @input="
-                  inputFields.menuIsOpen = false;
-                  inputFields.startDate = getCombinedDate();
+                  inputFields.startDatePickerIsOpen = false;
+                  inputFields.startDate = getCombinedStartDate(inputFields.startDateString);
+                  inputFields.endDateStringFormatted = convertEnglishToGermanReadableString(
+                    inputFields.startDateString
+                  );
+                "
+                locale="de-de"
+              ></v-date-picker>
+            </v-menu>
+            <v-menu
+              v-model="inputFields.endDatePickerIsOpen"
+              :close-on-content-click="false"
+              :nudge-right="40"
+              transition="scale-transition"
+              offset-y
+              min-width="auto"
+            >
+              <template v-slot:activator="{ on, attrs }">
+                <v-text-field
+                  v-model="inputFields.endDateStringFormatted"
+                  label="End Datum"
+                  persistent-hint
+                  prepend-icon="mdi-calendar"
+                  v-bind="attrs"
+                  @blur="
+                    inputFields.endDateString =
+                      convertGermanToEnglishReadableString(
+                        inputFields.endDateStringFormatted
+                      )
+                  "
+                  v-on="on"
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model="inputFields.endDateString"
+                :allowed-dates="
+                  (dateVal) => {
+                    return new Date(dateVal) >= new Date();
+                  }
+                "
+                @input="
+                  inputFields.endDatePickerIsOpen = false;
+                  inputFields.endDate = getCombinedEndDate(inputFields.endDateString);
+                  inputFields.endDateStringFormatted = convertEnglishToGermanReadableString(
+                    inputFields.endDateString
+                );
                 "
                 locale="de-de"
               ></v-date-picker>
             </v-menu>
           </v-row>
           <v-alert v-if="conflicts.length > 0" type="error" class="mt-4"
-            >Dieser Termin kann nicht gespeichert werden, da er mit folgenden
-            Terminen kollidiert:
+            >Dieser Termin kann gespeichert werden, kollidiert aber mit folgenden
+            Terminen:
             <ul>
               <li
                 v-for="conflict in conflicts"
@@ -204,7 +249,6 @@
           <v-btn
             color="primary"
             button
-            :disabled="conflicts.length > 0"
             @click="
               addAppointment({
                 therapist: selectedAppointment.therapist,
@@ -215,8 +259,10 @@
                 interval: parseInt(inputFields.interval, 10),
                 isBWO: inputFields.isBWO,
                 comment: inputFields.commentTextfield,
-                startDate: getCombinedDate(),
+                startDate: inputFields.startDate,
+                endDate: inputFields.endDate,
               });
+              resetInputs();
               createDialog = false;
             "
           >
@@ -264,12 +310,18 @@ export default class Masterlist extends Vue {
     startTimeSelect: '',
     endTimeSelect: '',
     commentTextfield: '',
-    menuIsOpen: false,
+    startDatePickerIsOpen: false,
+    endDatePickerIsOpen: false,
     startDate: new Date(),
+    endDate: new Date(),
     interval: '1',
     isBWO: false,
     startDateString: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
     startDateStringFormatted: Dateconversions.convertEnglishToGermanReadableString(
+      new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
+    ),
+    endDateString: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
+    endDateStringFormatted: Dateconversions.convertEnglishToGermanReadableString(
       new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
     ),
   }
@@ -437,28 +489,24 @@ export default class Masterlist extends Vue {
     }
   }
 
-  private getCombinedDate(): Date {
-    const timezoneOffsetInHours = new Date(`${this.inputFields.startDateString}T00:00:00.000Z`).getTimezoneOffset() * -1;
-    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
-    return new Date(`${this.inputFields.startDateString}T04:00:00.000${offsetSuffix}`);
-  }
-
-  private convertGermanToEnglishReadableString(): string {
-    return Dateconversions.convertGermanToEnglishReadableString(this.inputFields.startDateStringFormatted);
-  }
-
   private resetInputs(): void {
     this.inputFields = {
       patientTextfield: '',
       startTimeSelect: '',
       endTimeSelect: '',
       commentTextfield: '',
-      menuIsOpen: false,
+      startDatePickerIsOpen: false,
+      endDatePickerIsOpen: false,
       interval: '1',
       isBWO: false,
       startDate: new Date(),
+      endDate: new Date(),
       startDateString: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
       startDateStringFormatted: Dateconversions.convertEnglishToGermanReadableString(
+        new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
+      ),
+      endDateString: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
+      endDateStringFormatted: Dateconversions.convertEnglishToGermanReadableString(
         new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
       ),
     };
@@ -602,6 +650,34 @@ export default class Masterlist extends Vue {
   // eslint-disable-next-line class-methods-use-this
   private getAllTimes(): string[] {
     return Dateconversions.getAllTimes();
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  public getCombinedStartDate(dateString: string): Date {
+    const date = dateString;
+    // console.log(dateString);
+    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
+    return new Date(`${date}T04:00:00.000${offsetSuffix}`);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  public getCombinedEndDate(dateString: string): Date {
+    const date = dateString;
+    // console.log(dateString);
+    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
+    return new Date(`${date}T04:00:00.000${offsetSuffix}`);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private convertGermanToEnglishReadableString(string: string): string {
+    return Dateconversions.convertGermanToEnglishReadableString(string);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private convertEnglishToGermanReadableString(string: string): string {
+    return Dateconversions.convertEnglishToGermanReadableString(string);
   }
 }
 

@@ -293,7 +293,7 @@
         <v-spacer></v-spacer>
         <v-btn
           v-if="true"
-          color="primary"
+          color="warning"
           @click="printAppointment()"
           text
         >
@@ -630,9 +630,11 @@ export default class DaylistElement extends Vue {
       this.startTime as unknown as Time,
       this.endTime as unknown as Time,
       Dateconversions.convertReadableStringToDate(this.date),
-      0,
-      undefined,
-      Dateconversions.convertReadableStringToDate(this.currDate)
+      (this.appointment as AppointmentSeries).interval,
+      (this.appointment as AppointmentSeries).cancellations,
+      (this.appointment as AppointmentSeries).startDate,
+      (this.appointment as AppointmentSeries).endDate,
+      new Date(),
     );
     if (this.isSingleAppointment) {
       printer.printSingleAppointment(this.appointmentsForPatient);

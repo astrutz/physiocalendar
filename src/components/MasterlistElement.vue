@@ -72,7 +72,7 @@
         </v-row>
         <v-row class="pl-3">
           <v-menu
-            v-model="menuIsOpen"
+            v-model="startDatePickerIsOpen"
             :close-on-content-click="false"
             :nudge-right="40"
             transition="scale-transition"
@@ -82,7 +82,7 @@
             <template v-slot:activator="{ on, attrs }">
               <v-text-field
                 v-model="startDateStringFormatted"
-                label="Startdatum"
+                label="Start Datum"
                 persistent-hint
                 prepend-icon="mdi-calendar"
                 v-bind="attrs"
@@ -98,8 +98,48 @@
               v-model="startDateString"
               :allowed-dates="dateIsAllowed"
               @input="
-                menuIsOpen = false;
-                startDate = getCombinedDate();
+                startDatePickerIsOpen = false;
+                startDate = getCombinedStartDate(startDateString);
+                startDateStringFormatted = convertEnglishToGermanReadableString(
+                  startDateString
+                );
+              "
+              locale="de-de"
+              :first-day-of-week="1"
+            ></v-date-picker>
+          </v-menu>
+          <v-menu
+            v-model="endDatePickerIsOpen"
+            :close-on-content-click="false"
+            :nudge-right="40"
+            transition="scale-transition"
+            offset-y
+            min-width="auto"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-text-field
+                v-model="endDateStringFormatted"
+                label="End Datum"
+                persistent-hint
+                prepend-icon="mdi-calendar"
+                v-bind="attrs"
+                @blur="
+                  endDateString = convertGermanToEnglishReadableString(
+                    endDateStringFormatted
+                  )
+                "
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="endDateString"
+              :allowed-dates="dateIsAllowed"
+              @input="
+                endDatePickerIsOpen = false;
+                endDate = getCombinedEndDate(endDateString);
+                endDateStringFormatted = convertEnglishToGermanReadableString(
+                  endDateString
+                );
               "
               locale="de-de"
               :first-day-of-week="1"
@@ -125,7 +165,7 @@
 
       <v-card-actions>
         <v-btn
-          color="error"
+          color="normal"
           text
           @click="
             patientTextfield = patient;
@@ -136,8 +176,15 @@
         </v-btn>
         <v-spacer></v-spacer>
         <v-btn
-          v-if="patient !== ''"
-          color="primary"
+          color="error"
+          button
+          @click="deleteAppointment();"
+        >
+          Löschen
+        </v-btn>
+        <v-spacer></v-spacer>
+        <v-btn
+          color="warning"
           @click="printAppointment()"
           text
         >
@@ -197,19 +244,29 @@ export default class MasterlistElement extends Vue {
 
   @Prop() readonly appointmentStartDate!: Date;
 
+  @Prop() readonly appointmentEndDate!: Date;
+
   store = getModule(Store);
 
   private appointmentPatient = this.appointment.patient;
 
   appointmentsForPatient: Appointment[] = [];
 
-  private startDate = new Date(this.appointment?.startDate.getTime());
+  public startDate = new Date(this.appointment?.startDate.getTime());
 
-  private startDateString: string = new Date(
+  public startDateString: string = new Date(
     this.startDate.getTime() - this.startDate.getTimezoneOffset() * 60000,
   ).toISOString().substr(0, 10);
 
-  private startDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
+  public startDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
+
+  public endDate = this.appointmentEndDate ? new Date(this.appointmentEndDate.getTime()) : new Date(2524608000000);
+
+  public endDateString: string = new Date(
+    this.endDate.getTime() - this.endDate.getTimezoneOffset() * 60000,
+  ).toISOString().substr(0, 10);
+
+  public endDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
 
   private isBWO = this.appointment?.isBWO || false;
 
@@ -217,7 +274,9 @@ export default class MasterlistElement extends Vue {
 
   private dialogIsOpen = false;
 
-  private menuIsOpen = false;
+  public endDatePickerIsOpen = false;
+
+  public startDatePickerIsOpen = false;
 
   private patientTextfield = this.appointmentPatient;
 
@@ -312,8 +371,32 @@ export default class MasterlistElement extends Vue {
     return new Date(`${date}T04:00:00.000${offsetSuffix}`);
   }
 
-  private convertGermanToEnglishReadableString(): string {
-    return Dateconversions.convertGermanToEnglishReadableString(this.startDateStringFormatted);
+  // eslint-disable-next-line class-methods-use-this
+  public getCombinedStartDate(dateString: string): Date {
+    const date = dateString;
+    // console.log(dateString);
+    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
+    return new Date(`${date}T04:00:00.000${offsetSuffix}`);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  public getCombinedEndDate(dateString: string): Date {
+    const date = dateString;
+    // console.log(dateString);
+    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
+    return new Date(`${date}T04:00:00.000${offsetSuffix}`);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private convertGermanToEnglishReadableString(string: string): string {
+    return Dateconversions.convertGermanToEnglishReadableString(string);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private convertEnglishToGermanReadableString(string: string): string {
+    return Dateconversions.convertEnglishToGermanReadableString(string);
   }
 
   private changeAppointment(): void {
@@ -326,20 +409,7 @@ export default class MasterlistElement extends Vue {
         endTime: this.endTimeSelect,
         comment: this.commentTextfield,
         startDate: this.getCombinedDate(),
-        cancellations: this.appointment.cancellations,
-        interval: parseInt(this.interval, 10),
-        id: this.id,
-        isBWO: this.isBWO,
-      });
-    } else {
-      this.$emit('appointmentDeleted', {
-        patient: this.patient,
-        therapist: this.therapist,
-        therapistID: this.therapistID,
-        startTime: this.startTimeSelect,
-        endTime: this.endTimeSelect,
-        comment: this.commentTextfield,
-        startDate: this.getCombinedDate(),
+        endDate: this.endDate,
         cancellations: this.appointment.cancellations,
         interval: parseInt(this.interval, 10),
         id: this.id,
@@ -356,10 +426,32 @@ export default class MasterlistElement extends Vue {
       startTime: this.startTimeSelect,
       endTime: this.endTimeSelect,
       comment: this.commentTextfield,
-      startDate: this.getCombinedDate(),
+      startDate: this.startDate,
+      endDate: this.endDate,
       interval: parseInt(this.interval, 10),
       isBWO: this.isBWO,
     });
+  }
+
+  public deleteAppointment(): void {
+    /* eslint-disable */
+    if (window.confirm('Soll dieser Serien Termin wirklich unwiederruflich gelöscht werden?')) {
+    // löschen eines single appointments
+    this.$emit('appointmentDeleted', {
+        patient: this.patient,
+        therapist: this.therapist,
+        therapistID: this.therapistID,
+        startTime: this.startTimeSelect,
+        endTime: this.endTimeSelect,
+        comment: this.commentTextfield,
+        startDate: this.getCombinedDate(),
+        cancellations: this.appointment.cancellations,
+        interval: parseInt(this.interval, 10),
+        id: this.id,
+        isBWO: this.isBWO,
+      });
+      this.dialogIsOpen = false;
+    }
   }
 
   private printAppointment(): void {
@@ -372,6 +464,8 @@ export default class MasterlistElement extends Vue {
       this.day,
       parseInt(this.interval, 10),
       this.appointment.cancellations,
+      this.appointment.startDate,
+      this.appointment.endDate,
       new Date(),
     );
     if (this.localBackup) {

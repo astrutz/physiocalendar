@@ -932,11 +932,14 @@ export default class Daylist extends Vue {
       this.singleAppointmentToOpen.endTime,
       Dateconversions.convertReadableStringToDate(this.currentSingleDay),
       0,
+      undefined,
+      undefined,
+      undefined,
+      new Date(),
     );
     this.appointmentsForPatient = [];
     this.searchAppointmentsForPatient(this.singleAppointmentToOpen.patient);
     printer.printSingleAppointment(this.appointmentsForPatient);
-    //printer.printSeriesAppointment(this.appointmentsForPatient);
   }
 
   // eslint-disable-next-line class-methods-use-this
