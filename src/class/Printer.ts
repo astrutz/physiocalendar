@@ -93,7 +93,7 @@ export default class Printer {
         }
         const dateAsString = Dateconversions.convertDateToReadableString(appointment.date);
         const weekdayReadable = Printer.getWeekday(appointment.date);
-        str += `${weekdayReadable}${dateAsString} von ${appointment.startTime} bis ${appointment.endTime}\n`;
+        str += `${weekdayReadable}${dateAsString} ab ${appointment.startTime}\n`;
         i += 1;
         if (j === singleAppointments.length - 1) {
           strs.push(str);
@@ -148,7 +148,7 @@ export default class Printer {
         if (currDate.getTime() <= endDate.getTime() + (24 * 3600000)) {
           if (!holidays.includes(readableString)
             && !cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currDate))) {
-            str += `${weekdayReadable}${dateString} von ${startTime} bis ${endTime}\n`;
+            str += `${weekdayReadable}${dateString} ab ${startTime}\n`;
             i += 1;
           }
           currDate.setDate(currDate.getDate() + interval * 7);
