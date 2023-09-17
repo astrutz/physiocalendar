@@ -36,7 +36,7 @@ class StoreBackup extends VuexModule {
       // leere Einträge löschen
       this.backup.daylist.elements.forEach((element) => {
         element.appointments.forEach((app) => {
-          if (app.patient === '') {
+          if (app.patient === '' || app.patient === null) {
             this.deleteSingleAppointment(app as SingleAppointment);
           }
         });

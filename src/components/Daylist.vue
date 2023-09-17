@@ -343,7 +343,7 @@
               createDialog = false;
             "
           >
-            Speichern
+            Erstellen
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -775,6 +775,8 @@ export default class Daylist extends Vue {
       event.isElectric,
       event.id,
     );
+    console.log('speichern Serien Termin Daylist');
+    console.log(appointment);
     if (this.localBackup) {
       this.store.changeSingleAppointment(appointment);
     }

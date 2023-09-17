@@ -83,7 +83,7 @@
 
       <v-card-text class="pt-4">
         <v-combobox
-          :disabled="!isSingleAppointment"
+          :disabled="appointment.id != null"
           :value="patient"
           v-model="patientTextfield"
           :loading="patientsLoading"
@@ -301,12 +301,10 @@
         </v-btn>
         <v-spacer></v-spacer>
         <v-btn
+          v-if="id !== null"
           color="primary"
           button
-          @click="
-            patient !== ''
-              ? changeAppointment()
-              : addAppointment();
+          @click="changeAppointment();
             dialogIsOpen = false;
           "
         >
