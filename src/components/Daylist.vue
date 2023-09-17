@@ -124,7 +124,6 @@
           {{ selectedAppointment.therapist }} - {{ weekday }} {{ currentSingleDay }} -
           {{ selectedAppointment.startTime }}
         </v-card-title>
-
         <v-card-text class="pt-5">
           <v-combobox
             v-model="singleAppointmentToOpen.patient"
@@ -139,7 +138,6 @@
             clearable
             label="Name des Patienten"
           ></v-combobox>
-
           <v-select
           :disabled="true"
           :items="getAllTimes()"
@@ -155,13 +153,11 @@
           v-model="singleAppointmentToOpen.endTime"
           :value="singleAppointmentToOpen.endTime"
           ></v-select>
-
           <v-text-field
             label="Sonstige Bemerkungen"
             v-model="singleAppointmentToOpen.comment"
             clearable
           ></v-text-field>
-
           <v-row>
             <v-col>
               <v-checkbox
@@ -243,7 +239,8 @@
         </v-card-title>
 
         <v-card-text class="pt-5">
-          <v-combobox
+          <v-row>
+            <v-combobox
             v-model="inputFields.patientTextfield"
             @input="searchAppointmentsForPatient($event)"
             :loading="patientsLoading"
@@ -256,7 +253,85 @@
             clearable
             label="Name des Patienten"
           ></v-combobox>
-
+          <v-switch v-model="inputFields.createSeriesAppointment" label="Serientermin" ></v-switch>
+          </v-row>
+          <v-row v-if="inputFields.createSeriesAppointment">
+          <v-menu
+            v-model="startDatePickerIsOpen"
+            :close-on-content-click="false"
+            :nudge-right="40"
+            transition="scale-transition"
+            offset-y
+            min-width="auto"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-text-field
+                v-model="startDateStringFormatted"
+                label="Start Datum"
+                persistent-hint
+                append-icon="mdi-calendar"
+                v-bind="attrs"
+                @blur="
+                  startDateString = convertGermanToEnglishReadableString(
+                    startDateStringFormatted
+                  );
+                "
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="startDateString"
+              :allowed-dates="dateIsAllowed"
+              @input="
+                startDatePickerIsOpen = false;
+                startDate = getCombinedStartDate(startDateString);
+                startDateStringFormatted = convertEnglishToGermanReadableString(
+                  startDateString
+                );
+              "
+              locale="de-de"
+              :first-day-of-week="1"
+            ></v-date-picker>
+          </v-menu>
+          <v-menu
+            v-model="endDatePickerIsOpen"
+            :close-on-content-click="false"
+            :nudge-right="40"
+            transition="scale-transition"
+            offset-y
+            min-width="auto"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-text-field
+                v-model="endDateStringFormatted"
+                label="End Datum"
+                persistent-hint
+                append-icon="mdi-calendar"
+                v-bind="attrs"
+                @blur="
+                  endDateString = convertGermanToEnglishReadableString(
+                    endDateStringFormatted
+                  )
+                "
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="endDateString"
+              :allowed-dates="dateIsAllowed"
+              @input="
+                endDatePickerIsOpen = false;
+                endDate = getCombinedEndDate(endDateString);
+                endDateStringFormatted = convertEnglishToGermanReadableString(
+                  endDateString
+                );
+              "
+              locale="de-de"
+              :first-day-of-week="1"
+            ></v-date-picker>
+          </v-menu>
+        </v-row>
+        <v-row>
           <v-select
           :items="getAllTimes()"
           label="Start um"
@@ -268,32 +343,47 @@
           label="Ende um"
           v-model="inputFields.endTimeSelect"
           ></v-select>
-
+        </v-row>
+        <v-row v-if="inputFields.createSeriesAppointment">
+          <v-text-field
+              label="Wöchentliches Interval"
+              type="number"
+              :rules="[v => (v > 0 && v % 1 === 0)]"
+              v-model="inputFields.interval"
+              :value="inputFields.interval"
+          ></v-text-field>
+          <v-checkbox
+              label="BWO"
+              v-model="inputFields.isBWO"
+              :value="inputFields.isBWO"
+            ></v-checkbox>
+        </v-row>
+        <v-row>
           <v-text-field
             label="Sonstige Bemerkungen"
             v-model="inputFields.commentTextfield"
             clearable
           ></v-text-field>
-
-          <v-row>
-            <v-col>
-              <v-checkbox
-                label="Heißluft"
-                v-model="inputFields.isHotairField"
-              ></v-checkbox>
-            </v-col>
-            <v-col>
-              <v-checkbox
-                label="Ultraschall"
-                v-model="inputFields.isUltrasonicField"
-              ></v-checkbox>
-            </v-col>
-            <v-col>
-              <v-checkbox
-                label="Elektro"
-                v-model="inputFields.isElectricField"
-              ></v-checkbox>
-            </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-checkbox
+              label="Heißluft"
+              v-model="inputFields.isHotairField"
+            ></v-checkbox>
+          </v-col>
+          <v-col>
+            <v-checkbox
+              label="Ultraschall"
+              v-model="inputFields.isUltrasonicField"
+            ></v-checkbox>
+          </v-col>
+          <v-col>
+            <v-checkbox
+              label="Elektro"
+              v-model="inputFields.isElectricField"
+            ></v-checkbox>
+          </v-col>
           </v-row>
           <v-alert v-if="appointmentsForPatient.length > 0" type="info">
             Unter diesem Namen wurden weitere Termine gefunden:
@@ -327,8 +417,7 @@
           <v-btn
             color="primary"
             button
-            @click="
-              addAppointment({
+            @click="createAppointment({
                 therapist: selectedAppointment.therapist,
                 therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
@@ -336,6 +425,8 @@
                 endTime: inputFields.endTimeSelect,
                 comment: inputFields.commentTextfield,
                 id: '',
+                isBWO: inputFields.isBWO,
+                interval: inputFields.interval,
                 isHotair: inputFields.isHotairField,
                 isUltrasonic: inputFields.isUltrasonicField,
                 isElectric: inputFields.isElectricField,
@@ -343,7 +434,7 @@
               createDialog = false;
             "
           >
-            Erstellen
+          {{ inputFields.createSeriesAppointment ? 'Serientermin erstellen' : 'Einzeltermin erstellen' }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -363,6 +454,7 @@ import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import { Time, Weekday } from '@/class/Enums';
 import SingleAppointment from '@/class/SingleAppointment';
+import holidaysJSON from '@/data/holidays.json';
 import {
   Component, Prop, Vue, Watch,
 } from 'vue-property-decorator';
@@ -389,6 +481,8 @@ export default class Daylist extends Vue {
 
   weekday = '';
 
+  public holidays = holidaysJSON.days;
+
   inputFields = {
     patientTextfield: '',
     startTimeSelect: '',
@@ -397,6 +491,9 @@ export default class Daylist extends Vue {
     isHotairField: false,
     isUltrasonicField: false,
     isElectricField: false,
+    interval: '1',
+    isBWO: false,
+    createSeriesAppointment: false,
   }
 
   public singleAppointmentToOpen: SingleAppointment = new SingleAppointment('',
@@ -438,6 +535,26 @@ export default class Daylist extends Vue {
   }[] = [{ startTimeString: '' }];
 
   private patientsLoading = false;
+
+  public startDatePickerIsOpen = false;
+
+  public endDatePickerIsOpen = false;
+
+  public startDate = new Date();
+
+  public startDateString: string = new Date(
+    this.startDate.getTime() - this.startDate.getTimezoneOffset() * 60000,
+  ).toISOString().substr(0, 10);
+
+  public startDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
+
+  public endDate = new Date();
+
+  public endDateString: string = new Date(
+    this.endDate.getTime() - this.endDate.getTimezoneOffset() * 60000,
+  ).toISOString().substr(0, 10);
+
+  public endDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
 
   private searchValue = '';
 
@@ -659,6 +776,9 @@ export default class Daylist extends Vue {
       isHotairField: false,
       isUltrasonicField: false,
       isElectricField: false,
+      interval: '1',
+      isBWO: false,
+      createSeriesAppointment: false,
     };
 
     this.selectedAppointment = {
@@ -718,6 +838,46 @@ export default class Daylist extends Vue {
       this.store.addSingleAppointment(appointment);
     }
     this.resetInputs();
+  }
+
+  public addSeriesAppointment(
+    event: {
+      therapist: string, therapistID: string, patient: string, startDate: Date, endDate: Date,
+      startTime: string, endTime: string, comment: string, id: string,
+      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
+      weekday: Weekday, interval: number, cancellations: Cancellation[], isBWO: boolean,
+    },
+  ): void {
+    const appointment = new AppointmentSeries(
+      event.therapist,
+      event.therapistID,
+      event.patient,
+      event.startTime as unknown as Time,
+      event.endTime as unknown as Time,
+      event.comment,
+      event.isHotair,
+      event.isUltrasonic,
+      event.isElectric,
+      event.weekday,
+      event.interval,
+      event.cancellations,
+      event.startDate,
+      event.endDate,
+      event.id,
+      event.isBWO,
+    );
+    if (this.localBackup) {
+      this.store.addAppointmentSeries(appointment);
+    }
+    this.resetInputs();
+  }
+
+  public createAppointment(event): void {
+    if (this.inputFields.createSeriesAppointment) {
+      this.addSeriesAppointment(event);
+    } else {
+      this.addAppointment(event);
+    }
   }
 
   private changeAppointment(
@@ -965,6 +1125,46 @@ export default class Daylist extends Vue {
   // eslint-disable-next-line class-methods-use-this
   private getAllTimes(): string[] {
     return Dateconversions.getAllTimes();
+  }
+
+  public getCombinedStartDate(dateString: string): Date {
+    const date = dateString;
+    // console.log(dateString);
+    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
+    return new Date(`${date}T04:00:00.000${offsetSuffix}`);
+  }
+
+  public getCombinedEndDate(dateString: string): Date {
+    const date = dateString;
+    // console.log(dateString);
+    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
+    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
+    return new Date(`${date}T04:00:00.000${offsetSuffix}`);
+  }
+
+  public convertGermanToEnglishReadableString(string: string): string {
+    return Dateconversions.convertGermanToEnglishReadableString(string);
+  }
+
+  public convertEnglishToGermanReadableString(string: string): string {
+    return Dateconversions.convertEnglishToGermanReadableString(string);
+  }
+
+  public dateIsAllowed(dateVal: string | Date): boolean {
+    if (typeof dateVal === 'string') {
+      if (this.holidays.includes(dateVal)) {
+        return false;
+      }
+      const day = this.getCombinedStartDate(dateVal).getDay();
+      return day > 0 && day < 6;
+    }
+    const readableString = Dateconversions.convertGermanToEnglishReadableString(Dateconversions.convertDateToReadableString(dateVal));
+    if (this.holidays.includes(readableString)) {
+      return false;
+    }
+    const day = dateVal.getDay();
+    return day > 0 && day < 6;
   }
 }
 
