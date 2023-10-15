@@ -1,21 +1,21 @@
 <template>
   <v-dialog persistent v-model="dialogIsOpen" width="800">
     <template v-slot:activator="{ on, attrs }">
+      <button
+            type="button"
+            @click="dialogIsOpen = true"
+            v-bind="attrs"
+            v-on="on"
+            class="cell-button"
+            >
+            {{ patient }}>
       <span v-if="!isException"
           :class="{
             textcenter: true,
           }"
           >
-          <span>
-            <button
-            type="button"
-            @click="dialogIsOpen = true"
-            v-bind="attrs"
-            v-on="on">
-            {{ patient }}
-            </button>
-          </span>
         </span>
+
         <span v-if="isException"
           :class="{
             appointmentSeries: appointment.startDate,
@@ -74,6 +74,7 @@
           </ul>
         </div>
         </span>
+      </button>
     </template>
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
@@ -449,9 +450,6 @@ export default class DaylistElement extends Vue {
       this.appointmentsForPatient = this.appointmentsForPatient.concat(
         this.localBackup.masterlist.getAppointmentSeriesByPatient(this.patient),
       );
-      this.appointmentsForPatient = this.appointmentsForPatient.concat(
-        this.localBackup.masterlist.getReplacementsByPatient(this.patient),
-      );
       if (this.isException) {
         this.fetchReplacementAppointments(this.appointment.therapistID, this.currentDate, this.appointment.startTime,
           this.appointment.endTime);
@@ -791,5 +789,11 @@ ul {
   flex-direction: row;
   align-items: left;
   border: 1px solid black;
+}
+
+.cell-button {
+  width: 100%;
+  height: 100%;
+  padding: 0; /* Optional, um den Button-Innenabstand zu entfernen */
 }
 </style>

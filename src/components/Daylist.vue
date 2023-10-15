@@ -10,63 +10,62 @@
               class="text-center text-subtitle-2"
             >
               <span v-if="header.text === ''">{{ header.text }}</span>
-              <DaylistHeader
-                v-else
-                :therapist="header.text"
-                :therapistID="header.id"
-                :head="header"
-                :absences="
-                  header.absences.filter((abs) => abs.day.includes('.'))
-                "
-                :masterlistAbsences="
-                  header.absences.filter((abs) => !abs.day.includes('.'))
-                "
-                :exceptions="header.exceptions"
-                :date="currentSingleDay"
-                :key="`${hash}-${header.id}`"
-                @absencesChanged="saveAbsences($event)"
-              />
+              <div
+                @click="openCreateDialog(header.value, header.id, row.startTime)"
+              >
+                <DaylistHeader
+                  :therapist="header.text"
+                  :therapistID="header.id"
+                  :head="header"
+                  :absences="header.absences.filter((abs) => abs.day.includes('.'))"
+                  :masterlistAbsences="header.absences.filter((abs) => !abs.day.includes('.'))"
+                  :exceptions="header.exceptions"
+                  :date="currentSingleDay"
+                  :key="`${hash}-${header.id}`"
+                  @absencesChanged="saveAbsences($event)"
+                />
+              </div>
             </th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(row, rowIndex) in rows" :key="row.name">
             <td
-              v-for="header, headerIndex in headers.filter(header => header === '' || row[header.value] != undefined)"
-              :key="header.value"
-              :id="`cell_${rowIndex}_${headerIndex}`"
-              :rowspan="calculateRowspan(row[header.value])"
-              :isException="isCellException(row[header.value],`cell_${rowIndex}_${headerIndex}`)"
-              :class="{
-                'text-center': true,
-                'hour-begin': rowIndex % 6 === 0,
-                'cell-filled':
-                  row[header.value] &&
-                  row[header.value].patient &&
-                  row[header.value].startDate,
-                'cell-bwo':
-                  row[header.value] &&
-                  row[header.value].patient &&
-                  row[header.value].isBWO,
-                'cell-hotair':
-                  row[header.value] &&
-                  row[header.value].patient &&
-                  row[header.value].isHotair,
-                'cell-ultrasonic':
-                  row[header.value] &&
-                  row[header.value].patient &&
-                  row[header.value].isUltrasonic,
-                'cell-electric':
-                  row[header.value] &&
-                  row[header.value].patient &&
-                  row[header.value].isElectric,
-                'cell-absence':
-                  header.text !== '' && hasAbsenceInTime(header.id, rowIndex),
-                'cell-saturday':
-                  convertStringToDate(currentSingleDay).getDay() === 6 && !(typeof row[header.value] === 'string' &&
-                  row[header.value].includes(':'))
-              }"
-              @click="openCreateDialog(header.value, header.id, row.startTime)"
+          v-for="header, headerIndex in headers.filter(header => header === '' || row[header.value] != undefined)"
+          :key="header.value"
+          :id="`cell_${rowIndex}_${headerIndex}`"
+          :rowspan="calculateRowspan(row[header.value])"
+          :isException="isCellException(row[header.value],`cell_${rowIndex}_${headerIndex}`)"
+          :class="{
+            'text-center': true,
+            'hour-begin': rowIndex % 6 === 0,
+            'cell-filled':
+              row[header.value] &&
+              row[header.value].patient &&
+              row[header.value].startDate,
+            'cell-bwo':
+              row[header.value] &&
+              row[header.value].patient &&
+              row[header.value].isBWO,
+            'cell-hotair':
+              row[header.value] &&
+              row[header.value].patient &&
+              row[header.value].isHotair,
+            'cell-ultrasonic':
+              row[header.value] &&
+              row[header.value].patient &&
+              row[header.value].isUltrasonic,
+            'cell-electric':
+              row[header.value] &&
+              row[header.value].patient &&
+              row[header.value].isElectric,
+            'cell-absence':
+              header.text !== '' && hasAbsenceInTime(header.id, rowIndex),
+            'cell-saturday':
+              convertStringToDate(currentSingleDay).getDay() === 6 && !(typeof row[header.value] === 'string' &&
+              row[header.value].includes(':'))
+          }"
+            @click="openCreateDialog(header.value, header.id, row.startTime)"
             >
               <span
                 v-if="
@@ -80,46 +79,46 @@
                 class="create-appointment"
                 @click="openCreateDialog(header.value, header.id, row.startTime)"
               ></div>
-              <DaylistElement
-                v-else-if="row[header.value] && row[header.value].patient"
-                :key="`${hash}-${row[header.value].therapistID}-${row.startTime}`"
-                @appointmentAdded="addAppointment($event)"
-                @appointmentChanged="changeAppointment($event)"
-                @singleAppointmentChanged="changeSingleAppointment($event)"
-                @appointmentDeleted="deleteAppointment($event)"
-                @exceptionAdded="addException($event)"
-                @exceptionChanged="changeException($event)"
-                @exceptionDeleted="deleteException($event)"
-                @openDialog="showDialog($event)"
-                :currDate="currentSingleDay"
-                :patient="row[header.value].patient"
-                :id="row[header.value].id"
-                :comment="row[header.value].comment"
-                :therapist="row[header.value].therapist"
-                :therapistID="row[header.value].therapistID"
-                :isException="row[header.value].startDate
-                 ? row[header.value].cancellations.some((c) => c.date === currentSingleDay) : false"
-                :isHotair="row[header.value].startDate ? false : row[header.value].isHotair"
-                :isUltrasonic="row[header.value].startDate ? false : row[header.value].isUltrasonic"
-                :isElectric="row[header.value].startDate ? false : row[header.value].isElectric"
-                :startTime="row.startTime"
-                :endTime="row[header.value].endTime"
-                :patient1="row[header.value].startDate ? getPatient(row[header.value].cancellations) : ''"
-                :reqOnePatient="row[header.value].cancellations ? true : false"
-                :isSingleApp="row[header.value] && row[header.value].patient && !row[header.value].startDate"
-                :appointment="row[header.value]"
-                :appointmentStartDate="row[header.value].startDate"
-                :appointmentEndDate="row[header.value].endDate"
-                :date="row[header.value].startDate ? `seit ${convertDateToString(row[header.value].startDate)}` : currentSingleDay"
-                :weekday="weekday"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </template>
-    </v-simple-table>
-    <v-dialog v-model="openSingleAppointmentDialog" width="800">
-      <v-card>
+            <DaylistElement
+              v-else-if="row[header.value] && row[header.value].patient"
+              :key="`${hash}-${row[header.value].therapistID}-${row.startTime}`"
+              @appointmentAdded="addAppointment($event)"
+              @appointmentChanged="changeAppointment($event)"
+              @singleAppointmentChanged="changeSingleAppointment($event)"
+              @appointmentDeleted="deleteAppointment($event)"
+              @exceptionAdded="addException($event)"
+              @exceptionChanged="changeException($event)"
+              @exceptionDeleted="deleteException($event)"
+              @openDialog="showDialog($event)"
+              :currDate="currentSingleDay"
+              :patient="row[header.value].patient"
+              :id="row[header.value].id"
+              :comment="row[header.value].comment"
+              :therapist="row[header.value].therapist"
+              :therapistID="row[header.value].therapistID"
+              :isException="row[header.value].startDate
+               ? row[header.value].cancellations.some((c) => c.date === currentSingleDay) : false"
+              :isHotair="row[header.value].startDate ? false : row[header.value].isHotair"
+              :isUltrasonic="row[header.value].startDate ? false : row[header.value].isUltrasonic"
+              :isElectric="row[header.value].startDate ? false : row[header.value].isElectric"
+              :startTime="row.startTime"
+              :endTime="row[header.value].endTime"
+              :patient1="row[header.value].startDate ? getPatient(row[header.value].cancellations) : ''"
+              :reqOnePatient="row[header.value].cancellations ? true : false"
+              :isSingleApp="row[header.value] && row[header.value].patient && !row[header.value].startDate"
+              :appointment="row[header.value]"
+              :appointmentStartDate="row[header.value].startDate"
+              :appointmentEndDate="row[header.value].endDate"
+              :date="row[header.value].startDate ? `seit ${convertDateToString(row[header.value].startDate)}` : currentSingleDay"
+              :weekday="weekday"
+            />
+           </td>
+            </tr>
+          </tbody>
+        </template>
+      </v-simple-table>
+      <v-dialog v-model="openSingleAppointmentDialog" width="800">
+              <v-card>
         <v-card-title class="text-h5 grey lighten-2">
           {{ selectedAppointment.therapist }} - {{ weekday }} {{ currentSingleDay }} -
           {{ selectedAppointment.startTime }}
