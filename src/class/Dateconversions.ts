@@ -48,6 +48,17 @@ export default class Dateconversions {
     }
   }
 
+  static getGermanWeekdayString(weekday: Weekday): string {
+    switch (weekday) {
+      case Weekday.MONDAY: return 'Montag';
+      case Weekday.TUESDAY: return 'Dienstag';
+      case Weekday.WEDNESDAY: return 'Mittwoch';
+      case Weekday.THURSDAY: return 'Donnerstag';
+      case Weekday.FRIDAY: return 'Freitag';
+      default: return '';
+    }
+  }
+
   static getWeekdayStringForDate(date: Date) : string {
     switch (date.getDay()) {
       case 1: return 'Mo,';

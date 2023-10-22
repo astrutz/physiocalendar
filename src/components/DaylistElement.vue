@@ -6,16 +6,16 @@
             @click="dialogIsOpen = true"
             v-bind="attrs"
             v-on="on"
-            class="cell-button"
+            :class="{ 'cell-button': !isException }"
             >
-            {{ patient }}>
       <span v-if="!isException"
           :class="{
             textcenter: true,
           }"
           >
+          {{ patient }}
         </span>
-
+      </button>
         <span v-if="isException"
           :class="{
             appointmentSeries: appointment.startDate,
@@ -28,18 +28,12 @@
             :class="{
             cancelled: isException,
             exception: isException,
-            textcenter: false,
+            textcenter: true,
             }"
             type="button"
-            @click="dialogIsOpen = true"
             v-bind="attrs"
             v-on="on">
             {{ patient }}
-            </button>
-          </span>
-          <span>
-            <button v-if="isException" class="add-replacement">
-            +
             </button>
           </span>
           </div>
@@ -65,6 +59,7 @@
                 ishotair: appointment.isHotair,
                 isultrasonic: appointment.isUltrasonic,
                 iselectric: appointment.isElectric,
+                singleAppointment:  !appointment.isElectric && !appointment.isUltrasonic && !appointment.isHotair,
               }"
               type="button"
               @click="openDialog(appointment)"
@@ -74,7 +69,6 @@
           </ul>
         </div>
         </span>
-      </button>
     </template>
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
@@ -303,7 +297,7 @@
         <v-spacer></v-spacer>
         <v-btn
           v-if="id !== null"
-          color="primary"
+          color="success"
           button
           @click="changeAppointment();
             dialogIsOpen = false;
@@ -483,7 +477,7 @@ export default class DaylistElement extends Vue {
   }
 
   public openDialog(appointment: SingleAppointment): void {
-    console.log('Dialog öffnen:', appointment.patient);
+    console.log('Dialog öffnen Replacement:', appointment.patient);
     this.$emit('openDialog', { appointment });
   }
 
@@ -716,6 +710,10 @@ ul {
   background-color: rgb(228, 150, 5);
 }
 
+.singleAppointment {
+  background-color: rgb(255, 255, 255);
+}
+
 .iselectric {
   background-color: rgb(255, 61, 61);
 }
@@ -767,9 +765,6 @@ ul {
 }
 
 .appointmentSeries {
-  width: 100%;
-  height: 100%;
-  display: flex;
   flex-direction: column;
   text-align: center;
 }

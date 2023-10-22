@@ -121,12 +121,13 @@
               <v-card>
         <v-card-title class="text-h5 grey lighten-2">
           {{ selectedAppointment.therapist }} - {{ weekday }} {{ currentSingleDay }} -
-          {{ selectedAppointment.startTime }}
+          {{ singleAppointmentToOpen.startTime }}
         </v-card-title>
         <v-card-text class="pt-5">
           <v-combobox
             v-model="singleAppointmentToOpen.patient"
             @input="searchAppointmentsForPatient($event)"
+            :disabled="true"
             :loading="patientsLoading"
             :items="foundPatients"
             :search-input.sync="searchValue"
@@ -138,7 +139,6 @@
             label="Name des Patienten"
           ></v-combobox>
           <v-select
-          :disabled="true"
           :items="getAllTimes()"
           label="Start um"
           v-model="singleAppointmentToOpen.startTime"
@@ -146,7 +146,6 @@
           ></v-select>
 
           <v-select
-          :disabled="true"
           :items="getAllTimes()"
           label="Ende um"
           v-model="singleAppointmentToOpen.endTime"
@@ -190,6 +189,7 @@
           >
             Abbrechen
           </v-btn>
+          <v-spacer></v-spacer>
           <v-btn
           color="error"
           text
@@ -199,16 +199,17 @@
           >
             Einzeltermin löschen
           </v-btn>
+          <v-spacer></v-spacer>
           <v-btn
-          v-if="true"
-          color="primary"
+          color="warning"
           @click="printAppointment()"
           text
           >
             Drucken
           </v-btn>
+          <v-spacer></v-spacer>
           <v-btn
-            color="primary"
+            color="success"
             button
             @click="
               changeRepSingleAppointment({
@@ -400,10 +401,9 @@
           </v-alert>
         </v-card-text>
         <v-divider></v-divider>
-
         <v-card-actions>
           <v-btn
-            color="error"
+            color="normal"
             text
             @click="
               createDialog = false;
@@ -412,9 +412,8 @@
             Abbrechen
           </v-btn>
           <v-spacer></v-spacer>
-          <v-spacer></v-spacer>
           <v-btn
-            color="primary"
+            color="success"
             button
             @click="createAppointment({
                 therapist: selectedAppointment.therapist,
@@ -422,8 +421,11 @@
                 patient: inputFields.patientTextfield,
                 startTime: inputFields.startTimeSelect,
                 endTime: inputFields.endTimeSelect,
+                startDate: startDate,
+                endDate: endDate,
                 comment: inputFields.commentTextfield,
                 id: '',
+                weekday: weekdayLong,
                 isBWO: inputFields.isBWO,
                 interval: inputFields.interval,
                 isHotair: inputFields.isHotairField,
@@ -479,6 +481,8 @@ export default class Daylist extends Vue {
   openSingleAppointmentDialog = false;
 
   weekday = '';
+
+  weekdayLong = '';
 
   public holidays = holidaysJSON.days;
 
@@ -567,10 +571,14 @@ export default class Daylist extends Vue {
 
   @Watch('currentSingleDay')
   async currentSingleDayChanged(): Promise<void> {
+    const weekday = Dateconversions.getWeekdayForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
     this.createHeaders();
     this.createRows();
     this.hash = uuidv4();
     this.weekday = Dateconversions.getWeekdayStringForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
+    if (weekday) {
+      this.weekdayLong = Dateconversions.getGermanWeekdayString(weekday);
+    }
   }
 
   @Watch('localBackup')
@@ -865,7 +873,9 @@ export default class Daylist extends Vue {
       event.id,
       event.isBWO,
     );
+    console.log('Serien termin erstellen');
     if (this.localBackup) {
+      debugger;
       this.store.addAppointmentSeries(appointment);
     }
     this.resetInputs();

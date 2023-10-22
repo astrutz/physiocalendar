@@ -192,7 +192,7 @@
         </v-btn>
         <v-spacer></v-spacer>
         <v-btn
-          color="primary"
+          color="success"
           button
           @click="
             patient !== '' ? changeAppointment() : addAppointment();

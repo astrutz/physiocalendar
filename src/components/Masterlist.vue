@@ -117,7 +117,7 @@
           ></v-text-field>
           <v-row class="pl-3">
             <v-checkbox
-              label="Patient ist aus BWO"
+              label="BWO"
               v-model="inputFields.isBWO"
               :value="inputFields.isBWO"
             ></v-checkbox>
