@@ -305,10 +305,15 @@ export default class MasterlistElement extends Vue {
     this.getAppointmentConflicts();
     if (this.dialogIsOpen) {
       this.startDate = new Date(this.appointment?.startDate.getTime());
+      this.endDate = new Date(this.appointment?.endDate.getTime());
       this.startDateString = new Date(
         this.startDate.getTime() - this.startDate.getTimezoneOffset() * 60000,
       ).toISOString().substr(0, 10);
       this.startDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
+      this.endDateString = new Date(
+        this.endDate.getTime() - this.endDate.getTimezoneOffset() * 60000,
+      ).toISOString().substr(0, 10);
+      this.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
     }
   }
 
@@ -360,6 +365,7 @@ export default class MasterlistElement extends Vue {
         this.startTimeSelect !== this.appointment.startTime ? this.startTimeSelect : this.startTime as unknown as Time,
         this.endTimeSelect !== this.appointment.endTime ? this.endTimeSelect : this.endTime as unknown as Time,
         this.startDate,
+        this.endDate,
       );
     }
   }

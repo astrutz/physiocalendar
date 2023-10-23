@@ -77,6 +77,7 @@ export default class Daylist {
     startTime: Time,
     endTime: Time,
     startDate: Date,
+    endDate: Date,
   ): SingleAppointment[] {
     const conflicts: SingleAppointment[] = [];
     let weekdayOffset = 1;
@@ -94,10 +95,11 @@ export default class Daylist {
     // eslint-disable-next-line no-mixed-operators
     currentSearchDate.setDate(currentSearchDate.getDate() + ((7 - currentSearchDate.getDay()) % 7 + weekdayOffset) % 7);
 
-    const endDate = new Date();
-    endDate.setFullYear(endDate.getFullYear() + 1);
+    // Ignoriere die Uhrzeit von endDate, setze sie auf Mitternacht
+    const endDateWithoutTime = new Date(endDate);
+    endDateWithoutTime.setHours(0, 0, 0, 0);
 
-    while (currentSearchDate < endDate) {
+    while (currentSearchDate < endDateWithoutTime) {
       const conflictAppointmentOnStart = this.searchAppointment(
         therapistID,
         Dateconversions.convertDateToReadableString(currentSearchDate),
@@ -109,6 +111,18 @@ export default class Daylist {
       }
       currentSearchDate.setDate(currentSearchDate.getDate() + 7);
     }
+
+    // Überprüfe auf Konflikte am selben Tag wie endDate
+    const conflictAppointmentOnEnd = this.searchAppointment(
+      therapistID,
+      Dateconversions.convertDateToReadableString(endDateWithoutTime),
+      startTime,
+      endTime,
+    );
+    if (conflictAppointmentOnEnd) {
+      conflicts.push(conflictAppointmentOnEnd);
+    }
+
     return conflicts;
   }
 

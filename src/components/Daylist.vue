@@ -281,7 +281,11 @@
             </template>
             <v-date-picker
               v-model="startDateString"
-              :allowed-dates="dateIsAllowed"
+              :allowed-dates="
+                  (dateVal) => {
+                    return new Date(dateVal) >= new Date();
+                  }
+              "
               @input="
                 startDatePickerIsOpen = false;
                 startDate = getCombinedStartDate(startDateString);
@@ -318,7 +322,11 @@
             </template>
             <v-date-picker
               v-model="endDateString"
-              :allowed-dates="dateIsAllowed"
+              :allowed-dates="
+                  (dateVal) => {
+                    return new Date(dateVal) >= new Date();
+                  }
+              "
               @input="
                 endDatePickerIsOpen = false;
                 endDate = getCombinedEndDate(endDateString);
@@ -597,10 +605,13 @@ export default class Daylist extends Vue {
   }
 
   mounted(): void {
+    const weekday = Dateconversions.getWeekdayForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
     this.createHeaders();
     this.createRows();
     this.hash = uuidv4();
-    this.weekday = Dateconversions.getWeekdayStringForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
+    if (weekday) {
+      this.weekdayLong = Dateconversions.getGermanWeekdayString(weekday);
+    }
   }
 
   private createHeaders(): void {
@@ -867,7 +878,7 @@ export default class Daylist extends Vue {
       event.isElectric,
       event.weekday,
       event.interval,
-      event.cancellations,
+      [],
       event.startDate,
       event.endDate,
       event.id,
@@ -875,7 +886,6 @@ export default class Daylist extends Vue {
     );
     console.log('Serien termin erstellen');
     if (this.localBackup) {
-      debugger;
       this.store.addAppointmentSeries(appointment);
     }
     this.resetInputs();

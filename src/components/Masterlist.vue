@@ -32,6 +32,10 @@
               :class="{
                 'text-center': true,
                 'hour-begin': rowIndex % 6 === 0,
+                'cell-series-appointment':
+                  row[header.value] &&
+                  row[header.value].patient &&
+                  !row[header.value].isBWO,
                 'cell-bwo':
                   row[header.value] &&
                   row[header.value].patient &&
@@ -485,6 +489,7 @@ export default class Masterlist extends Vue {
           ? this.inputFields.startTimeSelect as unknown as Time : this.selectedAppointment.startTime as unknown as Time,
         this.inputFields.endTimeSelect as unknown as Time,
         this.inputFields.startDate,
+        this.inputFields.endDate,
       );
     }
   }
@@ -744,6 +749,10 @@ tr td:first-child:hover {
 
 .cell-bwo {
   background-color: yellow;
+}
+
+.cell-series-appointment {
+  background-color: lightgreen;
 }
 
 .cell-absence {
