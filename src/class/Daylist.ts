@@ -44,7 +44,6 @@ export default class Daylist {
 
   public getSingleAppointmentsConflicts(therapistId: string, date: Date, startTime: Time, endTime: Time): Appointment[] {
     const listday = this.findListday(date);
-    debugger;
     if (listday) {
       const appointments = listday.appointments.filter((appointment) => {
         // Prüfe, ob der Therapeut der gleiche ist

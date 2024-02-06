@@ -154,15 +154,25 @@ export default class Masterlist {
 
   public getSeriesAppointmentsConflicts(therapistId: string, date: Date, startTime: Time, endTime: Time): Appointment[] {
     const listday = this.findListdayByDate(date);
-    debugger;
+    const dayIndex = date.getDay(); // Gibt den Index des Wochentags (0 für Sonntag, 1 für Montag, usw.) zurück
+    const weekdays = Object.values(Weekday);
+    let appointments: Appointment[] = [];
     if (listday) {
-      const appointments = listday.appointments.filter((appointment) => {
+      appointments = listday.appointments.filter((appointment) => {
         // Prüfe, ob der Therapeut der gleiche ist
         const isSameTherapist = appointment.therapistID === therapistId;
         // Prüfe auf zeitliche Überschneidung
         const startsBeforeEndTime = Time[appointment.startTime] < Time[endTime];
         const endsAfterStartTime = Time[appointment.endTime] > Time[startTime];
-        return isSameTherapist && startsBeforeEndTime && endsAfterStartTime;
+        const sameWeekDay = appointment.weekday === weekdays[dayIndex - 1];
+        return isSameTherapist && startsBeforeEndTime && endsAfterStartTime && sameWeekDay;
+      });
+      // Filtere Appointments, die Cancellations haben, die mit dem 'date' übereinstimmen
+      appointments = appointments.filter((appointmentToBeChecked) => {
+        const hasCancellationOnDate = appointmentToBeChecked.cancellations.some((cancellation) => cancellation.date
+        === Dateconversions.convertDateToReadableString(date));
+        // Gib 'true' zurück, um den Termin zu behalten, wenn keine passenden Cancellations vorhanden sind
+        return !hasCancellationOnDate;
       });
       return appointments;
     }
