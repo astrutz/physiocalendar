@@ -152,6 +152,23 @@ export default class Masterlist {
     return appointments;
   }
 
+  public getSeriesAppointmentsConflicts(therapistId: string, date: Date, startTime: Time, endTime: Time): Appointment[] {
+    const listday = this.findListdayByDate(date);
+    debugger;
+    if (listday) {
+      const appointments = listday.appointments.filter((appointment) => {
+        // Prüfe, ob der Therapeut der gleiche ist
+        const isSameTherapist = appointment.therapistID === therapistId;
+        // Prüfe auf zeitliche Überschneidung
+        const startsBeforeEndTime = Time[appointment.startTime] < Time[endTime];
+        const endsAfterStartTime = Time[appointment.endTime] > Time[startTime];
+        return isSameTherapist && startsBeforeEndTime && endsAfterStartTime;
+      });
+      return appointments;
+    }
+    return [];
+  }
+
   private static removeDuplicates(appointmentList: AppointmentSeries[]): AppointmentSeries[] {
     const newAppointments: AppointmentSeries[] = [];
     appointmentList.forEach((appointmentToBeChecked) => {
@@ -183,6 +200,7 @@ export default class Masterlist {
     if (currentDay && appointmentToBeChanged) {
       appointmentToBeChanged.patient = appointment.patient;
       appointmentToBeChanged.startTime = appointment.startTime;
+      appointmentToBeChanged.endTime = appointment.endTime;
       // falls serien Termin gespeichert werden soll
       if (appointment.startDate) {
         (appointmentToBeChanged as AppointmentSeries).startDate = appointment.startDate;
@@ -267,5 +285,17 @@ export default class Masterlist {
     return this.elements.find(
       (listday) => listday.weekday === weekday,
     );
+  }
+
+  private findListdayByDate(date: Date): ListWeekDay | undefined {
+    const dayIndex = date.getDay(); // Gibt den Index des Wochentags (0 für Sonntag, 1 für Montag, usw.) zurück
+    const weekdays = Object.values(Weekday); // Erzeugt ein Array mit den Werten der Weekday-Enum
+    if (dayIndex >= 1 && dayIndex <= 5) {
+      // Überprüfe, ob der dayIndex im gültigen Bereich für Montag bis Freitag liegt
+      return this.elements.find(
+        (listday) => listday.weekday === weekdays[dayIndex - 1],
+      );
+    }
+    return undefined;
   }
 }

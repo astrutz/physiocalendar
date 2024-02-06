@@ -42,6 +42,23 @@ export default class Daylist {
     return [];
   }
 
+  public getSingleAppointmentsConflicts(therapistId: string, date: Date, startTime: Time, endTime: Time): Appointment[] {
+    const listday = this.findListday(date);
+    debugger;
+    if (listday) {
+      const appointments = listday.appointments.filter((appointment) => {
+        // Prüfe, ob der Therapeut der gleiche ist
+        const isSameTherapist = appointment.therapistID === therapistId;
+        // Prüfe auf zeitliche Überschneidung
+        const startsBeforeEndTime = Time[appointment.startTime] < Time[endTime];
+        const endsAfterStartTime = Time[appointment.endTime] > Time[startTime];
+        return isSameTherapist && startsBeforeEndTime && endsAfterStartTime;
+      });
+      return appointments;
+    }
+    return [];
+  }
+
   getSingleAppointmentsByPatient(patient: string): SingleAppointment[] {
     const currentSearchDate = new Date();
     const endDate = new Date();

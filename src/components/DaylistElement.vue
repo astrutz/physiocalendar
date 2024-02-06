@@ -554,22 +554,44 @@ export default class DaylistElement extends Vue {
       this.changeAppointmentSeries();
     }
     if (this.isSingleAppointment) {
-      console.log('speichern einzel Termin');
-      this.$emit('singleAppointmentChanged', {
-        patient: this.patientTextfield,
-        therapist: this.therapist,
-        therapistID: this.therapistID,
-        startTime: this.startTimeSelect,
-        endTime: this.endTimeSelect,
-        startDate: this.startDate,
-        endDate: this.endDate,
-        comment: this.commentTextfield,
-        id: this.id,
-        isHotair: this.isHotairField,
-        isUltrasonic: this.isUltrasonicField,
-        isElectric: this.isElectricField,
-      });
+      if (this.localBackup) {
+        // pruefen ob ausgewähltes Zeitfenster frei Einzeltermine
+        const conflictSingleAppointments: Appointment[] = this.localBackup.daylist.getSingleAppointmentsConflicts(this.therapistID,
+          this.startDate, this.startTimeSelect as unknown as Time, this.endTimeSelect as unknown as Time);
+        // pruefen ob ausgewähltes Zeitfenster frei Serientermine
+        const conflictSeriesAppointments: Appointment[] = this.localBackup.masterlist.getSeriesAppointmentsConflicts(this.therapistID,
+          this.startDate, this.startTimeSelect as unknown as Time, this.endTimeSelect as unknown as Time);
+        if (conflictSingleAppointments.length > 1 && conflictSeriesAppointments.length > 1) {
+          /* eslint-disable */
+          if (window.confirm('Die ausgewählte Zeit verursacht einen Konflikt mit einem bestehenden Termin. Bitte behebe den Konflikt vor dem Speichern.')) {
+            	return;
+          }
+        }
+        else {
+          console.log('speichern einzel Termin vom:');
+          console.log(this.startDate);
+          this.$emit('singleAppointmentChanged', {
+          patient: this.patientTextfield,
+          therapist: this.therapist,
+          therapistID: this.therapistID,
+          startTime: this.startTimeSelect,
+          endTime: this.endTimeSelect,
+          startDate: this.startDate,
+          endDate: this.endDate,
+          comment: this.commentTextfield,
+          id: this.id,
+          isHotair: this.isHotairField,
+          isUltrasonic: this.isUltrasonicField,
+          isElectric: this.isElectricField,
+          });
+        }
+      }
     }
+  }
+
+  public checkTimeAvailable(date: Date,startTime: string, endTime: string): boolean {
+
+   return false;
   }
 
   public addAppointment(): void {

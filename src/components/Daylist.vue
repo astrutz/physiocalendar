@@ -925,6 +925,7 @@ export default class Daylist extends Vue {
         event.startDate,
         event.endDate,
         event.id,
+        event.isBWO,
       );
       console.log('speichern Serien Termin Daylist');
       console.log(appointment);
