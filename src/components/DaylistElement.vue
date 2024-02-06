@@ -561,7 +561,6 @@ export default class DaylistElement extends Vue {
         // pruefen ob ausgewähltes Zeitfenster frei Serientermine
         const conflictSeriesAppointments: Appointment[] = this.localBackup.masterlist.getSeriesAppointmentsConflicts(this.therapistID,
           this.startDate, this.startTimeSelect as unknown as Time, this.endTimeSelect as unknown as Time);
-        debugger;
         if (conflictSingleAppointments.length > 1 || conflictSeriesAppointments.length > 0) {
           /* eslint-disable */
           if (window.confirm('Die ausgewählte Zeit verursacht einen Konflikt mit einem bestehenden Termin. Bitte behebe den Konflikt vor dem Speichern.')) {
