@@ -27,6 +27,9 @@
     <v-dialog v-model="menuItems[2].dialog" max-width="600">
       <Settings @dialogClosed="menuItems[2].dialog = false" />
     </v-dialog>
+    <v-dialog v-model="menuItems[3].dialog">
+      <Patients @dialogClosed="menuItems[3].dialog = false" />
+    </v-dialog>
   </v-menu>
 </template>
 
@@ -35,6 +38,7 @@ import { Component, Vue } from 'vue-property-decorator';
 import Terminfinder from '@/components/Terminfinder.vue';
 import Import from '@/components/Import.vue';
 import Settings from '@/components/Settings.vue';
+import Patients from '@/components/Patients.vue';
 
 import { getModule } from 'vuex-module-decorators';
 import FileSaver from 'file-saver';
@@ -46,14 +50,16 @@ import convertToJSON from '../store/convertToJSON';
     Terminfinder,
     Import,
     Settings,
+    Patients,
   },
 })
 
 export default class Menu extends Vue {
-  private menuItems = [
+  public menuItems = [
     { title: 'Backup einspielen', dialog: false },
     { title: 'Terminfinder', dialog: false },
     { title: 'Therapeuten verwalten', dialog: false },
+    { title: 'Patienten verwalten', dialog: false },
   ];
 
   store = getModule(Store);

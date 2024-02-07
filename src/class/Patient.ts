@@ -1,5 +1,4 @@
-
-export default class Therapist {
+export default class Patient {
   firstName: string;
 
   name: string;

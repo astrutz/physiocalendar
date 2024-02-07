@@ -74,6 +74,15 @@ export interface JSONTherapist {
   exceptions: JSONException[];
 }
 
+export interface JSONPatient {
+  firstName: string;
+  name: string;
+  id: string;
+  activeSince: Date;
+  activeUntil: Date;
+  isBWO: boolean;
+}
+
 export interface JSONBackup {
   createdDate: number;
   masterlist: JSONMasterlist;
