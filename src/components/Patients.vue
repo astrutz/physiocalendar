@@ -1,38 +1,42 @@
 <template>
-    <div>
-      <!-- Suchfeld -->
-    <v-text-field v-model="search" label="Suche" clearable @input="filterPatients" />
-      <!-- Tabelle mit Patienten -->
-      <v-data-table
+  <v-card>
+    <v-card-title class="text-h5"> Patienten verwalten </v-card-title>
+    <!-- Suchfeld -->
+    <v-card-text class="pt-5">
+      <v-text-field v-model="search" label="Suche" clearable @input="filterPatients"/>
+    <!-- Tabelle mit Patienten -->
+    <v-data-table
       :headers="headers"
       :items="filteredPatients"
       item-key="id"
       @click:row="showDetail"
     >
-      <template v-slot:item-activeSince="{ item }">
+      <!-- Formatieren der Datums- und isBWO-Spalten -->
+      <template v-slot:item.activeSince="{ item }">
         {{ formatDate(item.activeSince) }}
       </template>
-      <template v-slot:item-activeUntil="{ item }">
+      <template v-slot:item.activeUntil="{ item }">
         {{ formatDate(item.activeUntil) }}
       </template>
-      <template v-slot:item-isBWO="{ item }">
+      <template v-slot:item.isBWO="{ item }">
         <v-icon v-if="item.isBWO" color="green">mdi-check</v-icon>
       </template>
     </v-data-table>
+    </v-card-text>
 
-      <!-- PatientDetail-Komponente -->
-      <v-dialog v-model="detailDialog">
+    <!-- PatientDetail-Komponente -->
+    <v-dialog v-model="detailDialog">
       <v-card>
         <PatientDetail
-        :patient="selectedPatient"
-        :appointments="selectedPatientAppointments"
-        @save="savePatientChanges"
-        @cancel="closeDetailDialog"
+          :patient="selectedPatient"
+          :appointments="selectedPatientAppointments"
+          @save="savePatientChanges"
+          @cancel="closeDetailDialog"
         />
       </v-card>
     </v-dialog>
-    </div>
-  </template>
+  </v-card>
+</template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
@@ -40,6 +44,8 @@ import PatientDetail from '@/components/PatientDetail.vue';
 import Patient from '@/class/Patient';
 import Appointment from '@/class/Appointment';
 import { Time } from '@/class/Enums';
+import { getModule } from 'vuex-module-decorators';
+import Store from '../store/backup';
 
 @Component({
   components: {
@@ -58,31 +64,35 @@ export default class Patients extends Vue {
     { text: 'BWO', value: 'isBWO' },
   ];
 
+  store = getModule(Store);
+
   detailDialog = false;
 
   selectedPatient: Patient | null = null;
 
   selectedPatientAppointments: Appointment[] = [];
 
-  // Deklaration der gefilterten Patienten
+  patients: Patient[] = [];
+
   filteredPatients: Patient[] = [];
 
   search = '';
 
-  // Testpatienten
-  patients: Patient[] = [
-    new Patient('Max', 'Mustermann', '1', new Date('2023-01-01'), new Date('2023-12-31'), true),
-    new Patient('Erika', 'Musterfrau', '2', new Date('2023-02-01'), new Date('2023-12-31'), false),
-    // Füge weitere Patienten hier hinzu...
-  ];
+  async created(): Promise<void> {
+    // Warten, bis die Patientendaten geladen sind
+    await this.loadPatients();
+  }
 
-  mounted(): void {
-    // Initialisierung der gefilterten Patienten beim Laden der Komponente
+  async loadPatients(): Promise<void> {
+    this.patients = await this.store.getPatients();
+    console.log(this.patients);
     this.filteredPatients = [...this.patients];
   }
 
   // Methode zum Öffnen der Detailansicht
-  showDetail(patient: Patient): void {
+  async showDetail(patient: Patient): Promise<void> {
+    // Warten, bis die Patientendaten geladen sind
+    await this.loadPatients();
     this.selectedPatient = patient;
     // Annahme: Funktion zum Abrufen von Terminen für einen Patienten
     this.getAppointmentsForPatient(patient);

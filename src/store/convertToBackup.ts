@@ -2,7 +2,7 @@ import Backup from '@/class/Backup';
 import Daylist from '@/class/Daylist';
 import {
   JSONAbsence,
-  JSONBackup, JSONDaylist, JSONException, JSONMasterlist, JSONTherapist,
+  JSONBackup, JSONDaylist, JSONException, JSONMasterlist, JSONPatient, JSONTherapist,
 } from '@/class/JSONStructures';
 import { Time, Weekday } from '@/class/Enums';
 import ListSingleDay from '@/class/ListSingleDay';
@@ -13,6 +13,7 @@ import AppointmentSeries from '@/class/AppointmentSeries';
 import SingleAppointment from '@/class/SingleAppointment';
 import Absence from '@/class/Absence';
 import Exception from '@/class/Exception';
+import Patient from '@/class/Patient';
 
 function getListWeekDays(listWeekDaysJSON: JSONMasterlist): ListWeekDay[] {
   const listWeekDays = listWeekDaysJSON.elements.map((jsonElement) => {
@@ -82,11 +83,24 @@ function getTherapists(therapistsJSON: JSONTherapist[]): Therapist[] {
   return therapists;
 }
 
+function getPatients(patientJSON: JSONPatient[]): Patient[] {
+  const patient = patientJSON.map((jsonElement) => {
+    // 315532800000 is "01.01.1980"
+    const activeSinceDate = jsonElement.activeSince === -1 ? new Date(315532800000) : new Date(jsonElement.activeSince);
+    // 3471292800000 is "01.01.2080"
+    const activeUntilDate = jsonElement.activeUntil === -1 ? new Date(3471292800000) : new Date(jsonElement.activeUntil);
+    return new Patient(jsonElement.firstName, jsonElement.name, jsonElement.id,
+      activeSinceDate, activeUntilDate, jsonElement.isBWO);
+  });
+  return patient;
+}
+
 export default function convertToBackup(responseData: JSONBackup): Backup {
   const createdDate = new Date(responseData.createdDate);
   const masterList = new Masterlist(getListWeekDays(responseData.masterlist));
   const dayList = new Daylist(getListSingleDays(responseData.daylist));
   const therapists = getTherapists(responseData.therapists);
+  const patients = getPatients(responseData.patients);
 
-  return new Backup(masterList, dayList, createdDate, therapists);
+  return new Backup(masterList, dayList, createdDate, therapists, patients);
 }

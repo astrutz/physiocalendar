@@ -6,9 +6,15 @@ import Exception from '@/class/Exception';
 import {
   JSONAbsence,
   JSONAppointmentSeries,
-  JSONBackup, JSONDaylist, JSONException, JSONListSingleDay, JSONListWeekDay, JSONMasterlist, JSONSingleAppointment, JSONTherapist,
+  JSONBackup,
+  JSONDaylist,
+  JSONException,
+  JSONListSingleDay,
+  JSONListWeekDay,
+  JSONMasterlist, JSONPatient, JSONSingleAppointment, JSONTherapist,
 } from '@/class/JSONStructures';
 import Masterlist from '@/class/Masterlist';
+import Patient from '@/class/Patient';
 import SingleAppointment from '@/class/SingleAppointment';
 import Therapist from '@/class/Therapist';
 
@@ -109,12 +115,30 @@ function convertTherapists(therapists: Therapist[]): JSONTherapist[] {
   );
 }
 
+function convertPatients(patients: Patient[]): JSONPatient[] {
+  return patients.map(
+    (patient) => {
+      const activeSince = patient.activeSince.getTime() === 315532800000 ? -1 : patient.activeSince.getTime();
+      const activeUntil = patient.activeUntil.getTime() === 3471292800000 ? -1 : patient.activeUntil.getTime();
+      return {
+        firstName: patient.firstName,
+        name: patient.name,
+        id: patient.id,
+        activeSince,
+        activeUntil,
+        isBWO: patient.isBWO,
+      };
+    },
+  );
+}
+
 export default function convertToJSON(backup: Backup): JSONBackup {
   const backupJSON = {
     createdDate: backup.createdDate.getTime(),
     masterlist: convertMasterlist(backup.masterlist),
     daylist: convertDaylist(backup.daylist),
     therapists: convertTherapists(backup.therapists),
+    patients: convertPatients(backup.patients),
   };
   return backupJSON;
 }

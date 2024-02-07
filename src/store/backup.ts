@@ -13,6 +13,7 @@ import Backup from '../class/Backup';
 import convertToBackup from './convertToBackup';
 import convertToJSON from './convertToJSON';
 import store from './index';
+import Patient from '../class/Patient';
 
 @Module({ name: 'StoreBackup', dynamic: true, store })
 class StoreBackup extends VuexModule {
@@ -206,6 +207,57 @@ class StoreBackup extends VuexModule {
       this.setBackup(localBackup);
       this.saveBackup();
     }
+  }
+
+  @Action
+  public addPatient(patient: Patient): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      localBackup.patients.push(patient);
+      this.setBackup(localBackup);
+      this.saveBackup();
+    }
+  }
+
+  @Action
+  public removePatient(patient: Patient): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      localBackup.patients = localBackup.patients.filter((currPatient) => currPatient.id !== patient.id);
+      this.setBackup(localBackup);
+      this.saveBackup();
+    }
+  }
+
+  @Action
+  public changePatient(updatedPatient: Patient): void {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      const index = localBackup.patients.findIndex((patient) => patient.id === updatedPatient.id);
+      if (index !== -1) {
+        localBackup.patients[index] = { ...updatedPatient };
+        this.setBackup(localBackup);
+        this.saveBackup();
+      }
+    }
+  }
+
+  @Action
+  public getPatient(id: string): Patient | undefined {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      const index = localBackup.patients.findIndex((patient) => patient.id === id);
+      return localBackup.patients[index];
+    }
+    return undefined;
+  }
+
+  @Action
+  public getPatients(): Patient[] {
+    if (this.backup) {
+      return this.backup.patients;
+    }
+    return [];
   }
 
   @Mutation

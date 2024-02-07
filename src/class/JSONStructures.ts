@@ -78,8 +78,8 @@ export interface JSONPatient {
   firstName: string;
   name: string;
   id: string;
-  activeSince: Date;
-  activeUntil: Date;
+  activeSince: number;
+  activeUntil: number;
   isBWO: boolean;
 }
 
@@ -88,4 +88,5 @@ export interface JSONBackup {
   masterlist: JSONMasterlist;
   daylist: JSONDaylist;
   therapists: JSONTherapist[];
+  patients: JSONPatient[];
 }
