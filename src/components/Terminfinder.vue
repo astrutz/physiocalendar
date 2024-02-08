@@ -285,6 +285,8 @@ import Store from '../store/backup';
 export default class Terminfinder extends Vue {
   private patientTextfield = '';
 
+  private patientId = '';
+
   therapists: string[] = [];
 
   therapistIDs: string[] = [];
@@ -335,6 +337,7 @@ export default class Terminfinder extends Vue {
 
   mounted(): void {
     this.backup = this.store.getBackup;
+    this.patientId = '';
     if (this.backup) {
       const today = new Date();
       this.therapists = this.backup.therapists.filter(
@@ -402,6 +405,7 @@ export default class Terminfinder extends Vue {
       });
       const appointmentFinder = new AppointmentFinder(
         this.patientTextfield,
+        this.patientId,
         this.selectedTherapists,
         selectedTherapistIDs,
         this.appointmentCount,

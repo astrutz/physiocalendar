@@ -18,6 +18,7 @@ export default class SingleAppointment extends Appointment {
     therapist : string,
     therapistID : string,
     patient: string,
+    patientId: string,
     startTime: Time,
     endTime: Time,
     comment: string,
@@ -27,7 +28,7 @@ export default class SingleAppointment extends Appointment {
     isElectric: boolean,
     id?: string,
   ) {
-    super(therapist, therapistID, patient, startTime, endTime, comment, id);
+    super(therapist, therapistID, patient, patientId, startTime, endTime, comment, id);
     this.date = date;
     this.weekday = this.weekdays[date.getDay()];
     this.isHotair = isHotair;

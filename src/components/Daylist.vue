@@ -510,6 +510,7 @@ export default class Daylist extends Vue {
   public singleAppointmentToOpen: SingleAppointment = new SingleAppointment('',
     '',
     '',
+    '',
     Dateconversions.timeFromString('07:00'),
     Dateconversions.timeFromString('07:00'),
     '',
@@ -814,6 +815,7 @@ export default class Daylist extends Vue {
     this.singleAppointmentToOpen = new SingleAppointment('',
       '',
       '',
+      '',
       Dateconversions.timeFromString('07:00'),
       Dateconversions.timeFromString('07:00'),
       '',
@@ -836,14 +838,15 @@ export default class Daylist extends Vue {
 
   public addAppointment(
     event: {
-      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
-      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
+      therapist: string, therapistID: string, patient: string, patientId: string, startTime: string, endTime: string,
+      comment: string, id: string, isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
     },
   ): void {
     const appointment = new SingleAppointment(
       event.therapist,
       event.therapistID,
       event.patient,
+      event.patientId,
       event.startTime as unknown as Time,
       event.endTime as unknown as Time,
       event.comment,
@@ -860,7 +863,7 @@ export default class Daylist extends Vue {
 
   public addSeriesAppointment(
     event: {
-      therapist: string, therapistID: string, patient: string, startDate: Date, endDate: Date,
+      therapist: string, therapistID: string, patient: string, patientId: string, startDate: Date, endDate: Date,
       startTime: string, endTime: string, comment: string, id: string,
       isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
       weekday: Weekday, interval: number, cancellations: Cancellation[], isBWO: boolean,
@@ -870,6 +873,7 @@ export default class Daylist extends Vue {
       event.therapist,
       event.therapistID,
       event.patient,
+      event.patientId,
       event.startTime as unknown as Time,
       event.endTime as unknown as Time,
       event.comment,
@@ -901,7 +905,7 @@ export default class Daylist extends Vue {
 
   private changeAppointment(
     event: {
-      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, weekday: Weekday,
+      therapist: string, therapistID: string, patient: string, patientId: string, startTime: string, endTime: string, weekday: Weekday,
       interval: number, cancellations: Cancellation[],
       startDate: Date, endDate: Date, comment: string, id: string,
       isBWO: boolean, isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
@@ -913,6 +917,7 @@ export default class Daylist extends Vue {
         event.therapist,
         event.therapistID,
         event.patient,
+        event.patientId,
         event.startTime as unknown as Time,
         event.endTime as unknown as Time,
         event.comment,
@@ -938,14 +943,15 @@ export default class Daylist extends Vue {
 
   private changeSingleAppointment(
     event: {
-      therapist: string, therapistID: string, patient: string, comment: string, id: string, startTime: Time, endTime: Time,
-      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
+      therapist: string, therapistID: string, patient: string, patientId: string, comment: string, id: string,
+      startTime: Time, endTime: Time, isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
     },
   ): void {
     const appointment = new SingleAppointment(
       event.therapist,
       event.therapistID,
       event.patient,
+      event.patientId,
       event.startTime as unknown as Time,
       event.endTime as unknown as Time,
       event.comment,
@@ -964,7 +970,7 @@ export default class Daylist extends Vue {
 
   private changeRepSingleAppointment(
     event: {
-      therapist: string, therapistID: string, patient: string, comment: string, id: string,
+      therapist: string, therapistID: string, patient: string, patientId: string, comment: string, id: string,
       isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
     },
   ): void {
@@ -972,6 +978,7 @@ export default class Daylist extends Vue {
       event.therapist,
       event.therapistID,
       event.patient,
+      event.patientId,
       this.singleAppointmentToOpen.startTime as unknown as Time,
       this.singleAppointmentToOpen.endTime as unknown as Time,
       event.comment,
@@ -989,8 +996,8 @@ export default class Daylist extends Vue {
 
   private deleteAppointment(
     event: {
-      therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string, id: string,
-      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
+      therapist: string, therapistID: string, patient: string, patientId: string, startTime: string, endTime: string,
+      comment: string, id: string, isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
     },
   ): void {
     if (this.localBackup) {
@@ -998,6 +1005,7 @@ export default class Daylist extends Vue {
         event.therapist,
         event.therapistID,
         event.patient,
+        event.patientId,
         event.startTime as unknown as Time,
         event.endTime as unknown as Time,
         event.comment,

@@ -3,8 +3,12 @@
     <v-card-title class="text-h5"> Patienten verwalten </v-card-title>
     <!-- Suchfeld -->
     <v-card-text class="pt-5">
-      <v-text-field v-model="search" label="Suche" clearable @input="filterPatients"/>
-    <!-- Tabelle mit Patienten -->
+      <v-row>
+        <v-text-field v-model="search" label="Suche" clearable @input="filterPatients"/>
+      <v-btn color="green" @click="createPatient"> <v-icon color="white">mdi-plus</v-icon></v-btn>
+    </v-row>
+    <v-row>
+      <!-- Tabelle mit Patienten -->
     <v-data-table
       :headers="headers"
       :items="filteredPatients"
@@ -22,10 +26,10 @@
         <v-icon v-if="item.isBWO" color="green">mdi-check</v-icon>
       </template>
     </v-data-table>
+  </v-row>
     </v-card-text>
-
     <!-- PatientDetail-Komponente -->
-    <v-dialog v-model="detailDialog">
+    <v-dialog v-model="detailDialog" max-width="600">
       <v-card>
         <PatientDetail
           :patient="selectedPatient"
@@ -100,40 +104,7 @@ export default class Patients extends Vue {
   }
 
   getAppointmentsForPatient(patient: Patient): void {
-    const exampleAppointments: Appointment[] = [
-      new Appointment(
-        'Dr. Müller',
-        'therapist123',
-        patient.firstName,
-        Time['10:00'],
-        Time['10:30'],
-        'Routineuntersuchung',
-      ),
-      new Appointment(
-        'Dr. Müller',
-        'therapist123',
-        patient.firstName,
-        Time['10:00'],
-        Time['10:30'],
-        'Routineuntersuchung',
-      ),
-      new Appointment(
-        'Dr. Müller',
-        'therapist123',
-        patient.firstName,
-        Time['10:00'],
-        Time['10:30'],
-        'Routineuntersuchung',
-      ),
-      new Appointment(
-        'Dr. Müller',
-        'therapist123',
-        patient.firstName,
-        Time['10:00'],
-        Time['10:30'],
-        'Routineuntersuchung',
-      ),
-    ];
+    const exampleAppointments: Appointment[] = this.store.getAppointmentsForPatient(patient);
     this.selectedPatientAppointments = exampleAppointments;
   }
 
@@ -155,6 +126,12 @@ export default class Patients extends Vue {
 
   // Methode zum Speichern der Änderungen des Patienten
   savePatientChanges(): void {
+    // Hier die Logik zum Speichern der Patientenänderungen implementieren
+    this.closeDetailDialog();
+  }
+
+  // Methode zum Speichern der Änderungen des Patienten
+  createPatient(): void {
     // Hier die Logik zum Speichern der Patientenänderungen implementieren
     this.closeDetailDialog();
   }

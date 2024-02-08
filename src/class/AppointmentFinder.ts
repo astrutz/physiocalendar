@@ -10,6 +10,8 @@ import Therapist from './Therapist';
 export default class AppointmentFinder {
   patient: string;
 
+  patientId: string;
+
   therapists: string[];
 
   therapistIDs: string[];
@@ -36,6 +38,7 @@ export default class AppointmentFinder {
 
   constructor(
     patient: string,
+    patientId: string,
     therapists: string[],
     therapistIDs: string[],
     appointmentsNeeded: number,
@@ -46,6 +49,7 @@ export default class AppointmentFinder {
     allTherapists: Therapist[],
   ) {
     this.patient = patient;
+    this.patientId = patientId;
     this.therapists = therapists;
     this.therapistIDs = therapistIDs;
     this.appointmentsNeeded = parseInt(appointmentsNeeded.toString(), 10);
@@ -124,7 +128,7 @@ export default class AppointmentFinder {
         );
         if (!hasConflict) {
           foundAppointments.push(
-            new SingleAppointment(therapist, therapistID, this.patient,
+            new SingleAppointment(therapist, therapistID, this.patient, this.patientId,
               startTime as unknown as Time, endTime as unknown as Time, '', new Date(searchingDate.getTime()), false, false, false),
           );
           return false;

@@ -11,13 +11,15 @@ export default class Appointment {
 
   patient : string;
 
+  patientId : string;
+
   startTime: Time;
 
   endTime: Time;
 
   comment: string;
 
-  // macht keinen Sinn an der Stelle abe rum die Fehler zu bereinigen
+  // macht keinen Sinn an der Stelle aber um die Fehler zu bereinigen
 
   date: Date;
 
@@ -29,6 +31,7 @@ export default class Appointment {
     therapist : string,
     therapistID : string,
     patient: string,
+    patientId: string,
     startTime: Time,
     endTime: Time,
     comment: string,
@@ -41,6 +44,7 @@ export default class Appointment {
     this.therapist = therapist;
     this.therapistID = therapistID;
     this.patient = patient;
+    this.patientId = patientId;
     this.startTime = startTime;
     this.endTime = endTime;
     this.comment = comment;

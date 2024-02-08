@@ -68,6 +68,7 @@
                 @appointmentChanged="changeAppointment($event)"
                 @appointmentDeleted="deleteAppointment($event)"
                 :patient="row[header.value].patient"
+                :patientId="row[header.value].patientId"
                 :id="row[header.value].id"
                 :therapist="row[header.value].therapist"
                 :therapistID="row[header.value].therapistID"
@@ -258,6 +259,7 @@
                 therapist: selectedAppointment.therapist,
                 therapistID: selectedAppointment.therapistID,
                 patient: inputFields.patientTextfield,
+                patientId: inputFields.patientId,
                 startTime: inputFields.startTimeSelect,
                 endTime: inputFields.endTimeSelect,
                 interval: parseInt(inputFields.interval, 10),
@@ -311,6 +313,7 @@ export default class Masterlist extends Vue {
 
   inputFields = {
     patientTextfield: '',
+    patientId: '',
     startTimeSelect: '',
     endTimeSelect: '',
     commentTextfield: '',
@@ -497,6 +500,7 @@ export default class Masterlist extends Vue {
   private resetInputs(): void {
     this.inputFields = {
       patientTextfield: '',
+      patientId: '',
       startTimeSelect: '',
       endTimeSelect: '',
       commentTextfield: '',
@@ -527,13 +531,14 @@ export default class Masterlist extends Vue {
   }
 
   private addAppointment(
-    event: { therapist: string, therapistID: string, patient: string, startTime: string, endTime: string, comment: string,
-    startDate: Date, endDate: Date, id: string, isBWO: boolean, interval: number },
+    event: { therapist: string, therapistID: string, patient: string, patientId: string, startTime: string, endTime: string,
+      comment: string, startDate: Date, endDate: Date, id: string, isBWO: boolean, interval: number },
   ): void {
     const appointment = new AppointmentSeries(
       event.therapist,
       event.therapistID,
       event.patient,
+      event.patientId,
       event.startTime as unknown as Time,
       event.endTime as unknown as Time,
       event.comment,
@@ -556,7 +561,7 @@ export default class Masterlist extends Vue {
 
   private changeAppointment(
     event: {
-      patient: string, therapist: string, therapistID: string, startTime: string, endTime: string, comment: string,
+      patient: string, patientId: string, therapist: string, therapistID: string, startTime: string, endTime: string, comment: string,
       cancellations: Cancellation[], startDate: Date, endDate: Date, id: string, isBWO: boolean, interval: number
     },
   ): void {
@@ -564,6 +569,7 @@ export default class Masterlist extends Vue {
       event.therapist,
       event.therapistID,
       event.patient,
+      event.patientId,
       event.startTime as unknown as Time,
       event.endTime as unknown as Time,
       event.comment,
@@ -585,7 +591,7 @@ export default class Masterlist extends Vue {
 
   private deleteAppointment(
     event: {
-      patient: string, therapist: string, therapistID: string, startTime: string, endTime: string, comment: string,
+      patient: string, patientId: string, therapist: string, therapistID: string, startTime: string, endTime: string, comment: string,
       cancellations: Cancellation[], startDate: Date, endDate: Date, id: string, isBWO: boolean, interval: number
     },
   ): void {
@@ -594,6 +600,7 @@ export default class Masterlist extends Vue {
         event.therapist,
         event.therapistID,
         event.patient,
+        event.patientId,
         event.startTime as unknown as Time,
         event.endTime as unknown as Time,
         event.comment,

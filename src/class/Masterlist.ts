@@ -4,6 +4,7 @@ import Cancellation from './Cancellation';
 import Dateconversions from './Dateconversions';
 import { Time, Weekday } from './Enums';
 import ListWeekDay from './ListWeekDay';
+import Patient from './Patient';
 import SingleAppointment from './SingleAppointment';
 
 export default class Masterlist {
@@ -124,6 +125,15 @@ export default class Masterlist {
     return Masterlist.removeDuplicates(appointments as AppointmentSeries[]);
   }
 
+  getAppointmentsForPatient(patient: Patient): AppointmentSeries[] {
+    let appointments: Appointment[] = [];
+    this.elements.forEach((listWeekDay) => {
+      appointments = appointments.concat(listWeekDay.appointments.filter((appointment) => appointment.patient === patient.firstName));
+      // appointments = appointments.concat(listWeekDay.appointments.filter((appointment) => appointment.patientId === patient.id));
+    });
+    return Masterlist.removeDuplicates(appointments as AppointmentSeries[]);
+  }
+
   getReplacementsByPatient(patient: string) : SingleAppointment[] {
     const appointments: SingleAppointment[] = [];
     this.elements.forEach((listWeekDay) => {
@@ -137,6 +147,7 @@ export default class Masterlist {
               appointment.therapist,
               appointment.therapistID,
               appointment.patient,
+              appointment.patientId,
               appointment.startTime,
               appointment.endTime,
               '',

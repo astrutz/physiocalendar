@@ -48,9 +48,9 @@
     </v-card-text>
       <!-- Dialog-Steuerung -->
       <v-card-actions>
-        <v-btn color="primary" @click="saveChanges">Speichern</v-btn>
-        <v-spacer></v-spacer>
         <v-btn color="error" @click="cancelChanges">Abbrechen</v-btn>
+        <v-spacer></v-spacer>
+        <v-btn color="primary" @click="saveChanges">Speichern</v-btn>
       </v-card-actions>
     </v-card>
   </template>

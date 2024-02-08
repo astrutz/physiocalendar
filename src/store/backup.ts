@@ -9,6 +9,7 @@ import axios from 'axios';
 import {
   Action, Module, Mutation, VuexModule,
 } from 'vuex-module-decorators';
+import Appointment from '@/class/Appointment';
 import Backup from '../class/Backup';
 import convertToBackup from './convertToBackup';
 import convertToJSON from './convertToJSON';
@@ -110,6 +111,17 @@ class StoreBackup extends VuexModule {
       this.setBackup(localBackup);
       this.saveBackup();
     }
+  }
+
+  @Action
+  public getAppointmentsForPatient(patient: Patient): Appointment[] {
+    if (this.getBackup) {
+      const localBackup = { ...this.getBackup };
+      const appointmentsForPatient: Appointment[] = localBackup.masterlist.getAppointmentsForPatient(patient);
+      // appointmentsForPatient = localBackup.daylist.getAppointmentsForPatient(patient);
+      return appointmentsForPatient;
+    }
+    return [];
   }
 
   @Action
