@@ -232,7 +232,7 @@ class StoreBackup extends VuexModule {
   }
 
   @Action
-  public removePatient(patient: Patient): void {
+  public deletePatient(patient: Patient): void {
     if (this.getBackup) {
       const localBackup = { ...this.getBackup };
       localBackup.patients = localBackup.patients.filter((currPatient) => currPatient.id !== patient.id);

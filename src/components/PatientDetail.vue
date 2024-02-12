@@ -35,7 +35,7 @@
     </v-row>
     <v-spacer></v-spacer>
     <v-row>
-      <h6 class="text-h6">Termine für {{ patient.name }}</h6>
+      <h6 class="text-h6">Termine für {{ patient.name + ', ' + patient.firstName}}</h6>
     </v-row>
     <v-row>
       <v-list>
@@ -48,7 +48,9 @@
     </v-card-text>
       <!-- Dialog-Steuerung -->
       <v-card-actions>
-        <v-btn color="error" @click="cancelChanges">Abbrechen</v-btn>
+        <v-btn @click="cancelChanges">Abbrechen</v-btn>
+        <v-spacer></v-spacer>
+        <v-btn color="error" @click="deletePatient">Patient Löschen</v-btn>
         <v-spacer></v-spacer>
         <v-btn color="primary" @click="saveChanges">Speichern</v-btn>
       </v-card-actions>
@@ -77,6 +79,12 @@ export default class PatientDetail extends Vue {
   saveChanges(): void {
     // Hier kannst du die Logik zum Speichern der Änderungen implementieren
     this.$emit('save');
+  }
+
+  // Methode zum Schließen des Dialogs und Speichern der Änderungen
+  deletePatient(): void {
+    // Hier kannst du die Logik zum Speichern der Änderungen implementieren
+    this.$emit('deletePatient', { patient: this.patientInput });
   }
 
   // eslint-disable-next-line class-methods-use-this

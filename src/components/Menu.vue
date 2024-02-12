@@ -27,7 +27,7 @@
     <v-dialog v-model="menuItems[2].dialog" max-width="600">
       <Settings @dialogClosed="menuItems[2].dialog = false" />
     </v-dialog>
-    <v-dialog v-model="menuItems[3].dialog">
+    <v-dialog v-model="menuItems[3].dialog" max-width="800">
       <Patients @dialogClosed="menuItems[3].dialog = false" />
     </v-dialog>
   </v-menu>

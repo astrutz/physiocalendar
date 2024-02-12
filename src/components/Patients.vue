@@ -1,14 +1,13 @@
 <template>
   <v-card>
-    <v-card-title class="text-h5"> Patienten verwalten </v-card-title>
-    <!-- Suchfeld -->
     <v-card-text class="pt-5">
       <v-row>
         <v-text-field v-model="search" label="Suche" clearable @input="filterPatients"/>
-      <v-btn color="green" @click="createPatient"> <v-icon color="white">mdi-plus</v-icon></v-btn>
-    </v-row>
-    <v-row>
-      <!-- Tabelle mit Patienten -->
+        <v-btn color="green" @click="openCreatePatientDialog"> <v-icon color="white">mdi-plus</v-icon></v-btn>
+      </v-row>
+    </v-card-text>
+
+    <!-- Tabelle mit Patienten -->
     <v-data-table
       :headers="headers"
       :items="filteredPatients"
@@ -26,15 +25,22 @@
         <v-icon v-if="item.isBWO" color="green">mdi-check</v-icon>
       </template>
     </v-data-table>
-  </v-row>
-    </v-card-text>
-    <!-- PatientDetail-Komponente -->
+
+    <!-- Dialog für die Patientenerstellung -->
+    <v-dialog v-model="createPatientDialog" max-width="600">
+      <v-card>
+        <CreatePatient @save="createPatient($event)" @cancel="closeCreatePatientDialog" />
+      </v-card>
+    </v-dialog>
+
+    <!-- Dialog für die Patientendetails -->
     <v-dialog v-model="detailDialog" max-width="600">
       <v-card>
         <PatientDetail
           :patient="selectedPatient"
           :appointments="selectedPatientAppointments"
           @save="savePatientChanges"
+          @deletePatient="deletePatient($event)"
           @cancel="closeDetailDialog"
         />
       </v-card>
@@ -47,13 +53,14 @@ import { Component, Vue } from 'vue-property-decorator';
 import PatientDetail from '@/components/PatientDetail.vue';
 import Patient from '@/class/Patient';
 import Appointment from '@/class/Appointment';
-import { Time } from '@/class/Enums';
 import { getModule } from 'vuex-module-decorators';
 import Store from '../store/backup';
+import CreatePatient from './CreatePatient.vue';
 
 @Component({
   components: {
     PatientDetail,
+    CreatePatient,
   },
 })
 
@@ -62,7 +69,6 @@ export default class Patients extends Vue {
   headers = [
     { text: 'Vorname', value: 'firstName' },
     { text: 'Nachname', value: 'name' },
-    { text: 'ID', value: 'id' },
     { text: 'Aktiv seit', value: 'activeSince' },
     { text: 'Aktiv bis', value: 'activeUntil' },
     { text: 'BWO', value: 'isBWO' },
@@ -72,7 +78,11 @@ export default class Patients extends Vue {
 
   detailDialog = false;
 
+  createPatientDialog = false;
+
   selectedPatient: Patient | null = null;
+
+  selectedPatientId: string | null = null;
 
   selectedPatientAppointments: Appointment[] = [];
 
@@ -93,14 +103,16 @@ export default class Patients extends Vue {
     this.filteredPatients = [...this.patients];
   }
 
-  // Methode zum Öffnen der Detailansicht
   async showDetail(patient: Patient): Promise<void> {
-    // Warten, bis die Patientendaten geladen sind
-    await this.loadPatients();
-    this.selectedPatient = patient;
+    this.selectedPatient = patient; // setze den ausgewählten Patienten
+    this.selectedPatientId = patient.id; // setze die ausgewählte Patienten-ID
+    await this.loadPatientDetails(patient); // Asynchrone Funktion aufrufen
+    this.detailDialog = true; // setze detailDialog auf true, um den Dialog anzuzeigen
+  }
+
+  async loadPatientDetails(patient: Patient): Promise<void> {
     // Annahme: Funktion zum Abrufen von Terminen für einen Patienten
-    this.getAppointmentsForPatient(patient);
-    this.detailDialog = true;
+    await this.getAppointmentsForPatient(patient);
   }
 
   getAppointmentsForPatient(patient: Patient): void {
@@ -131,9 +143,31 @@ export default class Patients extends Vue {
   }
 
   // Methode zum Speichern der Änderungen des Patienten
-  createPatient(): void {
-    // Hier die Logik zum Speichern der Patientenänderungen implementieren
+  deletePatient(event: {
+      patient: Patient,
+    }): void {
+    this.store.deletePatient(event.patient);
     this.closeDetailDialog();
+    this.loadPatients();
+  }
+
+  // Methode zum Speichern der Änderungen des Patienten
+  createPatient(event: {
+      patient: Patient,
+    }): void {
+    this.store.addPatient(event.patient);
+    this.closeCreatePatientDialog();
+    this.loadPatients();
+  }
+
+  // Methode zum Speichern der Änderungen des Patienten
+  closeCreatePatientDialog(): void {
+    this.createPatientDialog = false;
+  }
+
+  // Methode zum Speichern der Änderungen des Patienten
+  openCreatePatientDialog(): void {
+    this.createPatientDialog = true;
   }
 
   // eslint-disable-next-line class-methods-use-this
