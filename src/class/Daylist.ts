@@ -87,6 +87,22 @@ export default class Daylist {
     return newAppointments;
   }
 
+  public getAppointmentConflicts1(therapistId: string, date: Date, startTime: Time, endTime: Time): Appointment[] {
+    const listday = this.findListday(date);
+    if (listday) {
+      const appointments = listday.appointments.filter((appointment) => {
+        // Prüfe, ob der Therapeut der gleiche ist
+        const isSameTherapist = appointment.therapistID === therapistId;
+        // Prüfe auf zeitliche Überschneidung
+        const startsBeforeEndTime = Time[appointment.startTime] < Time[endTime];
+        const endsAfterStartTime = Time[appointment.endTime] > Time[startTime];
+        return isSameTherapist && startsBeforeEndTime && endsAfterStartTime;
+      });
+      return appointments;
+    }
+    return [];
+  }
+
   getAppointmentConflicts(
     weekday: Weekday,
     therapistID: string,
@@ -107,6 +123,7 @@ export default class Daylist {
       default: break;
     }
 
+    const presentDayDate = new Date(); // Present day date
     const currentSearchDate = new Date(startDate);
     // eslint-disable-next-line no-mixed-operators
     currentSearchDate.setDate(currentSearchDate.getDate() + ((7 - currentSearchDate.getDay()) % 7 + weekdayOffset) % 7);
@@ -115,28 +132,33 @@ export default class Daylist {
     const endDateWithoutTime = new Date(endDate);
     endDateWithoutTime.setHours(0, 0, 0, 0);
 
-    while (currentSearchDate < endDateWithoutTime) {
-      const conflictAppointmentOnStart = this.searchAppointment(
-        therapistID,
-        Dateconversions.convertDateToReadableString(currentSearchDate),
-        startTime,
-        endTime,
-      );
-      if (conflictAppointmentOnStart) {
-        conflicts.push(conflictAppointmentOnStart);
+    while (currentSearchDate <= endDateWithoutTime) {
+      // Prüfen, ob das aktuelle Suchdatum in der Zukunft liegt
+      if (currentSearchDate >= presentDayDate) {
+        const conflictAppointment = this.searchAppointment(
+          therapistID,
+          Dateconversions.convertDateToReadableString(currentSearchDate),
+          startTime,
+          endTime,
+        );
+        if (conflictAppointment) {
+          conflicts.push(conflictAppointment);
+        }
       }
       currentSearchDate.setDate(currentSearchDate.getDate() + 7);
     }
 
-    // Überprüfe auf Konflikte am selben Tag wie endDate
-    const conflictAppointmentOnEnd = this.searchAppointment(
-      therapistID,
-      Dateconversions.convertDateToReadableString(endDateWithoutTime),
-      startTime,
-      endTime,
-    );
-    if (conflictAppointmentOnEnd) {
-      conflicts.push(conflictAppointmentOnEnd);
+    // Überprüfe auf Konflikte am selben Tag wie endDate, aber nur wenn es in der Zukunft liegt
+    if (endDateWithoutTime >= presentDayDate) {
+      const conflictAppointmentOnEnd = this.searchAppointment(
+        therapistID,
+        Dateconversions.convertDateToReadableString(endDateWithoutTime),
+        startTime,
+        endTime,
+      );
+      if (conflictAppointmentOnEnd) {
+        conflicts.push(conflictAppointmentOnEnd);
+      }
     }
 
     return conflicts;
