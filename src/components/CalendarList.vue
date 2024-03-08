@@ -53,7 +53,7 @@ export default class CalendarList extends Vue {
   mounted(): void {
     EventBus.$on('currentDayChanged1', (dateFormatted: string) => {
       this.currentSingleDay = dateFormatted;
-      console.log(this.currentSingleDay);
+      // console.log(this.currentSingleDay);
     });
   }
 

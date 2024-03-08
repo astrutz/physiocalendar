@@ -159,6 +159,21 @@
             </li>
           </ul>
         </v-alert>
+        <v-row>
+          <ul>
+            <li v-for="cancellation in cancellations" :key="cancellation.date">
+              {{ cancellation.date }}
+              <v-btn
+                color="error"
+                fab
+                small
+                @click="deleteCancellation(cancellation.date)"
+              >
+                <v-icon>mdi-delete</v-icon>
+              </v-btn>
+            </li>
+          </ul>
+        </v-row>
       </v-card-text>
 
       <v-divider></v-divider>
@@ -221,6 +236,7 @@ import {
 import { getModule } from 'vuex-module-decorators';
 import holidaysJSON from '@/data/holidays.json';
 import Store from '../store/backup';
+import Cancellation from '../class/Cancellation';
 
 @Component
 export default class MasterlistElement extends Vue {
@@ -296,6 +312,8 @@ export default class MasterlistElement extends Vue {
 
   private foundPatients : string[] = [];
 
+  private cancellations : Cancellation[] = [];
+
   get localBackup(): Backup | null {
     return this.store.getBackup;
   }
@@ -314,6 +332,7 @@ export default class MasterlistElement extends Vue {
         this.endDate.getTime() - this.endDate.getTimezoneOffset() * 60000,
       ).toISOString().substr(0, 10);
       this.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
+      this.cancellations = this.showCancellations(this.appointment.cancellations);
     }
   }
 
@@ -480,6 +499,44 @@ export default class MasterlistElement extends Vue {
       );
       printer.printSeriesAppointment(this.appointmentsForPatient);
     }
+  }
+
+  private deleteCancellation(date: string): void {
+    if (window.confirm('Soll dieser Termin Ausfall wirklich storniert werden? Einzeltermine in dem Zeitraum werden überschrieben')) {
+    // löschen einer cancellation
+    this.store.deleteCancellation({date: date, appointment: this.appointment});
+    }
+  }
+
+  private showCancellations(cancellations: Cancellation[]): Cancellation[] {
+     // Datum vor 4 Wochen
+     const fourWeeksAgo = new Date();
+     fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28); // 28 Tage entsprechen etwa 4 Wochen
+
+    // Filtere die Cancellations, um nur diejenigen in der Gegenwart und Zukunft zu behalten
+    const filteredCancellations = cancellations.filter(cancellation => {
+      // Wandle das Datum im Format "TT.MM.JJJJ" in ein JavaScript-Date-Objekt um
+      const [day, month, year] = cancellation.date.split('.').map(Number);
+      const cancellationDate = new Date(year, month - 1, day); // Monat ist 0-basiert
+
+      // Vergleiche das Cancellation-Datum mit dem heutigen Datum
+      return cancellationDate >= fourWeeksAgo;
+    });
+
+    // Sortiere die Cancellations nach Datum in aufsteigender Reihenfolge
+    filteredCancellations.sort((a, b) => {
+      // Wandle das Datum im Format "TT.MM.JJJJ" in ein JavaScript-Date-Objekt um
+      const [dayA, monthA, yearA] = a.date.split('.').map(Number);
+      const dateA = new Date(yearA, monthA - 1, dayA).getTime(); // Monat ist 0-basiert
+
+      const [dayB, monthB, yearB] = b.date.split('.').map(Number);
+      const dateB = new Date(yearB, monthB - 1, dayB).getTime(); // Monat ist 0-basiert
+
+      return dateA - dateB;
+    });
+
+    // Rückgabe der sortierten und gefilterten Cancellations
+    return filteredCancellations;
   }
 
   private searchPatients(searchQuery : string | undefined) : void {

@@ -118,7 +118,10 @@ export default class AppBar extends Vue {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     const dateFormatted = `${day}.${month}.${year}`;
-    EventBus.$emit('currentDayChanged1', dateFormatted);
+    // nur einzeltermine betroffen Serientermine haben date 1975
+    if (year >= 2000) {
+      EventBus.$emit('currentDayChanged1', dateFormatted);
+    }
     this.showSearchResults = false;
   }
 

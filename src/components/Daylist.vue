@@ -644,46 +644,57 @@ export default class Daylist extends Vue {
   }
 
   private createRows(): void {
-    type TableRow = {
-      [key: string]: string | Time | SingleAppointment | AppointmentSeries
-    }
+  type TableRow = {
+    [key: string]: string | Time | SingleAppointment | AppointmentSeries;
+  };
 
-    const startTimes = Object.values(Time).filter((startTime): startTime is string => startTime.toString().includes(':'));
-    const emptyRows = startTimes.map((startTime) => ({
-      startTimeString: startTime.toString(),
-      startTime: startTime as unknown as Time,
-    }));
+  const startTimes = Object.values(Time).filter((startTime): startTime is string => startTime.toString().includes(':'));
+  const emptyRows = startTimes.map((startTime) => ({
+    startTimeString: startTime.toString(),
+    startTime: startTime as unknown as Time,
+  }));
 
-    this.rows = [];
+  this.rows = [];
 
-    emptyRows.forEach((row) => {
-      const newRow: TableRow = {
-        startTimeString: row.startTimeString,
-        startTime: row.startTime,
-      };
-      this.headers.forEach((header) => {
-        if (header.text !== '' && !this.hasOngoingAppointments(header.value, row.startTime)) {
-          const singleAppointment = this.localBackup?.daylist.searchAppointment(
-            header.id, this.currentSingleDay, row.startTime as Time,
-          );
-          if (singleAppointment !== undefined) {
-            newRow[header.text] = singleAppointment;
-          } else {
-            const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
-            const weekday = Dateconversions.getWeekdayForDate(currentSingleDate);
-            if (weekday) {
-              const masterAppointment = this.localBackup?.masterlist.searchAppointmentForDaylist(
-                header.id, weekday, row.startTime as Time, currentSingleDate,
-              );
+  emptyRows.forEach((row) => {
+    const newRow: TableRow = {
+      startTimeString: row.startTimeString,
+      startTime: row.startTime,
+    };
+    this.headers.forEach((header) => {
+      if (header.text !== '' && !this.hasOngoingAppointments(header.value, row.startTime)) {
+        const singleAppointment = this.localBackup?.daylist.searchAppointment(
+          header.id, this.currentSingleDay, row.startTime as Time,
+        );
+        if (singleAppointment !== undefined) {
+          newRow[header.text] = singleAppointment;
+        } else {
+          const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
+          const weekday = Dateconversions.getWeekdayForDate(currentSingleDate);
+          if (weekday) {
+            const masterAppointment = this.localBackup?.masterlist.searchAppointmentForDaylist(
+              header.id, weekday, row.startTime as Time, currentSingleDate,
+            );
+            if (!masterAppointment?.cancellations.some((c) => c.date === this.currentSingleDay)) {
               newRow[header.text] = masterAppointment || '';
             } else {
               newRow[header.text] = '';
             }
+          } else {
+            newRow[header.text] = '';
           }
         }
-      });
-      this.rows.push(newRow);
+      }
     });
+    this.rows.push(newRow);
+  });
+  }
+
+  private hasCancellationForCurrentDate(entry: string | Time | SingleAppointment | AppointmentSeries): boolean {
+    if (entry instanceof AppointmentSeries) {
+      return entry.cancellations.some((c) => c.date === this.currentSingleDay);
+    }
+    return false;
   }
 
   private hasOngoingAppointments(therapist : string, time: Time) : boolean {
@@ -1041,7 +1052,6 @@ export default class Daylist extends Vue {
 
   private deleteException(event: { isException: boolean, patient: string, appointment: AppointmentSeries }): void {
     if (this.localBackup) {
-      console.log(event.isException);
       this.store.deleteCancellation({ date: this.currentSingleDay, appointment: event.appointment });
     }
   }

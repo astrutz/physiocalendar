@@ -45,14 +45,19 @@
 
 <script lang="ts">
 import Dateconversions from '@/class/Dateconversions';
+import EventBus from '@/class/EventBus';
 import {
   Component, Prop, Watch, Vue,
 } from 'vue-property-decorator';
 import holidaysJSON from '@/data/holidays.json';
 
-@Component
+@Component({
+  components: {
+    EventBus,
+  },
+})
 export default class SingleDayPicker extends Vue {
-  @Prop() readonly currentDate!: string;
+  @Prop() readonly currentSingleDay!: string;
 
   public date: string = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10)
 
@@ -70,10 +75,11 @@ export default class SingleDayPicker extends Vue {
     }
   }
 
-  @Watch('currentDate')
-  private onCurrentDateChanged(newDate: string, oldDate: string) {
-    debugger;
-    this.date = newDate;
+  @Watch('currentSingleDay')
+  private oncurrentSingleDayChanged(): void {
+    this.dateFormatted = Dateconversions.convertGermanToEnglishReadableString(this.currentSingleDay);
+    this.date = this.dateFormatted;
+    this.dateFormatted = Dateconversions.convertEnglishToGermanReadableString(this.date);
   }
 
   @Watch('date')
