@@ -285,7 +285,7 @@
         >
           Einzeltermin löschen
         </v-btn>
-        <v-spacer></v-spacer>
+        <v-spacer v-if="isSingleAppointment"></v-spacer>
         <v-btn
           v-if="true"
           color="warning"

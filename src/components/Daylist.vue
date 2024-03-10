@@ -10,9 +10,6 @@
               class="text-center text-subtitle-2"
             >
               <span v-if="header.text === ''">{{ header.text }}</span>
-              <div
-                @click="openCreateDialog(header.value, header.id, row.startTime)"
-              >
                 <DaylistHeader
                   :therapist="header.text"
                   :therapistID="header.id"
@@ -24,7 +21,6 @@
                   :key="`${hash}-${header.id}`"
                   @absencesChanged="saveAbsences($event)"
                 />
-              </div>
             </th>
           </tr>
         </thead>

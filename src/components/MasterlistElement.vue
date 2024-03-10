@@ -286,7 +286,7 @@ export default class MasterlistElement extends Vue {
 
   private isBWO = this.appointment?.isBWO || false;
 
-  private interval = this.appointment?.interval?.toString() || '1';
+  private interval = this.appointment?.interval;
 
   private dialogIsOpen = false;
 
@@ -320,7 +320,6 @@ export default class MasterlistElement extends Vue {
 
   @Watch('dialogIsOpen')
   private dialogIsOpenChanged(): void {
-    this.getAppointmentConflicts();
     if (this.dialogIsOpen) {
       this.startDate = new Date(this.appointment?.startDate.getTime());
       this.endDate = new Date(this.appointment?.endDate.getTime());
@@ -333,6 +332,7 @@ export default class MasterlistElement extends Vue {
       ).toISOString().substr(0, 10);
       this.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
       this.cancellations = this.showCancellations(this.appointment.cancellations);
+      this.getAppointmentConflicts();
     }
   }
 
@@ -385,6 +385,8 @@ export default class MasterlistElement extends Vue {
         this.endTimeSelect !== this.appointment.endTime ? this.endTimeSelect : this.endTime as unknown as Time,
         this.startDate,
         this.endDate,
+        this.interval,
+        this.cancellations,
       );
     }
   }
@@ -436,7 +438,7 @@ export default class MasterlistElement extends Vue {
         startDate: this.getCombinedDate(),
         endDate: this.endDate,
         cancellations: this.appointment.cancellations,
-        interval: parseInt(this.interval, 10),
+        interval: this.interval,
         id: this.id,
         isBWO: this.isBWO,
       });
@@ -453,7 +455,7 @@ export default class MasterlistElement extends Vue {
       comment: this.commentTextfield,
       startDate: this.startDate,
       endDate: this.endDate,
-      interval: parseInt(this.interval, 10),
+      interval: this.interval,
       isBWO: this.isBWO,
     });
   }
@@ -471,7 +473,7 @@ export default class MasterlistElement extends Vue {
         comment: this.commentTextfield,
         startDate: this.getCombinedDate(),
         cancellations: this.appointment.cancellations,
-        interval: parseInt(this.interval, 10),
+        interval: this.interval,
         id: this.id,
         isBWO: this.isBWO,
       });
@@ -487,7 +489,7 @@ export default class MasterlistElement extends Vue {
       this.startTime as unknown as Time,
       this.endTime as unknown as Time,
       this.day,
-      parseInt(this.interval, 10),
+      this.interval,
       this.appointment.cancellations,
       this.appointment.startDate,
       this.appointment.endDate,

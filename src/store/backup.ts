@@ -196,6 +196,7 @@ class StoreBackup extends VuexModule {
     { exceptions, therapistID, day }: { exceptions: Exception[], therapistID: string, day: Weekday | string },
   ): void {
     if (this.getBackup) {
+      debugger;
       const localBackup = { ...this.getBackup };
       const foundTherapist = localBackup.therapists.find((therapist) => therapist.id === therapistID);
       if (foundTherapist) {

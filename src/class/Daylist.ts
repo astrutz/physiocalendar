@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/no-cycle
 import Appointment from './Appointment';
+import Cancellation from './Cancellation';
 import Dateconversions from './Dateconversions';
 import { Time, Weekday } from './Enums';
 import ListSingleDay from './ListSingleDay';
@@ -87,22 +88,6 @@ export default class Daylist {
     return newAppointments;
   }
 
-  public getAppointmentConflicts1(therapistId: string, date: Date, startTime: Time, endTime: Time): Appointment[] {
-    const listday = this.findListday(date);
-    if (listday) {
-      const appointments = listday.appointments.filter((appointment) => {
-        // Prüfe, ob der Therapeut der gleiche ist
-        const isSameTherapist = appointment.therapistID === therapistId;
-        // Prüfe auf zeitliche Überschneidung
-        const startsBeforeEndTime = Time[appointment.startTime] < Time[endTime];
-        const endsAfterStartTime = Time[appointment.endTime] > Time[startTime];
-        return isSameTherapist && startsBeforeEndTime && endsAfterStartTime;
-      });
-      return appointments;
-    }
-    return [];
-  }
-
   getAppointmentConflicts(
     weekday: Weekday,
     therapistID: string,
@@ -110,9 +95,12 @@ export default class Daylist {
     endTime: Time,
     startDate: Date,
     endDate: Date,
+    interval: number,
+    cancellations: Cancellation[],
   ): SingleAppointment[] {
     const conflicts: SingleAppointment[] = [];
     let weekdayOffset = 1;
+    const step = interval * 7;
 
     switch (weekday) {
       case Weekday.MONDAY: weekdayOffset = 1; break;
@@ -145,7 +133,7 @@ export default class Daylist {
           conflicts.push(conflictAppointment);
         }
       }
-      currentSearchDate.setDate(currentSearchDate.getDate() + 7);
+      currentSearchDate.setDate(currentSearchDate.getDate() + step);
     }
 
     // Überprüfe auf Konflikte am selben Tag wie endDate, aber nur wenn es in der Zukunft liegt
@@ -160,7 +148,16 @@ export default class Daylist {
         conflicts.push(conflictAppointmentOnEnd);
       }
     }
-
+    conflicts.forEach((conflictAppointment, index) => {
+      const conflictDate = conflictAppointment.date;
+      const hasCancellation = cancellations.some((cancellation) => {
+        const cancellationDate = Dateconversions.convertReadableStringToDate(cancellation.date);
+        return cancellationDate.getTime() === conflictDate.getTime();
+      });
+      if (hasCancellation) {
+        conflicts.splice(index, 1); // Entferne den Konflikttermin aus dem Array
+      }
+    });
     return conflicts;
   }
 
