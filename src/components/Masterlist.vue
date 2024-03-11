@@ -262,7 +262,7 @@
                 patientId: inputFields.patientId,
                 startTime: inputFields.startTimeSelect,
                 endTime: inputFields.endTimeSelect,
-                interval: parseInt(inputFields.interval, 10),
+                interval: inputFields.interval,
                 isBWO: inputFields.isBWO,
                 comment: inputFields.commentTextfield,
                 startDate: inputFields.startDate,
@@ -321,7 +321,7 @@ export default class Masterlist extends Vue {
     endDatePickerIsOpen: false,
     startDate: new Date(),
     endDate: new Date(),
-    interval: '1',
+    interval: 1,
     isBWO: false,
     startDateString: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
     startDateStringFormatted: Dateconversions.convertEnglishToGermanReadableString(
@@ -493,6 +493,8 @@ export default class Masterlist extends Vue {
         this.inputFields.endTimeSelect as unknown as Time,
         this.inputFields.startDate,
         this.inputFields.endDate,
+        this.inputFields.interval,
+        [],
       );
     }
   }
@@ -506,7 +508,7 @@ export default class Masterlist extends Vue {
       commentTextfield: '',
       startDatePickerIsOpen: false,
       endDatePickerIsOpen: false,
-      interval: '1',
+      interval: 1,
       isBWO: false,
       startDate: new Date(),
       endDate: new Date(),

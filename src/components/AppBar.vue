@@ -19,14 +19,17 @@
       light
       elevation="24"
     >
-    <v-card-title>Suchergebnisse</v-card-title>
+      <v-card-title>Suchergebnisse</v-card-title>
       <ul class="pt-2 ml-4 mr-4 mb-4" v-if="searchResults.length > 0">
         <li v-for="(result, i) in searchResults" :key="`${result.id}-${i}`">
-          <strong>{{ result.patient }}:</strong>
-          {{
-            result.startDate ? `${result.weekday}s` : getReadableDate(result.date)
-          }}, {{ result.startTime }} bis {{ result.endTime }} bei
-          {{ result.therapist }}
+          <!-- Hier werden die Suchergebnisse in Button-Elemente gewrappt -->
+          <v-btn text @click="navigateTargetDate(result.date)">
+            <strong>{{ result.patient }}:</strong>
+            {{
+              result.startDate ? `${result.weekday}s` : getReadableDate(result.date)
+            }}, {{ result.startTime }} bis {{ result.endTime }} bei
+            {{ result.therapist }}
+          </v-btn>
         </li>
       </ul>
       <p v-else>Keine Termine gefunden.</p>
@@ -48,10 +51,12 @@ import SingleAppointment from '@/class/SingleAppointment';
 import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
 import Store from '../store/backup';
+import EventBus from '../class/EventBus';
 
 @Component({
   components: {
     Menu,
+    EventBus,
   },
 })
 
@@ -105,6 +110,18 @@ export default class AppBar extends Vue {
   closeSearchResults(): void {
     this.searchResults = [];
     this.searchTextfield = '';
+    this.showSearchResults = false;
+  }
+
+  navigateTargetDate(date: Date): void {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const dateFormatted = `${day}.${month}.${year}`;
+    // nur einzeltermine betroffen Serientermine haben date 1975
+    if (year >= 2000) {
+      EventBus.$emit('currentDayChanged1', dateFormatted);
+    }
     this.showSearchResults = false;
   }
 

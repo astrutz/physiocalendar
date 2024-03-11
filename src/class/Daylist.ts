@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/no-cycle
 import Appointment from './Appointment';
+import Cancellation from './Cancellation';
 import Dateconversions from './Dateconversions';
 import { Time, Weekday } from './Enums';
 import ListSingleDay from './ListSingleDay';
@@ -94,9 +95,12 @@ export default class Daylist {
     endTime: Time,
     startDate: Date,
     endDate: Date,
+    interval: number,
+    cancellations: Cancellation[],
   ): SingleAppointment[] {
     const conflicts: SingleAppointment[] = [];
     let weekdayOffset = 1;
+    const step = interval * 7;
 
     switch (weekday) {
       case Weekday.MONDAY: weekdayOffset = 1; break;
@@ -107,6 +111,7 @@ export default class Daylist {
       default: break;
     }
 
+    const presentDayDate = new Date(); // Present day date
     const currentSearchDate = new Date(startDate);
     // eslint-disable-next-line no-mixed-operators
     currentSearchDate.setDate(currentSearchDate.getDate() + ((7 - currentSearchDate.getDay()) % 7 + weekdayOffset) % 7);
@@ -115,30 +120,44 @@ export default class Daylist {
     const endDateWithoutTime = new Date(endDate);
     endDateWithoutTime.setHours(0, 0, 0, 0);
 
-    while (currentSearchDate < endDateWithoutTime) {
-      const conflictAppointmentOnStart = this.searchAppointment(
+    while (currentSearchDate <= endDateWithoutTime) {
+      // Prüfen, ob das aktuelle Suchdatum in der Zukunft liegt
+      if (currentSearchDate >= presentDayDate) {
+        const conflictAppointment = this.searchAppointment(
+          therapistID,
+          Dateconversions.convertDateToReadableString(currentSearchDate),
+          startTime,
+          endTime,
+        );
+        if (conflictAppointment) {
+          conflicts.push(conflictAppointment);
+        }
+      }
+      currentSearchDate.setDate(currentSearchDate.getDate() + step);
+    }
+
+    // Überprüfe auf Konflikte am selben Tag wie endDate, aber nur wenn es in der Zukunft liegt
+    if (endDateWithoutTime >= presentDayDate) {
+      const conflictAppointmentOnEnd = this.searchAppointment(
         therapistID,
-        Dateconversions.convertDateToReadableString(currentSearchDate),
+        Dateconversions.convertDateToReadableString(endDateWithoutTime),
         startTime,
         endTime,
       );
-      if (conflictAppointmentOnStart) {
-        conflicts.push(conflictAppointmentOnStart);
+      if (conflictAppointmentOnEnd) {
+        conflicts.push(conflictAppointmentOnEnd);
       }
-      currentSearchDate.setDate(currentSearchDate.getDate() + 7);
     }
-
-    // Überprüfe auf Konflikte am selben Tag wie endDate
-    const conflictAppointmentOnEnd = this.searchAppointment(
-      therapistID,
-      Dateconversions.convertDateToReadableString(endDateWithoutTime),
-      startTime,
-      endTime,
-    );
-    if (conflictAppointmentOnEnd) {
-      conflicts.push(conflictAppointmentOnEnd);
-    }
-
+    conflicts.forEach((conflictAppointment, index) => {
+      const conflictDate = conflictAppointment.date;
+      const hasCancellation = cancellations.some((cancellation) => {
+        const cancellationDate = Dateconversions.convertReadableStringToDate(cancellation.date);
+        return cancellationDate.getTime() === conflictDate.getTime();
+      });
+      if (hasCancellation) {
+        conflicts.splice(index, 1); // Entferne den Konflikttermin aus dem Array
+      }
+    });
     return conflicts;
   }
 

@@ -33,7 +33,7 @@
           >
             <v-col>
               <v-select
-                :items="exception.times"
+                :items="times"
                 :value="exception.start"
                 v-model="newExceptions[index].start"
                 label="Von"
@@ -41,7 +41,7 @@
             </v-col>
             <v-col>
               <v-select
-                :items="exception.times"
+                :items="times"
                 :value="exception.end"
                 v-model="newExceptions[index].end"
                 label="Bis"
@@ -50,7 +50,7 @@
             <v-col cols="1">
               <v-btn
                 icon
-                color="primary"
+                color="error"
                 @click="
                   newExceptions = newExceptions.filter((abs, i) => i !== index)
                 "
@@ -84,7 +84,7 @@
             <v-col cols="1">
               <v-btn
                 icon
-                color="primary"
+                color="error"
                 @click="
                   newAbsences = newAbsences.filter((abs, i) => i !== index)
                 "
@@ -94,25 +94,26 @@
               </v-btn>
             </v-col>
           </v-row>
-          <v-row>
-            <v-col>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions>
+          <v-btn color="normal" text @click="resetInputs()"> Abbrechen </v-btn>
+          <v-spacer></v-spacer>
               <v-btn
                 color="primary"
                 @click="newAbsences.push({ start: null, end: null })"
               >
-                Abwesenheit hinzufügen
+                Neue Abwesenheit
               </v-btn>
-            </v-col>
-          </v-row>
-        </v-card-text>
-        <v-divider></v-divider>
-
-        <v-card-actions>
-          <v-btn color="error" text @click="resetInputs()"> Abbrechen </v-btn>
-          <v-spacer></v-spacer>
+              <v-btn
+                color="primary"
+                @click="newExceptions.push({ start: null, end: null })"
+              >
+                Neue Ausnahme
+              </v-btn>
           <v-spacer></v-spacer>
           <v-btn
-            color="primary"
+            color="success"
             button
             @click="
               submitAbsences();
@@ -153,7 +154,7 @@ export default class DaylistHeader extends Vue {
 
   newAbsences = JSON.parse(JSON.stringify(this.absences)) as { start: Time, end: Time }[];
 
-  newExceptions : { start: Time, end: Time, times: string[] }[] = [];
+  newExceptions = JSON.parse(JSON.stringify(this.exceptions)) as { start: Time, end: Time }[];
 
   absenceDialog = false;
 
@@ -181,14 +182,6 @@ export default class DaylistHeader extends Vue {
       therapistID: this.therapistID.slice(),
     });
     this.resetInputs();
-  }
-
-  addException(absence : Absence): void {
-    this.newExceptions.push({
-      start: absence.start,
-      end: absence.end,
-      times: this.times.slice(this.times.indexOf(absence.start.toString()), this.times.indexOf(absence.end.toString()) + 1),
-    });
   }
 }
 

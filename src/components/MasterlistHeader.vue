@@ -4,7 +4,7 @@
     <v-dialog v-model="absenceDialog" width="600">
       <v-card>
         <v-card-title class="text-h5 grey lighten-2">
-          Abwesenheiten von {{ therapist }} am {{ date }}
+          Abwesenheiten von {{ therapist }} {{ date }}s
         </v-card-title>
 
         <v-card-text class="pt-5">
@@ -31,7 +31,7 @@
             <v-col cols="1">
               <v-btn
                 icon
-                color="primary"
+                color="error"
                 @click="
                   newAbsences = newAbsences.filter((abs, i) => i !== index)
                 "
@@ -41,22 +41,21 @@
               </v-btn>
             </v-col>
           </v-row>
-          <v-btn
-            icon
-            color="primary"
-            @click="newAbsences.push({ start: null, end: null })"
-          >
-            <v-icon>mdi-clock-plus-outline</v-icon>
-          </v-btn>
         </v-card-text>
         <v-divider></v-divider>
 
         <v-card-actions>
-          <v-btn color="error" text @click="resetInputs()"> Abbrechen </v-btn>
-          <v-spacer></v-spacer>
+          <v-btn color="normal" text @click="resetInputs()"> Abbrechen </v-btn>
           <v-spacer></v-spacer>
           <v-btn
             color="primary"
+            @click="newAbsences.push({ start: null, end: null })"
+          >
+            Neue Abwesenheit
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="success"
             button
             @click="submitAbsences()"
           >
