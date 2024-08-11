@@ -10,6 +10,7 @@ import { JSONListSingleDayDTO } from '../class/JSONStructures';
 import AbsenceException from '@/class/AbsenceException';
 import { Weekday } from '../class/Enums';
 import Patient from '@/class/Patient';
+import therapist from '@/store/TherapistStore';
 
 export function convertToTherapist(dto: any): Therapist {
   return new Therapist(
@@ -142,18 +143,26 @@ export function convertToAppointmentSeries(appointmentSeries: JSONAppointmentSer
   );
 }
 
-export function convertToAppointmentSeriesDTO(appointmentSeries: AppointmentSeries): any {
+export function convertToAppointmentSeriesDTO(appointmentSeries: AppointmentSeries): JSONAppointmentSeriesDTO {
   return {
     id: appointmentSeries.id,
+    therapist: convertToTherapistDTO(appointmentSeries.therapist),
     therapistId: appointmentSeries.therapistId,
+    patient: convertToPatientDTO(appointmentSeries.patient),
     patientId: appointmentSeries.patientId,
-    startTime: appointmentSeries.startTime.getTime(),
-    endTime: appointmentSeries.endTime.getTime(),
+    startTime: appointmentSeries.startTime,
+    endTime: appointmentSeries.endTime,
     comment: appointmentSeries.comment,
-    startDate: appointmentSeries.startDate.getTime(),
-    endDate: appointmentSeries.endDate.getTime(),
-    interval: appointmentSeries.weeklyFrequency,
+    startDate: appointmentSeries.startDate,
+    endDate: appointmentSeries.endDate,
+    weeklyFrequency: appointmentSeries.weeklyFrequency,
+    weekday: appointmentSeries.weekday,
     cancellations: appointmentSeries.cancellations ? appointmentSeries.cancellations.map(convertToCancellationDTO) : [],
+    cancellationIds: appointmentSeries.cancellationIds,
+    isBWO: appointmentSeries.isBWO,
+    isElectric: appointmentSeries.isElectric,
+    isHotair: appointmentSeries.isHotair,
+    isUltrasonic: appointmentSeries.isUltrasonic
   };
 }
 

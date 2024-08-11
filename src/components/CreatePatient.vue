@@ -8,7 +8,7 @@
           <v-text-field label="Vorname" v-model="patientInput.firstName" clearable required></v-text-field>
         </v-col>
         <v-col>
-          <v-text-field label="Nachname" v-model="patientInput.name" clearable required></v-text-field>
+          <v-text-field label="Nachname" v-model="patientInput.lastName" clearable required></v-text-field>
         </v-col>
       </v-row>
       <v-row>
@@ -19,7 +19,6 @@
           <v-text-field
             label="Aktiv seit"
             :value="formatDate(patientInput.activeSince)"
-            v-model="patientInput.activeSince"
             clearable
           ></v-text-field>
         </v-col>
@@ -27,7 +26,6 @@
           <v-text-field
             label="Aktiv bis"
             :value="formatDate(patientInput.activeUntil)"
-            v-model="patientInput.activeUntil"
             clearable
           ></v-text-field>
         </v-col>
@@ -54,7 +52,7 @@ export default class CreatePatient extends Vue {
   patientInput: Patient = {
     id: '',
     firstName: '',
-    name: '',
+    lastName: '',
     activeSince: new Date(),
     activeUntil: new Date('2050-01-01'),
     isBWO: false,
@@ -67,7 +65,7 @@ export default class CreatePatient extends Vue {
 
   // Methode zum Schließen des Dialogs und Speichern der Änderungen
   saveChanges(): void {
-    if (!this.patientInput.firstName || !this.patientInput.name) {
+    if (!this.patientInput.firstName || !this.patientInput.lastName) {
       // Überprüfen, ob Vorname und Nachname ausgefüllt sind
       // eslint-disable-next-line no-alert
       alert('Vorname und Nachname sind erforderlich.');
@@ -87,10 +85,10 @@ export default class CreatePatient extends Vue {
 
   // Methode zur Formatierung des Datums
   // eslint-disable-next-line class-methods-use-this
-  formatDate(date: Date | undefined): string {
-    if (!date) return ''; // Sicherstellen, dass ein gültiges Date-Objekt vorhanden ist
-    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-    return new Date(date).toLocaleDateString('de-DE', options);
+  formatDate(date: Date | undefined): Date {
+    if (!date) return new Date; // Sicherstellen, dass ein gültiges Date-Objekt vorhanden ist
+    //const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return date;
   }
 }
 </script>

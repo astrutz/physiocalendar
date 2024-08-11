@@ -9,7 +9,6 @@
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
-import { getModule } from 'vuex-module-decorators';
 
 import AppBar from './components/AppBar.vue';
 import ListTabs from './components/ListTabs.vue';
@@ -22,10 +21,6 @@ import ListTabs from './components/ListTabs.vue';
 })
 
 export default class App extends Vue {
-  store = getModule(Store);
 
-  mounted() : void {
-    this.store.loadBackup();
-  }
 }
 </script>

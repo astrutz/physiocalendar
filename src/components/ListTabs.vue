@@ -27,6 +27,6 @@ import CalendarList from './CalendarList.vue';
 export default class ListTabs extends Vue {
   public tab = null;
 
-  public lists: Array<Record<string, string>> = [{ name: 'Terminliste', type: 'daylist' }, { name: 'Stammliste', type: 'masterlist' }]
+  public lists: Array<Record<string, string>> = [{ name: 'Terminliste', type: 'daylist' }]
 }
 </script>

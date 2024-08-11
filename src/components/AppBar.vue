@@ -22,14 +22,13 @@
       <v-card-title>Suchergebnisse</v-card-title>
       <ul class="pt-2 ml-4 mr-4 mb-4" v-if="searchResults.length > 0">
         <li v-for="(result, i) in searchResults" :key="`${result.id}-${i}`">
-          <!-- Hier werden die Suchergebnisse in Button-Elemente gewrappt -->
-          <v-btn text @click="navigateTargetDate(result.date)">
+          <!-- <v-btn text @click="navigateTargetDate(result.date)">
             <strong>{{ result.patient }}:</strong>
             {{
-              result.startDate ? `${result.weekday}s` : getReadableDate(result.date)
+              // result.startDate ? `${result.weekday}s` : getReadableDate(result.date)
             }}, {{ result.startTime }} bis {{ result.endTime }} bei
             {{ result.therapist }}
-          </v-btn>
+          </v-btn> -->
         </li>
       </ul>
       <p v-else>Keine Termine gefunden.</p>
@@ -45,13 +44,11 @@
 import { Component, Vue } from 'vue-property-decorator';
 import Menu from '@/components/Menu.vue';
 import { getModule } from 'vuex-module-decorators';
-import Appointment from '@/class/Appointment';
-import AppointmentSeries from '@/class/AppointmentSeries';
-import SingleAppointment from '@/class/SingleAppointment';
-import Backup from '@/class/Backup';
 import Dateconversions from '@/class/Dateconversions';
-import Store from '../store/backup';
+import AppointmentStore from '../store/AppointmentStore';
 import EventBus from '../class/EventBus';
+import SingleAppointment from '@/class/SingleAppointment';
+import AppointmentSeries from '@/class/AppointmentSeries';
 
 @Component({
   components: {
@@ -61,48 +58,36 @@ import EventBus from '../class/EventBus';
 })
 
 export default class AppBar extends Vue {
-  private searchTextfield = '';
+  public searchTextfield = '';
 
-  private showSearchResults = false;
+  public showSearchResults = false;
 
-  private searchResults: Appointment[] = [];
+  public searchResults: Array<SingleAppointment | AppointmentSeries> = [];
 
-  store = getModule(Store);
-
-  get localBackup(): Backup | null {
-    return this.store.getBackup;
-  }
+  public appointmentStore = getModule(AppointmentStore);
 
   search(): void {
     this.searchResults = [];
-    if (this.localBackup && this.searchTextfield.length > 2) {
+    if (this.searchTextfield.length > 2) {
       const searchText = this.searchTextfield.toLowerCase();
-      this.localBackup.masterlist.elements.forEach((listDay) => {
-        this.searchResults = this.searchResults.concat(listDay.appointments.filter((appointment) => {
-          const readableStartDate = Dateconversions.convertDateToReadableString((appointment as AppointmentSeries).startDate);
-          const readableEndDate = Dateconversions.convertDateToReadableString((appointment as AppointmentSeries).endDate);
-          const readableTargetDate = Dateconversions.convertDateToReadableString(new Date());
-          return appointment.patient
-            && ((appointment as AppointmentSeries).startDate < new Date() || readableStartDate === readableTargetDate)
-            && ((appointment as AppointmentSeries).endDate > new Date() || readableEndDate === readableTargetDate)
-            && appointment.patient.toLowerCase().includes(searchText);
-        }));
-      });
-      this.localBackup.daylist.elements.forEach((listDay) => {
-        this.searchResults = this.searchResults.concat(listDay.appointments.filter((appointment) => {
-          const readableStartDate = Dateconversions.convertDateToReadableString((appointment as SingleAppointment).date);
-          const readableTargetDate = Dateconversions.convertDateToReadableString(new Date());
-          return appointment.patient
-            && ((appointment as SingleAppointment).date > new Date() || readableStartDate === readableTargetDate)
-            && appointment.patient.toLowerCase().includes(searchText);
-        }));
-      });
-      // Sortiere die Suchergebnisse nach dem Datum
+
+      // Suchen in Einzelterminen
+      const singleAppointments = this.appointmentStore.getAllAppointments.filter(appointment =>
+        appointment.patient?.lastName.toLowerCase().includes(searchText)
+      );
+
+      // Suchen in Serienterminen
+      const seriesAppointments = this.appointmentStore.getAllAppointments.filter(appointment =>
+      appointment.patient?.firstName.toLowerCase().includes(searchText)
+      );
+
+      this.searchResults = [...singleAppointments, ...seriesAppointments];
       this.searchResults.sort((a, b) => {
-        const dateA = (a instanceof AppointmentSeries) ? (a as AppointmentSeries).startDate : (a as SingleAppointment).date;
-        const dateB = (b instanceof AppointmentSeries) ? (b as AppointmentSeries).startDate : (b as SingleAppointment).date;
+        const dateA = a instanceof AppointmentSeries ? (a as AppointmentSeries).startDate : (a as SingleAppointment).date;
+        const dateB = b instanceof AppointmentSeries ? (b as AppointmentSeries).startDate : (b as SingleAppointment).date;
         return dateA.getTime() - dateB.getTime();
       });
+
       this.showSearchResults = true;
     }
   }
@@ -118,14 +103,13 @@ export default class AppBar extends Vue {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     const dateFormatted = `${day}.${month}.${year}`;
-    // nur einzeltermine betroffen Serientermine haben date 1975
+
     if (year >= 2000) {
       EventBus.$emit('currentDayChanged1', dateFormatted);
     }
     this.showSearchResults = false;
   }
 
-  // eslint-disable-next-line class-methods-use-this
   getReadableDate(date: Date): string {
     return Dateconversions.convertDateToReadableString(date);
   }

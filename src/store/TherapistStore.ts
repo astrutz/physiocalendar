@@ -8,6 +8,7 @@ import { convertToTherapist, convertToTherapistDTO } from './convert';
 @Module({ name: 'TherapistStore', dynamic: true, store })
 class TherapistStore extends VuexModule {
   public therapists: Therapist[] = [];
+  public therapist!: Therapist;
 
   @Action
   public async loadTherapists(): Promise<void> {
@@ -15,6 +16,17 @@ class TherapistStore extends VuexModule {
       const responseData: JSONTherapistDTO[] = (await axios.get('http://localhost:8080/api/therapists')).data;
       const therapists = responseData.map((dto) => convertToTherapist(dto));
       this.context.commit('setTherapists', therapists);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  @Action
+  public async loadTherapist(id: number): Promise<void> {
+    try {
+      const responseData: JSONTherapistDTO[] = (await axios.get('http://localhost:8080/api/therapist/'+ id)).data;
+      const therapist = responseData.map((dto) => convertToTherapist(dto));
+      this.context.commit('setTherapist', therapist);
     } catch (err) {
       console.error(err);
     }
@@ -32,7 +44,7 @@ class TherapistStore extends VuexModule {
   }
 
   @Action
-  public async updateTherapist({ id, therapist }: { id: number, therapist: Therapist }): Promise<void> {
+  public async updateTherapist(id: number, therapist: Therapist ): Promise<void> {
     try {
       const therapistDTO = convertToTherapistDTO(therapist);
       await axios.put(`http://localhost:8080/api/therapists/${id}`, therapistDTO);
@@ -59,6 +71,12 @@ class TherapistStore extends VuexModule {
 
   get getAllTherapists(): Therapist[] {
     return this.therapists;
+  }
+
+  public get getTherapistById(): (id: number) => Therapist | undefined {
+    return (id: number) => {
+      return this.therapists.find(therapist => therapist.id === id);
+    };
   }
 }
 

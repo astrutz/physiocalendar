@@ -24,8 +24,8 @@
     <v-bottom-sheet v-model="menuItems[1].dialog">
       <Terminfinder @dialogClosed="menuItems[1].dialog = false" />
     </v-bottom-sheet>
-    <v-dialog v-model="menuItems[2].dialog" max-width="600">
-      <Settings @dialogClosed="menuItems[2].dialog = false" />
+    <v-dialog v-model="menuItems[2].dialog" max-width="800">
+      <Therapists @dialogClosed="menuItems[2].dialog = false" />
     </v-dialog>
     <v-dialog v-model="menuItems[3].dialog" max-width="800">
       <Patients @dialogClosed="menuItems[3].dialog = false" />
@@ -37,14 +37,14 @@
 import { Component, Vue } from 'vue-property-decorator';
 import Terminfinder from '@/components/Terminfinder.vue';
 import Import from '@/components/Import.vue';
-import Settings from '@/components/Settings.vue';
+import Therapists from '@/components/Therapists.vue';
 import Patients from '@/components/Patients.vue';
 
 @Component({
   components: {
     Terminfinder,
     Import,
-    Settings,
+    Therapists,
     Patients,
   },
 })
@@ -61,7 +61,6 @@ export default class Menu extends Vue {
     console.log('TODO implement download structured Data in JSON Format')
   }
 }
-
 </script>
 
 <style scoped>

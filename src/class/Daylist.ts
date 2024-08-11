@@ -4,6 +4,7 @@ import Cancellation from './Cancellation';
 import Dateconversions from './Dateconversions';
 import { Time, Weekday } from './Enums';
 import ListSingleDay from './ListSingleDay';
+import Patient from './Patient';
 import SingleAppointment from './SingleAppointment';
 
 export default class Daylist {
@@ -16,12 +17,12 @@ export default class Daylist {
   }
 
   searchAppointment(
-    therapistID: string, dateString: string, startTime: Time, endTime? : Time | undefined,
+    therapistId: number, dateString: string, startTime: Date, endTime: Date | undefined,
   ): SingleAppointment | undefined {
     const currentDay = this.findListday(dateString);
     if (currentDay !== undefined) {
       return currentDay.appointments.find((appointment) => {
-        if (appointment.therapistID !== therapistID) {
+        if (appointment.therapistId !== therapistId) {
           return false;
         }
         return Dateconversions.appointmentIsInTimeInterval(appointment, startTime, endTime);
@@ -30,12 +31,12 @@ export default class Daylist {
     return undefined;
   }
 
-  public getSingleAppointmentsByDateAndTimeframe(therapistId: string, date: Date, startTime: Time, endTime: Time): SingleAppointment[] {
+  public getSingleAppointmentsByDateAndTimeframe(therapistId: number, date: Date, startTime: Date, endTime: Date): SingleAppointment[] {
     const listday = this.findListday(date);
     if (listday) {
-      const appointments = listday.appointments.filter((appointment) => appointment.therapistID === therapistId
-        && Time[appointment.startTime] >= Time[startTime]
-        && Time[appointment.endTime] <= Time[endTime]);
+      const appointments = listday.appointments.filter((appointment) => appointment.therapistId === therapistId
+        && appointment.startTime >= startTime
+        && appointment.endTime <= endTime);
       if (appointments.length > 0) {
         return appointments as SingleAppointment[];
       }
@@ -43,15 +44,15 @@ export default class Daylist {
     return [];
   }
 
-  public getSingleAppointmentsConflicts(therapistId: string, date: Date, startTime: Time, endTime: Time): Appointment[] {
+  public getSingleAppointmentsConflicts(therapistId: number, date: Date, startTime: Date, endTime: Date): Appointment[] {
     const listday = this.findListday(date);
     if (listday) {
       const appointments = listday.appointments.filter((appointment) => {
         // Prüfe, ob der Therapeut der gleiche ist
-        const isSameTherapist = appointment.therapistID === therapistId;
+        const isSameTherapist = appointment.therapistId === therapistId;
         // Prüfe auf zeitliche Überschneidung
-        const startsBeforeEndTime = Time[appointment.startTime] < Time[endTime];
-        const endsAfterStartTime = Time[appointment.endTime] > Time[startTime];
+        const startsBeforeEndTime = appointment.startTime < endTime;
+        const endsAfterStartTime = appointment.endTime > startTime;
         return isSameTherapist && startsBeforeEndTime && endsAfterStartTime;
       });
       return appointments;
@@ -59,7 +60,7 @@ export default class Daylist {
     return [];
   }
 
-  getSingleAppointmentsByPatient(patient: string): SingleAppointment[] {
+  getSingleAppointmentsByPatient(patient: Patient): SingleAppointment[] {
     const currentSearchDate = new Date();
     const endDate = new Date();
     let appointments: Appointment[] = [];
@@ -80,7 +81,7 @@ export default class Daylist {
       if (!newAppointments.find(
         (appointment) => (appointment.date === appointmentToBeChecked.date
           && appointment.startTime === appointmentToBeChecked.startTime
-          && appointment.therapistID === appointmentToBeChecked.therapistID),
+          && appointment.therapistId === appointmentToBeChecked.therapistId),
       )) {
         newAppointments.push(appointmentToBeChecked);
       }
@@ -90,9 +91,9 @@ export default class Daylist {
 
   getAppointmentConflicts(
     weekday: Weekday,
-    therapistID: string,
-    startTime: Time,
-    endTime: Time,
+    therapistId: number,
+    startTime: Date,
+    endTime: Date,
     startDate: Date,
     endDate: Date,
     interval: number,
@@ -124,7 +125,7 @@ export default class Daylist {
       // Prüfen, ob das aktuelle Suchdatum in der Zukunft liegt
       if (currentSearchDate >= presentDayDate) {
         const conflictAppointment = this.searchAppointment(
-          therapistID,
+          therapistId,
           Dateconversions.convertDateToReadableString(currentSearchDate),
           startTime,
           endTime,
@@ -139,7 +140,7 @@ export default class Daylist {
     // Überprüfe auf Konflikte am selben Tag wie endDate, aber nur wenn es in der Zukunft liegt
     if (endDateWithoutTime >= presentDayDate) {
       const conflictAppointmentOnEnd = this.searchAppointment(
-        therapistID,
+        therapistId,
         Dateconversions.convertDateToReadableString(endDateWithoutTime),
         startTime,
         endTime,
@@ -151,7 +152,7 @@ export default class Daylist {
     conflicts.forEach((conflictAppointment, index) => {
       const conflictDate = conflictAppointment.date;
       const hasCancellation = cancellations.some((cancellation) => {
-        const cancellationDate = Dateconversions.convertReadableStringToDate(cancellation.date);
+        const cancellationDate = cancellation.date;
         return cancellationDate.getTime() === conflictDate.getTime();
       });
       if (hasCancellation) {

@@ -80,14 +80,8 @@ export default class Dateconversions {
     return times;
   }
 
-  static appointmentIsInTimeInterval(appointment: Appointment, startTime: Time, endTime?: Time) : boolean {
-    if (endTime) {
-      return Time[appointment.endTime] === Time[endTime]
-      || Time[appointment.startTime] === Time[startTime]
-      || (Time[appointment.startTime] < Time[startTime] && Time[appointment.endTime] > Time[endTime])
-      || (Time[appointment.startTime] > Time[startTime] && Time[appointment.startTime] < Time[endTime])
-      || (Time[appointment.endTime] > Time[startTime] && Time[appointment.endTime] < Time[endTime]);
-    }
-    return Time[appointment.startTime] === Time[startTime];
+  static appointmentIsInTimeInterval(appointment: Appointment, startTime: Date, endTime?: Date) : boolean {
+    //TODO implmentieren
+    return false;
   }
 }

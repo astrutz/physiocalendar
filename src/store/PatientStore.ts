@@ -21,6 +21,16 @@ class PatientStore extends VuexModule {
   }
 
   @Action
+  public findPatientsByName(searchQuery: string): Patient[] {
+    const queryLower = searchQuery.toLowerCase();
+    return this.patients.filter(
+      (patient) =>
+        patient.firstName.toLowerCase().includes(queryLower) ||
+        patient.lastName.toLowerCase().includes(queryLower)
+    );
+  }
+
+  @Action
   public async addPatient(patient: Patient): Promise<void> {
     try {
       const patientDTO = convertToPatientDTO(patient);

@@ -46,11 +46,10 @@
               <v-list-item ripple @click="toggleAllTherapists">
                 <v-list-item-action>
                   <v-icon
-                    :color="
-                      selectedTherapists.length > 0 ? 'indigo darken-4' : ''
-                    "
-                    >{{ icon }}</v-icon
+                    :color="selectedTherapists.length > 0 ? 'indigo darken-4' : ''"
                   >
+                    {{ icon }}
+                  </v-icon>
                 </v-list-item-action>
                 <v-list-item-content>
                   <v-list-item-title>Alle auswählen</v-list-item-title>
@@ -88,7 +87,7 @@
             :color="selectedAppointmentRequests.length === appointmentRequests.length ? '' : 'primary'"
           >
             Alle {{selectedAppointmentRequests.length === appointmentRequests.length ? 'abwählen' : 'auswählen'}}
-            </v-btn>
+          </v-btn>
         </v-row>
         <v-tooltip top>
           <template v-slot:activator="{ on, attrs }">
@@ -96,8 +95,8 @@
               mdi-information
             </v-icon>
           </template>
-          <span
-            >Die Tageszeiten sind wie folgt definiert:
+          <span>
+            Die Tageszeiten sind wie folgt definiert:
             <ul>
               <li>Morgen: 07:00 bis 10:00</li>
               <li>Vormittag: 10:00 bis 12:00</li>
@@ -117,57 +116,46 @@
               v-model="selectedAppointmentRequests"
               dense
               :label="`${request.weekday} ${request.timeOfDay}`"
-              :value="request"
             ></v-checkbox>
           </v-col>
           <v-col cols="2">
-            <v-checkbox
-              v-for="request in appointmentRequests.filter(
-                (req, i) => i % 5 === 1
-              )"
-              :key="`${request.weekday}-${request.timeOfDay}`"
-              v-model="selectedAppointmentRequests"
-              dense
-              :label="`${request.weekday} ${request.timeOfDay}`"
-              :value="request"
-            ></v-checkbox>
-          </v-col>
-          <v-col cols="2">
-            <v-checkbox
-              v-for="request in appointmentRequests.filter(
-                (req, i) => i % 5 === 2
-              )"
-              :key="`${request.weekday}-${request.timeOfDay}`"
-              v-model="selectedAppointmentRequests"
-              dense
-              :label="`${request.weekday} ${request.timeOfDay}`"
-              :value="request"
-            ></v-checkbox>
-          </v-col>
-          <v-col cols="2">
-            <v-checkbox
-              v-for="request in appointmentRequests.filter(
-                (req, i) => i % 5 === 3
-              )"
-              :key="`${request.weekday}-${request.timeOfDay}`"
-              v-model="selectedAppointmentRequests"
-              dense
-              :label="`${request.weekday} ${request.timeOfDay}`"
-              :value="request"
-            ></v-checkbox>
-          </v-col>
-          <v-col cols="2">
-            <v-checkbox
-              v-for="request in appointmentRequests.filter(
-                (req, i) => i % 5 === 4
-              )"
-              :key="`${request.weekday}-${request.timeOfDay}`"
-              v-model="selectedAppointmentRequests"
-              dense
-              :label="`${request.weekday} ${request.timeOfDay}`"
-              :value="request"
-            ></v-checkbox>
-          </v-col>
+  <v-checkbox
+    v-for="(request1, index) in appointmentRequests.filter((req, i) => i % 5 === 1)"
+    :key="`request-${index}`"
+    v-model="selectedAppointmentRequests"
+    dense
+    :label="`${request1.weekday} ${request1.timeOfDay}`"
+  ></v-checkbox>
+</v-col>
+<v-col cols="2">
+  <v-checkbox
+    v-for="(request2, index) in appointmentRequests.filter((req, i) => i % 5 === 2)"
+    :key="`request-${index}`"
+    v-model="selectedAppointmentRequests"
+    dense
+    :label="`${request2.weekday} ${request2.timeOfDay}`"
+
+  ></v-checkbox>
+</v-col>
+<v-col cols="2">
+  <v-checkbox
+    v-for="(request3, index) in appointmentRequests.filter((req, i) => i % 5 === 3)"
+    :key="`request-${index}`"
+    v-model="selectedAppointmentRequests"
+    dense
+    :label="`${request3.weekday} ${request3.timeOfDay}`"
+  ></v-checkbox>
+</v-col>
+<v-col cols="2">
+  <v-checkbox
+    v-for="(request4, index) in appointmentRequests.filter((req, i) => i % 5 === 4)"
+    :key="`request-${index}`"
+    v-model="selectedAppointmentRequests"
+    dense
+    :label="`${request4.weekday} ${request4.timeOfDay}`"
+  ></v-checkbox>
+</v-col>
+
         </v-row>
 
         <v-btn @click="resetFinder()" color="error" text> Abbrechen </v-btn>
@@ -204,7 +192,6 @@
                   suggestion.date
                 )} um ${suggestion.startTime}`"
                 :value="suggestion"
-                v-model="selectedAppointmentSuggestions"
                 :multiple="true"
               ></v-checkbox>
             </v-col>
@@ -219,7 +206,7 @@
           <v-btn
             :disabled="
               selectedAppointmentSuggestions.length !==
-              parseInt(appointmentCount)
+              appointmentCount
             "
             class="button-next"
             color="primary"
@@ -268,36 +255,27 @@
     </v-stepper-items>
   </v-stepper>
 </template>
-
 <script lang="ts">
-
-import AppointmentFinder from '@/class/AppointmentFinder';
-import AppointmentRequest from '@/class/AppointmentRequest';
-import SingleAppointment from '@/class/SingleAppointment';
-import Backup from '@/class/Backup';
-import Dateconversions from '@/class/Dateconversions';
-import { TimeOfDay } from '@/class/Enums';
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
-import Store from '../store/backup';
+import TherapistStore from '@/store/therapistStore';
+
+import AppointmentRequest from '@/class/AppointmentRequest';
+import SingleAppointment from '@/class/SingleAppointment';
+import Dateconversions from '@/class/Dateconversions';
+import { TimeOfDay } from '@/class/Enums';
+import PatientStore from '@/store/PatientStore';
+import Patient from '@/class/Patient';
 
 @Component
 export default class Terminfinder extends Vue {
-  private patientTextfield = '';
-
-  private patientId = '';
-
-  therapists: string[] = [];
-
-  therapistIDs: string[] = [];
-
-  selectedTherapists: string[] = [];
-
-  appointmentCount = 0;
-
-  appointmentLength = 20;
-
-  availableAppoinmentLengths = [
+  public patientTextfield = '';
+  public patientId = '';
+  public therapists: string[] = [];
+  public selectedTherapists: string[] = [];
+  public appointmentCount = 0;
+  public appointmentLength = 20;
+  public availableAppoinmentLengths = [
     { text: '10 Minuten', value: 10 },
     { text: '20 Minuten', value: 20 },
     { text: '30 Minuten', value: 30 },
@@ -309,52 +287,23 @@ export default class Terminfinder extends Vue {
     { text: '90 Minuten', value: 90 },
     { text: '100 Minuten', value: 100 },
     { text: '110 Minuten', value: 110 },
-    { text: '120 Minuten', value: 120 }]
+    { text: '120 Minuten', value: 120 }];
 
-  menuIsOpen = false;
+  public appointmentRequests = AppointmentRequest.generateAll();
+  public selectedAppointmentRequests: AppointmentRequest[] = [];
+  public appointmentSuggestions: SingleAppointment[] = [];
+  public selectedAppointmentSuggestions: SingleAppointment[] = [];
+  public currentStep = 1;
+  public patientsLoading = false;
+  public searchValue = '';
+  public foundPatients: Patient[] = [];
 
-  appointmentRequests = AppointmentRequest.generateAll();
-
-  timesOfDay = [TimeOfDay.MORNING, TimeOfDay.FORENOON, TimeOfDay.NOON, TimeOfDay.AFTERNOON, TimeOfDay.EVENING];
-
-  selectedAppointmentRequests: AppointmentRequest[] = [];
-
-  appointmentSuggestions: SingleAppointment[] = [];
-
-  selectedAppointmentSuggestions: SingleAppointment[] = [];
-
-  currentStep = 1;
-
-  store = getModule(Store);
-
-  backup: Backup | null = null;
-
-  private patientsLoading = false;
-
-  private searchValue = '';
-
-  private foundPatients : string[] = [];
+  public therapistStore = getModule(TherapistStore);
+  public patientStore = getModule(PatientStore);
 
   mounted(): void {
-    this.backup = this.store.getBackup;
-    this.patientId = '';
-    if (this.backup) {
-      const today = new Date();
-      this.therapists = this.backup.therapists.filter(
-        (therapist) => therapist.activeSince < today && therapist.activeUntil > today,
-      ).map((therapist) => therapist.name);
-      this.therapistIDs = this.backup.therapists.filter(
-        (therapist) => therapist.activeSince < today && therapist.activeUntil > today,
-      ).map((therapist) => therapist.id);
-    }
-  }
-
-  @Watch('searchValue')
-  searchValueChanged(val: string | undefined): boolean {
-    this.foundPatients = [];
-    this.patientTextfield = val || this.patientTextfield;
-    this.searchPatients(val);
-    return val !== this.patientTextfield;
+    this.loadTherapists();
+    this.loadPatients();
   }
 
   get label(): string {
@@ -373,6 +322,24 @@ export default class Terminfinder extends Vue {
     return 'mdi-checkbox-blank-outline';
   }
 
+  @Watch('searchValue')
+  searchValueChanged(val: string | undefined): boolean {
+    this.foundPatients = [];
+    this.patientTextfield = val || this.patientTextfield;
+    this.searchPatients(val);
+    return val !== this.patientTextfield;
+  }
+
+  private loadTherapists(): void {
+    this.therapistStore.loadTherapists().then(() => {
+      this.therapists = this.therapistStore.getAllTherapists.map(t => t.name);
+    });
+  }
+
+  private loadPatients(): void {
+    this.patientStore.loadPatients();
+  }
+
   toggleAllSlots(): void {
     if (this.selectedAppointmentRequests.length === this.appointmentRequests.length) {
       this.selectedAppointmentRequests = [];
@@ -389,37 +356,15 @@ export default class Terminfinder extends Vue {
     }
   }
 
-  // eslint-disable-next-line class-methods-use-this
   convertSuggestionDate(date: Date): string {
     return Dateconversions.convertDateToReadableString(date);
   }
 
   findAppointments(): void {
-    if (this.backup) {
-      const selectedTherapistIDs: string[] = [];
-      this.selectedTherapists.forEach((selectedTherapist) => {
-        const index = this.therapists.indexOf(selectedTherapist);
-        if (index > -1) {
-          selectedTherapistIDs.push(this.therapistIDs[index]);
-        }
-      });
-      const appointmentFinder = new AppointmentFinder(
-        this.patientTextfield,
-        this.patientId,
-        this.selectedTherapists,
-        selectedTherapistIDs,
-        this.appointmentCount,
-        this.appointmentLength,
-        this.selectedAppointmentRequests,
-        this.backup.daylist,
-        this.backup.masterlist,
-        this.backup.therapists,
-      );
-      this.appointmentSuggestions = appointmentFinder.getSuggestions();
-    }
+    // Logik, um verfügbare Termine basierend auf den Auswahlkriterien zu finden.
   }
 
-  resetSelectedAppointmentSuggestions() : void {
+  resetSelectedAppointmentSuggestions(): void {
     this.selectedAppointmentSuggestions = [];
   }
 
@@ -435,36 +380,18 @@ export default class Terminfinder extends Vue {
   }
 
   takeAppointmentSuggestion(): void {
-    if (this.backup) {
-      this.selectedAppointmentSuggestions.forEach((suggestion) => {
-        this.store.addSingleAppointment(suggestion);
-      });
-    }
+    // Logik, um die ausgewählten Termine zu speichern.
     this.resetFinder();
   }
 
-  private searchPatients(searchQuery : string | undefined) : void {
-    if (searchQuery && searchQuery.length > 2 && this.backup) {
+  private searchPatients(searchQuery: string | undefined): void {
+    if (searchQuery && searchQuery.length > 2) {
       this.patientsLoading = true;
-      this.backup.masterlist.elements.forEach((listDay) => {
-        this.foundPatients = this.foundPatients.concat(
-          listDay.appointments.filter(
-            (appointment) => appointment.patient && appointment.patient.toLowerCase().includes(searchQuery.toLowerCase()),
-          ).map((appointment) => appointment.patient),
-        );
-      });
-      this.backup.daylist.elements.forEach((listDay) => {
-        this.foundPatients = this.foundPatients.concat(
-          listDay.appointments.filter(
-            (appointment) => appointment.patient && appointment.patient.toLowerCase().includes(searchQuery.toLowerCase()),
-          ).map((appointment) => appointment.patient),
-        );
-      });
+      this.foundPatients = this.patientStore.findPatientsByName(searchQuery);
       this.patientsLoading = false;
     }
   }
 }
-
 </script>
 
 <style scoped>

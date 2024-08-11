@@ -455,7 +455,7 @@ import Absence from '@/class/Absence';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Cancellation from '@/class/Cancellation';
 import Printer from '@/class/Printer';
-import Backup from '@/class/Backup';
+
 import Dateconversions from '@/class/Dateconversions';
 import { Time, Weekday } from '@/class/Enums';
 import SingleAppointment from '@/class/SingleAppointment';
@@ -465,10 +465,10 @@ import {
 } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
 import Util from '@/class/Util';
-import Exception from '@/class/Exception';
-import Store from '../store/backup';
+
 import DaylistElement from './DaylistElement.vue';
 import DaylistHeader from './DaylistHeader.vue';
+import AbsenceException from '@/class/AbsenceException';
 
 @Component({
   components: {
@@ -566,13 +566,11 @@ export default class Daylist extends Vue {
 
   private searchValue = '';
 
-  private patient1 = '';
+
 
   private foundPatients : string[] = [];
 
-  get localBackup(): Backup | null {
-    return this.store.getBackup;
-  }
+
 
   @Watch('currentSingleDay')
   async currentSingleDayChanged(): Promise<void> {
@@ -1064,17 +1062,12 @@ export default class Daylist extends Vue {
     if (cancellations.length === 0) {
       return '';
     }
-    const cancellation = cancellations.find((c) => c.date === this.currentSingleDay);
-    if (!cancellation || cancellation.patient === '' || cancellation.patient === null) {
+    const cancellation = cancellations.find((c) => c.date === new Date(this.currentSingleDay));
+    if (!cancellation || cancellation.id || cancellation.date === null) {
       return '';
     }
-    const arr = cancellation.patient.split(';');
+    const arr = cancellation;
     let patientName = '';
-    arr.forEach((p) => {
-      if (p.trim()) {
-        patientName += `${p.trim()}; `;
-      }
-    });
     return patientName;
   }
 
@@ -1120,22 +1113,22 @@ export default class Daylist extends Vue {
   }
 
   public printAppointment(): void {
-    const printer = new Printer(
-      this.singleAppointmentToOpen.id,
-      this.singleAppointmentToOpen.patient,
-      this.selectedAppointment.therapist,
-      this.singleAppointmentToOpen.startTime,
-      this.singleAppointmentToOpen.endTime,
-      Dateconversions.convertReadableStringToDate(this.currentSingleDay),
-      0,
-      undefined,
-      undefined,
-      undefined,
-      new Date(),
-    );
-    this.appointmentsForPatient = [];
-    this.searchAppointmentsForPatient(this.singleAppointmentToOpen.patient);
-    printer.printSingleAppointment(this.appointmentsForPatient);
+    // const printer = new Printer(
+    //   this.singleAppointmentToOpen.id,
+    //   this.singleAppointmentToOpen.patient,
+    //   this.selectedAppointment.therapist,
+    //   this.singleAppointmentToOpen.startTime,
+    //   this.singleAppointmentToOpen.endTime,
+    //   Dateconversions.convertReadableStringToDate(this.currentSingleDay),
+    //   0,
+    //   undefined,
+    //   undefined,
+    //   undefined,
+    //   new Date(),
+    // );
+    // this.appointmentsForPatient = [];
+    // this.searchAppointmentsForPatient(this.singleAppointmentToOpen.patient);
+    // printer.printSingleAppointment(this.appointmentsForPatient);
   }
 
   // eslint-disable-next-line class-methods-use-this

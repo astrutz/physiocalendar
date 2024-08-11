@@ -7,52 +7,58 @@ import SingleAppointment from './SingleAppointment';
 import Appointment from './Appointment';
 import Cancellation from './Cancellation';
 import AppointmentSeries from './AppointmentSeries';
+import Patient from './Patient';
+import Therapist from './Therapist';
 
 export default class Printer {
-  id: string;
+  appointmentId: number;
 
-  patient: string;
+  patient: Patient;
 
-  therapist: string;
+  therapist: Therapist;
 
-  startTime: Time;
+  startTime: Date;
 
-  endTime: Time;
+  endTime: Date;
 
-  day: Weekday | Date;
+  date: Date;
 
-  interval: number;
+  weekday: Weekday;
+
+  weeklyFrequency: number;
 
   cancellations : Cancellation[];
 
-  startDate: Date | undefined;
+  startDate?: Date;
 
-  endDate: Date | undefined;
+  endDate?: Date;
 
-  currentSingleDay: Date | undefined;
+  currentSingleDay?: Date;
 
   MAX_APPOINTMENT_COUNT = 12;
 
   constructor(
-    id: string,
-    patient: string,
-    therapist: string,
-    startTime: Time,
-    endTime: Time,
-    day: Weekday | Date,
-    interval: number,
+    appointmentId: number,
+    patient: Patient,
+    therapist: Therapist,
+    startTime: Date,
+    endTime: Date,
+    date: Date,
+    weekday: Weekday,
+    weeklyFrequency: number,
     cancellations: Cancellation[] = [],
     startDate?: Date,
     endDate?: Date,
     currentSingleDay?: Date,
   ) {
-    this.id = id;
+    this.appointmentId = appointmentId;
     this.patient = patient;
     this.therapist = therapist;
     this.startTime = startTime;
     this.endTime = endTime;
-    this.day = day;
-    this.interval = interval;
+    this.date = date;
+    this.weekday = weekday;
+    this.weeklyFrequency = weeklyFrequency;
     this.cancellations = cancellations;
     this.startDate = startDate;
     this.endDate = endDate;
@@ -114,9 +120,9 @@ export default class Printer {
     if (seriesAppointments.length === 0) {
       return;
     }
-    const seriesAppointmentToPrint = seriesAppointments.find((appointment) => appointment.id === this.id);
+    const seriesAppointmentToPrint = seriesAppointments.find((appointment) => appointment.id === this.appointmentId);
     if (!seriesAppointmentToPrint) {
-      console.log(`Kein Termin mit ID ${this.id} gefunden`);
+      console.log(`Kein Termin mit ID ${this.appointmentId} gefunden`);
       return;
     }
     let str = '';
@@ -126,7 +132,7 @@ export default class Printer {
       endDate,
       endTime,
       startTime,
-      interval,
+      weeklyFrequency,
       cancellations,
       weekday,
     } = seriesAppointmentToPrint;
@@ -147,11 +153,11 @@ export default class Printer {
         const readableString = Dateconversions.convertGermanToEnglishReadableString(dateString);
         if (currDate.getTime() <= endDate.getTime() + (24 * 3600000)) {
           if (!holidays.includes(readableString)
-            && !cancellations.some((c) => c.date === Dateconversions.convertDateToReadableString(currDate))) {
+            && !cancellations.some((c) => c.date ===currDate)) {
             str += `${weekdayReadable}${dateString} ab ${startTime}\n`;
             i += 1;
           }
-          currDate.setDate(currDate.getDate() + interval * 7);
+          currDate.setDate(currDate.getDate() + weeklyFrequency * 7);
         } else {
           i += 1;
         }
