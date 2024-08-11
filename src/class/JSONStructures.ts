@@ -2,93 +2,104 @@
 
 import { Weekday } from './Enums';
 
-export interface JSONCancellation {
-  date: string;
-  patient: string;
+export interface JSONCancellationDTO {
+  id: number,
+  date: Date
 }
 
-export interface JSONAppointmentSeries {
-  id: string,
-  therapist : string,
-  therapistID : string,
-  patient: string,
-  patientId: string,
-  startTime: string,
-  endTime: string,
+export interface JSONAppointmentSeriesDTO {
+  id: number,
+  therapist : JSONTherapistDTO,
+  therapistId : number,
+  patient: JSONPatientDTO,
+  patientId: number,
+  startTime: Date,
+  endTime: Date,
+  startDate: Date,
+  endDate: Date,
   comment: string,
-  startDate: number,
-  endDate: number,
-  isBWO : boolean,
-  interval: number,
-  cancellations: JSONCancellation[]
+  isHotair: boolean,
+  isUltrasonic: boolean,
+  isElectric: boolean,
+  isBWO: boolean,
+  weekday: Weekday,
+  weeklyFrequency: number,
+  cancellations: JSONCancellationDTO[],
+  cancellationIds: number[]
 }
 
-export interface JSONListWeekDay {
+export interface JSONListWeekDayDTO {
   weekday: Weekday;
-  appointments: JSONAppointmentSeries[];
+  appointments: JSONAppointmentSeriesDTO[];
 }
 
-export interface JSONMasterlist {
-  elements: JSONListWeekDay[];
+export interface JSONMasterlistDTO {
+  elements: JSONListWeekDayDTO[];
 }
 
-export interface JSONSingleAppointment {
-  id: string,
-  therapist : string,
-  therapistID : string,
-  patient: string,
-  patientId: string,
-  startTime: string,
-  endTime: string,
+export interface JSONSingleAppointmentDTO {
+  id: number,
+  therapist: JSONTherapistDTO,
+  therapistId: number,
+  patient: JSONPatientDTO,
+  patientId: number,
+  startTime: Date,
+  endTime: Date,
+  date: Date,
   comment: string,
   isHotair: boolean,
   isUltrasonic: boolean,
   isElectric: boolean
 }
 
-export interface JSONListSingleDay {
+export interface JSONListSingleDayDTO {
   date: number;
-  appointments: JSONSingleAppointment[];
+  appointments: JSONSingleAppointmentDTO[];
 }
 
-export interface JSONDaylist {
-  elements: JSONListSingleDay[];
+export interface JSONDaylistDTO {
+  elements: JSONListSingleDayDTO[];
 }
 
-export interface JSONException {
-  day: string;
-  start: string;
-  end: string;
+export interface JSONAbsenceExceptionDTO {
+  id: number
+  date: Date;
+  startTime: Date;
+  endTime: Date;
 }
 
-export interface JSONAbsence {
-  day: Weekday | string;
-  start: string;
-  end: string;
+export interface JSONAbsenceDTO {
+  id: number;
+  date: Date;
+  weekday: Weekday;
+  startTime: Date;
+  endTime: Date;
 }
 
-export interface JSONTherapist {
+export interface JSONTherapistDTO {
   name: string;
-  id: string;
-  activeSince: number;
-  activeUntil: number;
-  absences: JSONAbsence[];
-  exceptions: JSONException[];
+  id: number;
+  activeSince: Date;
+  activeUntil: Date;
+  absences: JSONAbsenceDTO[];
+  absenceIds: number[];
+  absenceExceptions: JSONAbsenceExceptionDTO[];
+  absenceExceptionIds: number[];
 }
 
-export interface JSONPatient {
+export interface JSONPatientDTO {
+  id: string;
   firstName: string;
-  name: string;
-  id: string;
-  activeSince: number;
-  activeUntil: number;
+  lastName: string;
+  activeSince: Date;
+  activeUntil: Date;
   isBWO: boolean;
 }
 
-export interface JSONBackup {
+export interface JSONBackupDTO {
   createdDate: number;
-  masterlist: JSONMasterlist;
-  daylist: JSONDaylist;
-  therapists: JSONTherapist[];
-  patients: JSONPatient[];
+  masterlist: JSONMasterlistDTO;
+  daylist: JSONDaylistDTO;
+  therapists: JSONTherapistDTO[];
+  patients: JSONPatientDTO[];
 }

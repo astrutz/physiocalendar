@@ -10,7 +10,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
-import Store from './store/backup';
+
 import AppBar from './components/AppBar.vue';
 import ListTabs from './components/ListTabs.vue';
 

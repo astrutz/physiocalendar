@@ -40,11 +40,6 @@ import Import from '@/components/Import.vue';
 import Settings from '@/components/Settings.vue';
 import Patients from '@/components/Patients.vue';
 
-import { getModule } from 'vuex-module-decorators';
-import FileSaver from 'file-saver';
-import Store from '../store/backup';
-import convertToJSON from '../store/convertToJSON';
-
 @Component({
   components: {
     Terminfinder,
@@ -62,16 +57,8 @@ export default class Menu extends Vue {
     { title: 'Patienten verwalten', dialog: false },
   ];
 
-  store = getModule(Store);
-
   downloadItem(): void {
-    const backup = this.store.getBackup;
-    if (backup) {
-      const backupJSON = convertToJSON(backup);
-      backupJSON.createdDate = new Date().getTime();
-      const blob = new Blob([JSON.stringify(backupJSON, null, 2)], { type: 'text/plain;charset=utf-8' });
-      FileSaver.saveAs(blob, `backup_${backupJSON.createdDate}.json`);
-    }
+    console.log('TODO implement download structured Data in JSON Format')
   }
 }
 

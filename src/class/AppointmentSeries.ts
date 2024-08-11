@@ -1,13 +1,18 @@
 import Appointment from './Appointment';
 import Cancellation from './Cancellation';
 import { Time, Weekday } from './Enums';
+import Therapist from './Therapist';
+import Patient from './Patient';
 
 export default class AppointmentSeries extends Appointment {
+
   weekday: Weekday;
 
-  interval: number;
+  weeklyFrequency: number;
 
   cancellations: Cancellation[];
+
+  cancellationIds: number[];
 
   startDate: Date;
 
@@ -22,28 +27,30 @@ export default class AppointmentSeries extends Appointment {
   isBWO: boolean;
 
   constructor(
-    therapist: string,
-    therapistID: string,
-    patient: string,
-    patientId: string,
-    startTime: Time,
-    endTime: Time,
+    id: number,
+    therapistId: number,
+    therapist: Therapist,
+    patient: Patient,
+    patientId: number,
+    startTime: Date,
+    endTime: Date,
+    startDate: Date,
+    endDate: Date,
     comment: string,
     isHotair: boolean,
     isUltrasonic: boolean,
     isElectric: boolean,
     weekday: Weekday,
-    interval: number,
+    weeklyFrequency: number,
     cancellations: Cancellation[],
-    startDate?: Date,
-    endDate?: Date,
-    id?: string,
+    cancellationIds: number[],
     isBWO = false,
   ) {
-    super(therapist, therapistID, patient, patientId, startTime, endTime, comment, id);
+    super(id, therapist, therapistId, patient, patientId, startTime, endTime, comment);
     this.weekday = weekday;
-    this.interval = interval;
+    this.weeklyFrequency = weeklyFrequency;
     this.cancellations = cancellations;
+    this.cancellationIds = cancellationIds;
     this.startDate = startDate || new Date();
     this.endDate = endDate || new Date();
     this.isHotair = isHotair;
@@ -53,6 +60,6 @@ export default class AppointmentSeries extends Appointment {
   }
 
   getTimeAsString(): string {
-    return Time[this.startTime];
+    return this.startTime.toDateString();
   }
 }

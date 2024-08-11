@@ -1,17 +1,15 @@
 export default class Cancellation {
-  date: string;
-
-  patient: string;
-
-  // repAppointmentIds: string[];
+  
+  id: number;
+  
+  date: Date;
 
   constructor(
-    date: string,
-    patient: string,
-    // repAppointmentIds: string[],
+    id: number,
+    date: Date,
+
   ) {
+    this.id = id;
     this.date = date;
-    this.patient = patient;
-    // this.repAppointmentIds = repAppointmentIds;
   }
 }

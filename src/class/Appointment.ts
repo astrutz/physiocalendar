@@ -1,60 +1,46 @@
-import { v4 as uuidv4 } from 'uuid';
-import Cancellation from './Cancellation';
-import { Time } from './Enums';
+import Therapist from './Therapist';
+import Patient from './Patient';
 
 export default class Appointment {
-  id: string;
+  id: number;
 
-  therapist : string;
+  therapist : Therapist;
 
-  therapistID : string;
+  therapistId : number;
 
-  patient : string;
+  patient : Patient;
 
-  patientId : string;
+  patientId : number;
 
-  startTime: Time;
+  startTime: Date;
 
-  endTime: Time;
+  endTime: Date;
 
   comment: string;
 
-  // macht keinen Sinn an der Stelle aber um die Fehler zu bereinigen
-
-  date: Date;
-
-  cancellations: Cancellation[];
-
-  weekday: string;
 
   constructor(
-    therapist : string,
-    therapistID : string,
-    patient: string,
-    patientId: string,
-    startTime: Time,
-    endTime: Time,
+    id : number,
+    therapist : Therapist,
+    therapistId : number,
+    patient: Patient,
+    patientId: number,
+    startTime: Date,
+    endTime: Date,
     comment: string,
-    id? : string,
-    date?: Date,
-    weekday?: string,
-    cancellations?: Cancellation[],
   ) {
-    this.id = id || uuidv4();
+    this.id = id;
     this.therapist = therapist;
-    this.therapistID = therapistID;
+    this.therapistId = therapistId;
     this.patient = patient;
     this.patientId = patientId;
     this.startTime = startTime;
     this.endTime = endTime;
     this.comment = comment;
-    this.date = date || new Date('01.01.1975');
-    this.weekday = weekday || '';
-    this.cancellations = cancellations || [];
   }
 
   // eslint-disable-next-line class-methods-use-this
   calculateLength() : number {
-    return parseInt(Time[this.endTime], 10) - parseInt(Time[this.startTime], 10);
+    return this.endTime.getTime() - this.startTime.getTime();
   }
 }

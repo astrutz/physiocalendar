@@ -1,10 +1,10 @@
 import Absence from './Absence';
-import Exception from './Exception';
+import Exception from './AbsenceException';
 
 export default class Therapist {
   name: string;
 
-  id: string;
+  id: number;
 
   activeSince: Date;
 
@@ -12,21 +12,29 @@ export default class Therapist {
 
   absences: Absence[];
 
-  exceptions: Exception[];
+  absenceIds: number[];
+
+  absenceExceptions: Exception[];
+
+  absenceExceptionIds: number[]
 
   constructor(
     name: string,
-    id: string,
+    id: number,
     activeSince: Date,
     activeUntil: Date,
     absences: Absence[],
-    exceptions: Exception[],
+    absenceIds: number[],
+    absenceExceptions: Exception[],
+    absenceExceptionIds: number[],
   ) {
     this.name = name;
     this.id = id;
     this.activeSince = activeSince;
     this.activeUntil = activeUntil;
     this.absences = absences;
-    this.exceptions = exceptions;
+    this.absenceIds = absenceIds;
+    this.absenceExceptions = absenceExceptions;
+    this.absenceExceptionIds = absenceExceptionIds;
   }
 }

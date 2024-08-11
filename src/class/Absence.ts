@@ -1,19 +1,27 @@
 import { Time, Weekday } from './Enums';
 
 export default class Absence {
-  day: Weekday | string;
+  id: number;
 
-  start : Time;
+  date: Date;
+  
+  weekday: Weekday;
 
-  end : Time;
+  startTime : Time;
+
+  endTime : Time;
 
   constructor(
-    day: Weekday | string,
-    start : Time,
-    end : Time,
+    id: number,
+    date: Date,
+    weekday: Weekday,
+    startTime: Time,
+    endTime: Time,
   ) {
-    this.day = day;
-    this.start = start;
-    this.end = end;
+    this.id = id;
+    this.date = date;
+    this.weekday = weekday;
+    this.startTime = startTime;
+    this.endTime = endTime;
   }
 }
