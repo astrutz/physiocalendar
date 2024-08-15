@@ -1,1200 +1,220 @@
 <template>
-  <div v-if="localBackup !== null">
+  <div>
     <v-simple-table style="margin-top: 16px" dense>
       <template v-slot:default>
         <thead>
           <tr>
-            <th
-              v-for="header in headers"
-              :key="header.value"
-              class="text-center text-subtitle-2"
-            >
-              <span v-if="header.text === ''">{{ header.text }}</span>
-                <DaylistHeader
-                  :therapist="header.text"
-                  :therapistID="header.id"
-                  :head="header"
-                  :absences="header.absences.filter((abs) => abs.day.includes('.'))"
-                  :masterlistAbsences="header.absences.filter((abs) => !abs.day.includes('.'))"
-                  :exceptions="header.exceptions"
-                  :date="currentSingleDay"
-                  :key="`${hash}-${header.id}`"
-                  @absencesChanged="saveAbsences($event)"
-                />
+            <th v-for="header in headers" :key="header.value" class="text-center text-subtitle-2">
+              <DaylistHeader
+                :therapist="header.text"
+                :therapistID="header.id"
+                :date="currentSingleDay"
+                @absencesChanged="saveAbsences($event)"
+              />
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, rowIndex) in rows" :key="row.name">
+          <tr v-for="(row, rowIndex) in rows" :key="row.startTimeString">
             <td
-          v-for="header, headerIndex in headers.filter(header => header === '' || row[header.value] != undefined)"
-          :key="header.value"
-          :id="`cell_${rowIndex}_${headerIndex}`"
-          :rowspan="calculateRowspan(row[header.value])"
-          :isException="isCellException(row[header.value],`cell_${rowIndex}_${headerIndex}`)"
-          :class="{
-            'text-center': true,
-            'hour-begin': rowIndex % 6 === 0,
-            'cell-filled':
-              row[header.value] &&
-              row[header.value].patient &&
-              row[header.value].startDate,
-            'cell-bwo':
-              row[header.value] &&
-              row[header.value].patient &&
-              row[header.value].isBWO,
-            'cell-hotair':
-              row[header.value] &&
-              row[header.value].patient &&
-              row[header.value].isHotair,
-            'cell-ultrasonic':
-              row[header.value] &&
-              row[header.value].patient &&
-              row[header.value].isUltrasonic,
-            'cell-electric':
-              row[header.value] &&
-              row[header.value].patient &&
-              row[header.value].isElectric,
-            'cell-absence':
-              header.text !== '' && hasAbsenceInTime(header.id, rowIndex),
-            'cell-saturday':
-              convertStringToDate(currentSingleDay).getDay() === 6 && !(typeof row[header.value] === 'string' &&
-              row[header.value].includes(':'))
-          }"
-            @click="openCreateDialog(header.value, header.id, row.startTime)"
+              v-for="header in headers"
+              :key="header.value"
+              @click="openCreateDialog(header.text, header.id, row.startTime)"
+              :class="getClassForCell(row[header.value])"
             >
-              <span
-                v-if="
-                  typeof row[header.value] === 'string' &&
-                  row[header.value].includes(':')
-                "
-                >{{ row[header.value] }}</span
-              >
-              <div
-                v-else-if="row[header.value] === ''"
-                class="create-appointment"
-                @click="openCreateDialog(header.value, header.id, row.startTime)"
-              ></div>
-            <DaylistElement
-              v-else-if="row[header.value] && row[header.value].patient"
-              :key="`${hash}-${row[header.value].therapistID}-${row.startTime}`"
-              @appointmentAdded="addAppointment($event)"
-              @appointmentChanged="changeAppointment($event)"
-              @singleAppointmentChanged="changeSingleAppointment($event)"
-              @appointmentDeleted="deleteAppointment($event)"
-              @exceptionAdded="addException($event)"
-              @exceptionChanged="changeException($event)"
-              @exceptionDeleted="deleteException($event)"
-              @openDialog="showDialog($event)"
-              :currDate="currentSingleDay"
-              :patient="row[header.value].patient"
-              :id="row[header.value].id"
-              :comment="row[header.value].comment"
-              :therapist="row[header.value].therapist"
-              :therapistID="row[header.value].therapistID"
-              :isException="row[header.value].startDate
-               ? row[header.value].cancellations.some((c) => c.date === currentSingleDay) : false"
-              :isHotair="row[header.value].startDate ? false : row[header.value].isHotair"
-              :isUltrasonic="row[header.value].startDate ? false : row[header.value].isUltrasonic"
-              :isElectric="row[header.value].startDate ? false : row[header.value].isElectric"
-              :startTime="row.startTime"
-              :endTime="row[header.value].endTime"
-              :patient1="row[header.value].startDate ? getPatient(row[header.value].cancellations) : ''"
-              :reqOnePatient="row[header.value].cancellations ? true : false"
-              :isSingleApp="row[header.value] && row[header.value].patient && !row[header.value].startDate"
-              :appointment="row[header.value]"
-              :appointmentStartDate="row[header.value].startDate"
-              :appointmentEndDate="row[header.value].endDate"
-              :date="row[header.value].startDate ? `seit ${convertDateToString(row[header.value].startDate)}` : currentSingleDay"
-              :weekday="weekday"
-            />
-           </td>
-            </tr>
-          </tbody>
-        </template>
-      </v-simple-table>
-      <v-dialog v-model="openSingleAppointmentDialog" width="800">
-              <v-card>
-        <v-card-title class="text-h5 grey lighten-2">
-          {{ selectedAppointment.therapist }} - {{ weekday }} {{ currentSingleDay }} -
-          {{ singleAppointmentToOpen.startTime }}
-        </v-card-title>
-        <v-card-text class="pt-5">
-          <v-combobox
-            v-model="singleAppointmentToOpen.patient"
-            @input="searchAppointmentsForPatient($event)"
-            :disabled="true"
-            :loading="patientsLoading"
-            :items="foundPatients"
-            :search-input.sync="searchValue"
-            class="mb-4 mt-0"
-            flat
-            hide-no-data
-            hide-details
-            clearable
-            label="Name des Patienten"
-          ></v-combobox>
-          <v-select
-          :items="getAllTimes()"
-          label="Start um"
-          v-model="singleAppointmentToOpen.startTime"
-          :value="singleAppointmentToOpen.startTime"
-          ></v-select>
+              <div v-if="!row[header.value]">
+                <v-btn text @click="openCreateDialog(header.text, header.id, row.startTime)">+</v-btn>
+              </div>
+              <div v-else-if="row[header.value] instanceof SingleAppointment">
+                <v-btn text @click="openSingleAppointmentDialog(row[header.value])">
+                  {{ row[header.value].patient }}
+                </v-btn>
+              </div>
+              <div v-else-if="row[header.value] instanceof AppointmentSeries">
+                <v-btn text @click="openSeriesAppointmentDialog(row[header.value])">
+                  {{ row[header.value].patient }} (Serie)
+                </v-btn>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </template>
+    </v-simple-table>
 
-          <v-select
-          :items="getAllTimes()"
-          label="Ende um"
-          v-model="singleAppointmentToOpen.endTime"
-          :value="singleAppointmentToOpen.endTime"
-          ></v-select>
-          <v-text-field
-            label="Sonstige Bemerkungen"
-            v-model="singleAppointmentToOpen.comment"
-            clearable
-          ></v-text-field>
-          <v-row>
-            <v-col>
-              <v-checkbox
-                label="Heißluft"
-                v-model="singleAppointmentToOpen.isHotair"
-              ></v-checkbox>
-            </v-col>
-            <v-col>
-              <v-checkbox
-                label="Ultraschall"
-                v-model="singleAppointmentToOpen.isUltrasonic"
-              ></v-checkbox>
-            </v-col>
-            <v-col>
-              <v-checkbox
-                label="Elektro"
-                v-model="singleAppointmentToOpen.isElectric"
-              ></v-checkbox>
-            </v-col>
-          </v-row>
-        </v-card-text>
-        <v-divider></v-divider>
+    <!-- Dialog für das Erstellen eines Termins -->
+    <create-appointment-dialog
+      v-if="createDialog"
+      :therapist="selectedTherapist"
+      :currentDay="currentSingleDay"
+      v-model="createDialog"
+      @saveSingle="addAppointment"
+      @saveSeries="addSeriesAppointment"
+    />
 
-        <v-card-actions>
-          <v-btn
-            color="normal"
-            text
-            @click="
-              openSingleAppointmentDialog = false;
-              resetSingleAppointmentToOpen();"
-          >
-            Abbrechen
-          </v-btn>
-          <v-spacer></v-spacer>
-          <v-btn
-          color="error"
-          text
-          @click="
-            deleteSingleAppointment(singleAppointmentToOpen);
-            resetSingleAppointmentToOpen();"
-          >
-            Einzeltermin löschen
-          </v-btn>
-          <v-spacer></v-spacer>
-          <v-btn
-          color="warning"
-          @click="printAppointment()"
-          text
-          >
-            Drucken
-          </v-btn>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="success"
-            button
-            @click="
-              changeRepSingleAppointment({
-                therapist: selectedAppointment.therapist,
-                therapistID: selectedAppointment.therapistID,
-                patient: singleAppointmentToOpen.patient,
-                comment: singleAppointmentToOpen.comment,
-                id: singleAppointmentToOpen.id,
-                isHotair: singleAppointmentToOpen.isHotair,
-                isUltrasonic: singleAppointmentToOpen.isUltrasonic,
-                isElectric: singleAppointmentToOpen.isElectric,
-              });
-              openSingleAppointmentDialog = false;
-              resetSingleAppointmentToOpen();
-            "
-          >
-            Speichern
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    <v-dialog v-model="createDialog" width="600">
-      <v-card>
-        <v-card-title class="text-h5 grey lighten-2">
-          {{ selectedAppointment.therapist }} - {{ weekday }} {{ currentSingleDay }} -
-          {{ selectedAppointment.startTime }}
-        </v-card-title>
+    <!-- Dialog für das Anzeigen und Bearbeiten eines Einzeltermins -->
+    <single-appointment-dialog
+      v-if="openSingleAppointmentDialog"
+      :appointment="selectedAppointment"
+      @save="changeSingleAppointment"
+      @delete="deleteSingleAppointment"
+      v-model="openSingleAppointmentDialog"
+    />
 
-        <v-card-text class="pt-5">
-          <v-row>
-            <v-combobox
-            v-model="inputFields.patientTextfield"
-            @input="searchAppointmentsForPatient($event)"
-            :loading="patientsLoading"
-            :items="foundPatients"
-            :search-input.sync="searchValue"
-            class="mb-4 mt-0"
-            flat
-            hide-no-data
-            hide-details
-            clearable
-            label="Name des Patienten"
-          ></v-combobox>
-          <v-switch v-model="inputFields.createSeriesAppointment" label="Serientermin" ></v-switch>
-          </v-row>
-          <v-row v-if="inputFields.createSeriesAppointment">
-          <v-menu
-            v-model="startDatePickerIsOpen"
-            :close-on-content-click="false"
-            :nudge-right="40"
-            transition="scale-transition"
-            offset-y
-            min-width="auto"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                v-model="startDateStringFormatted"
-                label="Start Datum"
-                persistent-hint
-                append-icon="mdi-calendar"
-                v-bind="attrs"
-                @blur="
-                  startDateString = convertGermanToEnglishReadableString(
-                    startDateStringFormatted
-                  );
-                "
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker
-              v-model="startDateString"
-              :allowed-dates="
-                  (dateVal) => {
-                    return new Date(dateVal) >= new Date();
-                  }
-              "
-              @input="
-                startDatePickerIsOpen = false;
-                startDate = getCombinedStartDate(startDateString);
-                startDateStringFormatted = convertEnglishToGermanReadableString(
-                  startDateString
-                );
-              "
-              locale="de-de"
-              :first-day-of-week="1"
-            ></v-date-picker>
-          </v-menu>
-          <v-menu
-            v-model="endDatePickerIsOpen"
-            :close-on-content-click="false"
-            :nudge-right="40"
-            transition="scale-transition"
-            offset-y
-            min-width="auto"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                v-model="endDateStringFormatted"
-                label="End Datum"
-                persistent-hint
-                append-icon="mdi-calendar"
-                v-bind="attrs"
-                @blur="
-                  endDateString = convertGermanToEnglishReadableString(
-                    endDateStringFormatted
-                  )
-                "
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker
-              v-model="endDateString"
-              :allowed-dates="
-                  (dateVal) => {
-                    return new Date(dateVal) >= new Date();
-                  }
-              "
-              @input="
-                endDatePickerIsOpen = false;
-                endDate = getCombinedEndDate(endDateString);
-                endDateStringFormatted = convertEnglishToGermanReadableString(
-                  endDateString
-                );
-              "
-              locale="de-de"
-              :first-day-of-week="1"
-            ></v-date-picker>
-          </v-menu>
-        </v-row>
-        <v-row>
-          <v-select
-          :items="getAllTimes()"
-          label="Start um"
-          v-model="inputFields.startTimeSelect"
-          ></v-select>
-
-          <v-select
-          :items="getAllTimes()"
-          label="Ende um"
-          v-model="inputFields.endTimeSelect"
-          ></v-select>
-        </v-row>
-        <v-row v-if="inputFields.createSeriesAppointment">
-          <v-text-field
-              label="Wöchentliches Interval"
-              type="number"
-              :rules="[v => (v > 0 && v % 1 === 0)]"
-              v-model="inputFields.interval"
-              :value="inputFields.interval"
-          ></v-text-field>
-          <v-checkbox
-              label="BWO"
-              v-model="inputFields.isBWO"
-              :value="inputFields.isBWO"
-            ></v-checkbox>
-        </v-row>
-        <v-row>
-          <v-text-field
-            label="Sonstige Bemerkungen"
-            v-model="inputFields.commentTextfield"
-            clearable
-          ></v-text-field>
-        </v-row>
-        <v-row>
-          <v-col>
-            <v-checkbox
-              label="Heißluft"
-              v-model="inputFields.isHotairField"
-            ></v-checkbox>
-          </v-col>
-          <v-col>
-            <v-checkbox
-              label="Ultraschall"
-              v-model="inputFields.isUltrasonicField"
-            ></v-checkbox>
-          </v-col>
-          <v-col>
-            <v-checkbox
-              label="Elektro"
-              v-model="inputFields.isElectricField"
-            ></v-checkbox>
-          </v-col>
-          </v-row>
-          <v-alert v-if="appointmentsForPatient.length > 0" type="info">
-            Unter diesem Namen wurden weitere Termine gefunden:
-            <div
-              v-for="appointment in appointmentsForPatient"
-            :key="`${appointment.therapistID}-${appointment.startTime}-${appointment.weekday}`"
-            >
-              {{
-                appointment.weekday
-                  ? appointment.weekday + "s"
-                  : convertDateToString(appointment.date)
-              }}, {{ appointment.startTime }} bei
-              {{ appointment.therapist }}
-            </div>
-          </v-alert>
-        </v-card-text>
-        <v-divider></v-divider>
-        <v-card-actions>
-          <v-btn
-            color="normal"
-            text
-            @click="
-              createDialog = false;
-            "
-          >
-            Abbrechen
-          </v-btn>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="success"
-            button
-            @click="createAppointment({
-                therapist: selectedAppointment.therapist,
-                therapistID: selectedAppointment.therapistID,
-                patient: inputFields.patientTextfield,
-                startTime: inputFields.startTimeSelect,
-                endTime: inputFields.endTimeSelect,
-                startDate: startDate,
-                endDate: endDate,
-                comment: inputFields.commentTextfield,
-                id: '',
-                weekday: weekdayLong,
-                isBWO: inputFields.isBWO,
-                interval: inputFields.interval,
-                isHotair: inputFields.isHotairField,
-                isUltrasonic: inputFields.isUltrasonicField,
-                isElectric: inputFields.isElectricField,
-              });
-              createDialog = false;
-            "
-          >
-          {{ inputFields.createSeriesAppointment ? 'Serientermin erstellen' : 'Einzeltermin erstellen' }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <!-- Dialog für das Anzeigen und Bearbeiten eines Serientermins -->
+    <appointment-series-dialog
+      v-if="openSeriesAppointmentDialog"
+      :appointment="selectedSeriesAppointment"
+      @save="changeSeriesAppointment"
+      @delete="deleteSeriesAppointment"
+      v-model="openSeriesAppointmentDialog"
+    />
   </div>
-  <div v-else>wird geladen</div>
 </template>
 
 <script lang="ts">
-import { v4 as uuidv4 } from 'uuid';
-import Appointment from '@/class/Appointment';
-import Absence from '@/class/Absence';
-import AppointmentSeries from '@/class/AppointmentSeries';
-import Cancellation from '@/class/Cancellation';
-import Printer from '@/class/Printer';
-
-import Dateconversions from '@/class/Dateconversions';
-import { Time, Weekday } from '@/class/Enums';
-import SingleAppointment from '@/class/SingleAppointment';
-import holidaysJSON from '@/data/holidays.json';
-import {
-  Component, Prop, Vue, Watch,
-} from 'vue-property-decorator';
-import { getModule } from 'vuex-module-decorators';
-import Util from '@/class/Util';
-
-import DaylistElement from './DaylistElement.vue';
+import { Component, Vue, Watch } from 'vue-property-decorator';
 import DaylistHeader from './DaylistHeader.vue';
-import AbsenceException from '@/class/AbsenceException';
+import CreateAppointmentDialog from './CreateAppointmentDialog.vue';
+import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
+import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
+import { getModule } from 'vuex-module-decorators';
+import AppointmentStore from '@/store/AppointmentStore';
+import AppointmentSeriesStore from '@/store/AppointmentSeriesStore';
+import { Time } from '@/class/Enums';
+import Dateconversions from '@/class/Dateconversions';
+import Therapist from '@/class/Therapist';
+import SingleAppointment from '@/class/SingleAppointment';
+import AppointmentSeries from '@/class/AppointmentSeries';
 
 @Component({
   components: {
-    DaylistElement,
     DaylistHeader,
+    CreateAppointmentDialog,
+    SingleAppointmentDialog,
+    AppointmentSeriesDialog,
   },
 })
-
 export default class Daylist extends Vue {
-  @Prop() readonly currentSingleDay!: string;
+  public currentSingleDay: Date = Dateconversions.getCurrentDateString();
+  public createDialog: boolean = false;
+  public singleAppointmentDialog: boolean = false;
+  public seriesAppointmentDialog: boolean = false;
+  public selectedTherapist: string = '';
+  public selectedAppointment: SingleAppointment | null = null;
+  public selectedSeriesAppointment: AppointmentSeries | null = null;
 
-  createDialog = false;
+  appointmentStore = getModule(AppointmentStore);
+  appointmentSeriesStore = getModule(AppointmentSeriesStore);
 
-  openSingleAppointmentDialog = false;
-
-  weekday = '';
-
-  weekdayLong = '';
-
-  public holidays = holidaysJSON.days;
-
-  inputFields = {
-    patientTextfield: '',
-    startTimeSelect: '',
-    endTimeSelect: '',
-    commentTextfield: '',
-    isHotairField: false,
-    isUltrasonicField: false,
-    isElectricField: false,
-    interval: '1',
-    isBWO: false,
-    createSeriesAppointment: false,
-  }
-
-  public singleAppointmentToOpen: SingleAppointment = new SingleAppointment('',
-    '',
-    '',
-    '',
-    Dateconversions.timeFromString('07:00'),
-    Dateconversions.timeFromString('07:00'),
-    '',
-    new Date(),
-    false,
-    false,
-    false,
-    '');
-
-  selectedAppointment = {
-    therapist: '',
-    therapistID: '',
-    startTime: '7:00',
-    day: this.currentSingleDay,
-    patient: '',
-  };
-
-  store = getModule(Store);
-
-  appointmentsForPatient: Appointment[] = [];
-
-  cellsToUpdate: { id: string, isException: boolean }[] = [];
-
-  hash = uuidv4();
-
-  private headers: { text: string, value: string, id: string, absences: Absence[], exceptions: Exception[], align: string }[] = [
-    {
-      text: '', value: 'startTime', id: '', absences: [], exceptions: [], align: '',
-    },
-  ];
-
-  private rows: {
-    [key: string]: string | Time | SingleAppointment | AppointmentSeries | Absence[]
-  }[] = [{ startTimeString: '' }];
-
-  private patientsLoading = false;
-
-  public startDatePickerIsOpen = false;
-
-  public endDatePickerIsOpen = false;
-
-  public startDate = new Date();
-
-  public startDateString: string = new Date(
-    this.startDate.getTime() - this.startDate.getTimezoneOffset() * 60000,
-  ).toISOString().substr(0, 10);
-
-  public startDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.startDateString);
-
-  public endDate = new Date();
-
-  public endDateString: string = new Date(
-    this.endDate.getTime() - this.endDate.getTimezoneOffset() * 60000,
-  ).toISOString().substr(0, 10);
-
-  public endDateStringFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.endDateString);
-
-  private searchValue = '';
-
-
-
-  private foundPatients : string[] = [];
-
-
+  public headers: Array<{ id: number; text: string; value: number}> = [];
+  public rows: Array<Record<string, any>> = [];
 
   @Watch('currentSingleDay')
-  async currentSingleDayChanged(): Promise<void> {
-    const weekday = Dateconversions.getWeekdayForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
-    this.createHeaders();
-    this.createRows();
-    this.hash = uuidv4();
-    this.weekday = Dateconversions.getWeekdayStringForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
-    if (weekday) {
-      this.weekdayLong = Dateconversions.getGermanWeekdayString(weekday);
-    }
+  async onDateChange() {
+    await this.loadAppointments();
   }
 
-  @Watch('localBackup')
-  localBackupChanged(): void {
+  mounted() {
     this.createHeaders();
-    this.createRows();
-    this.hash = uuidv4();
-  }
-
-  @Watch('searchValue')
-  searchValueChanged(val: string | undefined): boolean {
-    this.foundPatients = [];
-    this.searchPatients(val);
-    this.inputFields.patientTextfield = val || this.inputFields.patientTextfield;
-    return val !== this.inputFields.patientTextfield;
-  }
-
-  mounted(): void {
-    const weekday = Dateconversions.getWeekdayForDate(Dateconversions.convertReadableStringToDate(this.currentSingleDay));
-    this.createHeaders();
-    this.createRows();
-    this.hash = uuidv4();
-    if (weekday) {
-      this.weekdayLong = Dateconversions.getGermanWeekdayString(weekday);
-    }
+    this.loadAppointments();
   }
 
   private createHeaders(): void {
-    if (this.localBackup !== null) {
-      this.headers = [];
-      const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
-      const therapistHeaders = this.localBackup.therapists.filter(
-        (therapist) => therapist.activeSince < currentSingleDate && therapist.activeUntil > currentSingleDate,
-      ).map((therapist) => ({
-        text: therapist.name,
-        value: therapist.name,
-        id: therapist.id,
-        absences: therapist.absences.filter(
-          (abs) => abs.day === this.currentSingleDay || abs.day === Dateconversions.getWeekdayForDate(currentSingleDate),
-        ),
-        exceptions: therapist.exceptions.filter(
-          (exc) => exc.day === this.currentSingleDay,
-        ),
-        align: 'center',
-      }));
-      this.headers = [{
-        text: '',
-        value: 'startTime',
-        id: '',
-        absences: [new Absence('a', Time['7:00'], Time['7:00'])],
-        exceptions: [new Exception('a', Time['7:00'], Time['7:00'])],
-        align: '',
-      }].concat(therapistHeaders);
-    }
+    // Beispielhafte Header-Daten; sollte auf Basis deiner Datenquelle erstellt werden.
+    this.headers = this.getTherapists().map(therapist => ({
+      id: therapist.id,
+      text: therapist.name,
+      value: therapist.id,
+    }));
+  }
+
+  private async loadAppointments(): Promise<void> {
+    await this.appointmentStore.loadAppointments();
+    await this.appointmentSeriesStore.loadAppointmentSeries();
+    this.createRows();
   }
 
   private createRows(): void {
-  type TableRow = {
-    [key: string]: string | Time | SingleAppointment | AppointmentSeries;
-  };
+    const startTimes = new Time());
+    this.rows = startTimes.map((time) => {
+      const row: Record<string, any> = { startTimeString: time, startTime: time };
+      this.headers.forEach((header) => {
+        const singleAppointment: SingleAppointment = this.appointmentStore.getAppointmentByTherapistAndTime(header.id, this.currentSingleDay, time);
+        const seriesAppointment = this.appointmentSeriesStore.getAppointmentSeriesByTherapistAndTime(header.id, this.currentSingleDay, time);
 
-  const startTimes = Object.values(Time).filter((startTime): startTime is string => startTime.toString().includes(':'));
-  const emptyRows = startTimes.map((startTime) => ({
-    startTimeString: startTime.toString(),
-    startTime: startTime as unknown as Time,
-  }));
-
-  this.rows = [];
-
-  emptyRows.forEach((row) => {
-    const newRow: TableRow = {
-      startTimeString: row.startTimeString,
-      startTime: row.startTime,
-    };
-    this.headers.forEach((header) => {
-      if (header.text !== '' && !this.hasOngoingAppointments(header.value, row.startTime)) {
-        const singleAppointment = this.localBackup?.daylist.searchAppointment(
-          header.id, this.currentSingleDay, row.startTime as Time,
-        );
-        if (singleAppointment !== undefined) {
-          newRow[header.text] = singleAppointment;
+        if (singleAppointment) {
+          row[header.value] = singleAppointment;
+        } else if (seriesAppointment) {
+          row[header.value] = seriesAppointment;
         } else {
-          const currentSingleDate = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
-          const weekday = Dateconversions.getWeekdayForDate(currentSingleDate);
-          if (weekday) {
-            const masterAppointment = this.localBackup?.masterlist.searchAppointmentForDaylist(
-              header.id, weekday, row.startTime as Time, currentSingleDate,
-            );
-            if (!masterAppointment?.cancellations.some((c) => c.date === this.currentSingleDay)) {
-              newRow[header.text] = masterAppointment || '';
-            } else {
-              newRow[header.text] = '';
-            }
-          } else {
-            newRow[header.text] = '';
-          }
+          row[header.value] = null;
         }
-      }
+      });
+      return row;
     });
-    this.rows.push(newRow);
-  });
   }
 
-  private hasCancellationForCurrentDate(entry: string | Time | SingleAppointment | AppointmentSeries): boolean {
+  private getTherapists(): Therapist[] {
+    // Diese Methode sollte die Liste der Therapeuten aus dem Store oder einer API laden.
+    return [];
+  }
+
+  private openCreateDialog(therapist: Therapist, therapistId: number, startTime: Date): void {
+    this.selectedTherapist = therapist;
+    this.createDialog = true;
+  }
+
+  private openSingleAppointmentDialog(appointment: SingleAppointment): void {
+    this.selectedAppointment = appointment;
+    this.singleAppointmentDialog = true;
+  }
+
+  private openSeriesAppointmentDialog(appointment: AppointmentSeries): void {
+    this.selectedSeriesAppointment = appointment;
+    this.singleAppointmentDialog = true;
+  }
+
+  private addAppointment(appointment: SingleAppointment): void {
+    this.appointmentStore.addAppointment(appointment);
+    this.loadAppointments();
+  }
+
+  private addSeriesAppointment(appointment: AppointmentSeries): void {
+    this.appointmentSeriesStore.addAppointmentSeries(appointment);
+    this.loadAppointments();
+  }
+
+  private changeSingleAppointment(appointment: SingleAppointment): void {
+    this.appointmentStore.updateAppointment(appointment);
+    this.loadAppointments();
+  }
+
+  private changeSeriesAppointment(appointment: AppointmentSeries): void {
+    this.appointmentSeriesStore.updateAppointmentSeries(appointment);
+    this.loadAppointments();
+  }
+
+  private deleteSingleAppointment(id: string): void {
+    this.appointmentStore.deleteAppointment(id);
+    this.loadAppointments();
+  }
+
+  private deleteSeriesAppointment(id: string): void {
+    this.appointmentSeriesStore.deleteAppointmentSeries(id);
+    this.loadAppointments();
+  }
+
+  private getClassForCell(entry: SingleAppointment | AppointmentSeries | null): string {
+    if (!entry) return '';
+    if (entry instanceof SingleAppointment) {
+      return entry.isHotair ? 'cell-hotair' : entry.isUltrasonic ? 'cell-ultrasonic' : entry.isElectric ? 'cell-electric' : '';
+    }
     if (entry instanceof AppointmentSeries) {
-      return entry.cancellations.some((c) => c.date === this.currentSingleDay);
+      return entry.isBWO ? 'cell-bwo' : '';
     }
-    return false;
-  }
-
-  private hasOngoingAppointments(therapist : string, time: Time) : boolean {
-    return this.rows.some((row) => {
-      if (row[therapist] !== '') {
-        try {
-          const appointment = (row[therapist] as Appointment);
-          if (Time[appointment.startTime] < Time[time] && Time[appointment.endTime] > Time[time]) {
-            return true;
-          }
-        } catch (err) {
-          return false;
-        }
-      }
-      return false;
-    });
-  }
-
-  public isCellException(appointment : string | AppointmentSeries | SingleAppointment, pId: string): boolean {
-    if (typeof appointment === 'string') {
-      return false;
-    }
-    if (!appointment || appointment.cancellations.length === 0) {
-      return false;
-    }
-    const match = appointment.cancellations.find((cancellation) => cancellation.date === this.currentSingleDay);
-    if (match) {
-      return true;
-    }
-    return false;
-  }
-
-  setRowspanTdId = (id: string, rowspan: number) => {
-    const td = document.getElementById(id);
-    if (td) {
-      td.setAttribute('rowspan', rowspan.toString());
-    }
-  }
-
-  public static removeOverflowingCells1(): void {
-    const table = document.querySelector('table');
-    if (!table) return;
-    const { rows } = table;
-    const headerRow = table.querySelector('tr');
-    if (!headerRow) return;
-    const { cells: headerCells } = headerRow;
-    const therapistHeaderCell = Array.from(headerCells).find((cell) => cell.textContent === 'Therapeut');
-    const therapistHeaderCellIndex = therapistHeaderCell ? therapistHeaderCell.cellIndex : -1;
-    for (let i = rows.length - 1; i >= 0; i -= 1) {
-      const row = rows[i];
-      const { cells } = row;
-      if (therapistHeaderCellIndex === -1) {
-        if (cells.length > 11) {
-          for (let j = cells.length - 1; j >= 11; j -= 1) {
-            row.deleteCell(j);
-          }
-        }
-      } else if (cells.length > therapistHeaderCellIndex + 1) {
-        for (let j = cells.length - 1; j > therapistHeaderCellIndex + 1; j -= 1) {
-          row.deleteCell(j);
-        }
-      }
-    }
-  }
-
-  private openCreateDialog(therapist: string, therapistID: string, startTime: string): void {
-    this.selectedAppointment.therapist = therapist;
-    this.selectedAppointment.therapistID = therapistID;
-    this.selectedAppointment.startTime = startTime;
-    const times = this.getAllTimes();
-    const i = times.indexOf(startTime);
-    this.inputFields.startTimeSelect = startTime;
-    this.inputFields.endTimeSelect = i + 2 < times.length - 1 ? times[i + 2] : times[times.length - 1];
-    if (this.singleAppointmentToOpen.patient !== '') {
-      this.createDialog = false;
-    } else {
-      this.createDialog = true;
-    }
-  }
-
-  private showDialog(event: { appointment: SingleAppointment}): void {
-    const { appointment } = event;
-    console.log(event.appointment);
-    this.selectedAppointment.therapist = appointment.therapist;
-    this.selectedAppointment.therapistID = appointment.therapistID;
-    this.selectedAppointment.startTime = Dateconversions.stringFromTime(appointment.startTime);
-    this.singleAppointmentToOpen.date = Dateconversions.convertReadableStringToDate(this.currentSingleDay);
-    this.singleAppointmentToOpen.id = appointment.id;
-    this.singleAppointmentToOpen.startTime = appointment.startTime;
-    this.singleAppointmentToOpen.patient = appointment.patient;
-    this.singleAppointmentToOpen.endTime = appointment.endTime;
-    this.singleAppointmentToOpen.comment = appointment.comment;
-    this.singleAppointmentToOpen.isHotair = appointment.isHotair;
-    this.singleAppointmentToOpen.isUltrasonic = appointment.isUltrasonic;
-    this.singleAppointmentToOpen.isElectric = appointment.isElectric;
-    if (this.createDialog) {
-      this.createDialog = false;
-    }
-    this.openSingleAppointmentDialog = true;
-  }
-
-  private resetInputs(): void {
-    this.inputFields = {
-      patientTextfield: '',
-      startTimeSelect: '',
-      endTimeSelect: '',
-      commentTextfield: '',
-      isHotairField: false,
-      isUltrasonicField: false,
-      isElectricField: false,
-      interval: '1',
-      isBWO: false,
-      createSeriesAppointment: false,
-    };
-
-    this.selectedAppointment = {
-      patient: '',
-      therapist: '',
-      therapistID: '',
-      startTime: '7:00',
-      day: this.currentSingleDay,
-    };
-
-    this.appointmentsForPatient = [];
-  }
-
-  private resetSingleAppointmentToOpen(): void {
-    this.singleAppointmentToOpen = new SingleAppointment('',
-      '',
-      '',
-      '',
-      Dateconversions.timeFromString('07:00'),
-      Dateconversions.timeFromString('07:00'),
-      '',
-      new Date(),
-      false,
-      false,
-      false,
-      '');
-  }
-
-  private searchAppointmentsForPatient(patient: string): void {
-    if (this.localBackup) {
-      let appointments: Appointment[] = this.localBackup.daylist.getSingleAppointmentsByPatient(patient);
-      appointments = appointments.concat(this.localBackup.masterlist.getAppointmentSeriesByPatient(patient));
-      appointments = appointments.concat(this.localBackup.masterlist.getReplacementsByPatient(patient));
-      console.log(appointments);
-      this.appointmentsForPatient = appointments;
-    }
-  }
-
-  public addAppointment(
-    event: {
-      therapist: string, therapistID: string, patient: string, patientId: string, startTime: string, endTime: string,
-      comment: string, id: string, isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
-    },
-  ): void {
-    const appointment = new SingleAppointment(
-      event.therapist,
-      event.therapistID,
-      event.patient,
-      event.patientId,
-      event.startTime as unknown as Time,
-      event.endTime as unknown as Time,
-      event.comment,
-      Dateconversions.convertReadableStringToDate(this.currentSingleDay),
-      event.isHotair,
-      event.isUltrasonic,
-      event.isElectric,
-    );
-    if (this.localBackup) {
-      this.store.addSingleAppointment(appointment);
-    }
-    this.resetInputs();
-  }
-
-  public addSeriesAppointment(
-    event: {
-      therapist: string, therapistID: string, patient: string, patientId: string, startDate: Date, endDate: Date,
-      startTime: string, endTime: string, comment: string, id: string,
-      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
-      weekday: Weekday, interval: number, cancellations: Cancellation[], isBWO: boolean,
-    },
-  ): void {
-    const appointment = new AppointmentSeries(
-      event.therapist,
-      event.therapistID,
-      event.patient,
-      event.patientId,
-      event.startTime as unknown as Time,
-      event.endTime as unknown as Time,
-      event.comment,
-      event.isHotair,
-      event.isUltrasonic,
-      event.isElectric,
-      event.weekday,
-      event.interval,
-      [],
-      event.startDate,
-      event.endDate,
-      event.id,
-      event.isBWO,
-    );
-    console.log('Serien termin erstellen');
-    if (this.localBackup) {
-      this.store.addAppointmentSeries(appointment);
-    }
-    this.resetInputs();
-  }
-
-  public createAppointment(event): void {
-    if (this.inputFields.createSeriesAppointment) {
-      this.addSeriesAppointment(event);
-    } else {
-      this.addAppointment(event);
-    }
-  }
-
-  private changeAppointment(
-    event: {
-      therapist: string, therapistID: string, patient: string, patientId: string, startTime: string, endTime: string, weekday: Weekday,
-      interval: number, cancellations: Cancellation[],
-      startDate: Date, endDate: Date, comment: string, id: string,
-      isBWO: boolean, isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
-    },
-  ): void {
-    if (event.endDate) {
-      // speichern SerienTermin
-      const appointment = new AppointmentSeries(
-        event.therapist,
-        event.therapistID,
-        event.patient,
-        event.patientId,
-        event.startTime as unknown as Time,
-        event.endTime as unknown as Time,
-        event.comment,
-        event.isHotair,
-        event.isUltrasonic,
-        event.isElectric,
-        event.weekday,
-        event.interval,
-        event.cancellations,
-        event.startDate,
-        event.endDate,
-        event.id,
-        event.isBWO,
-      );
-      console.log('speichern Serien Termin Daylist');
-      console.log(appointment);
-      if (this.localBackup) {
-        this.store.changeAppointmentSeries(appointment);
-        this.resetInputs();
-      }
-    }
-  }
-
-  private changeSingleAppointment(
-    event: {
-      therapist: string, therapistID: string, patient: string, patientId: string, comment: string, id: string,
-      startTime: Time, endTime: Time, isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
-    },
-  ): void {
-    const appointment = new SingleAppointment(
-      event.therapist,
-      event.therapistID,
-      event.patient,
-      event.patientId,
-      event.startTime as unknown as Time,
-      event.endTime as unknown as Time,
-      event.comment,
-      Dateconversions.convertReadableStringToDate(this.currentSingleDay),
-      event.isHotair,
-      event.isUltrasonic,
-      event.isElectric,
-      event.id,
-    );
-    console.log('speichern Serien Termin Daylist');
-    console.log(appointment);
-    if (this.localBackup) {
-      this.store.changeSingleAppointment(appointment);
-    }
-  }
-
-  private changeRepSingleAppointment(
-    event: {
-      therapist: string, therapistID: string, patient: string, patientId: string, comment: string, id: string,
-      isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
-    },
-  ): void {
-    const appointment = new SingleAppointment(
-      event.therapist,
-      event.therapistID,
-      event.patient,
-      event.patientId,
-      this.singleAppointmentToOpen.startTime as unknown as Time,
-      this.singleAppointmentToOpen.endTime as unknown as Time,
-      event.comment,
-      Dateconversions.convertReadableStringToDate(this.currentSingleDay),
-      event.isHotair,
-      event.isUltrasonic,
-      event.isElectric,
-      event.id,
-    );
-    if (this.localBackup) {
-      this.store.changeSingleAppointment(appointment);
-      this.resetInputs();
-    }
-  }
-
-  private deleteAppointment(
-    event: {
-      therapist: string, therapistID: string, patient: string, patientId: string, startTime: string, endTime: string,
-      comment: string, id: string, isHotair: boolean, isUltrasonic: boolean, isElectric: boolean,
-    },
-  ): void {
-    if (this.localBackup) {
-      const appointment = new SingleAppointment(
-        event.therapist,
-        event.therapistID,
-        event.patient,
-        event.patientId,
-        event.startTime as unknown as Time,
-        event.endTime as unknown as Time,
-        event.comment,
-        Dateconversions.convertReadableStringToDate(this.currentSingleDay),
-        event.isHotair,
-        event.isUltrasonic,
-        event.isElectric,
-        event.id,
-      );
-      this.store.deleteSingleAppointment(appointment);
-    }
-  }
-
-  private deleteSingleAppointment(appointment: SingleAppointment): void {
-    /* eslint-disable */
-    if (window.confirm('Soll dieser Termin wirklich unwiederruflich gelöscht werden?')) {
-      if (this.localBackup) {
-        this.store.deleteSingleAppointment(appointment);
-        console.log('gelöschter einzeltermin: ');
-        console.log(appointment);
-        this.openSingleAppointmentDialog = false;
-      }
-    }
-  }
-
-  private addException(event: { isException: boolean, patient: string, appointment: AppointmentSeries }): void {
-    if (this.localBackup) {
-      this.store.addCancellation({
-        date: this.currentSingleDay, patient: event.patient, appointment: event.appointment,
-      });
-    }
-  }
-
-  private changeException(event: { isException: boolean, patient: string, appointment: AppointmentSeries }): void {
-    if (this.localBackup) {
-      this.store.changeCancellation({
-        date: this.currentSingleDay, patient: event.patient, appointment: event.appointment,
-      });
-    }
-  }
-
-  private deleteException(event: { isException: boolean, patient: string, appointment: AppointmentSeries }): void {
-    if (this.localBackup) {
-      this.store.deleteCancellation({ date: this.currentSingleDay, appointment: event.appointment });
-    }
-  }
-
-  private getPatient(cancellations: Cancellation[]): string {
-    if (cancellations.length === 0) {
-      return '';
-    }
-    const cancellation = cancellations.find((c) => c.date === new Date(this.currentSingleDay));
-    if (!cancellation || cancellation.id || cancellation.date === null) {
-      return '';
-    }
-    const arr = cancellation;
-    let patientName = '';
-    return patientName;
-  }
-
-  private hasAbsenceInTime(therapistID: string, rowIndex: number): boolean {
-    const therapist = this.headers.find((header) => header.id === therapistID);
-    let hasAbsence = false;
-    if (therapist) {
-      therapist.absences.forEach((abs) => {
-        if (parseInt(Time[abs.start], 10) <= rowIndex && parseInt(Time[abs.end], 10) >= rowIndex + 1) {
-          if (!therapist.exceptions.find(
-            (exc) => parseInt(Time[exc.start], 10) <= rowIndex && parseInt(Time[exc.end], 10) >= rowIndex + 1,
-          )) {
-            hasAbsence = true;
-          }
-        } else if (abs.end.toString() === '20:50' && rowIndex === 83) {
-          hasAbsence = true;
-        }
-      });
-    }
-    return hasAbsence;
-  }
-
-  private saveAbsences(event: { absences: [{ start: string, end: string }], masterlistAbsences: [{ start: string, end: string }],
-    exceptions: [{ start: string, end: string }], therapistID: string }): void {
-    if (this.localBackup) {
-      const absences = event.absences.map(
-        (abs) => new Absence(this.currentSingleDay, abs.start as unknown as Time, abs.end as unknown as Time),
-      );
-      this.store.setAbsencesForTherapistForDay({ absences, therapistID: event.therapistID.slice(), day: this.currentSingleDay });
-      const exceptions = event.exceptions.map(
-        (exc) => new Exception(this.currentSingleDay, exc.start as unknown as Time, exc.end as unknown as Time),
-      );
-      this.store.setExceptionsForTherapistForDay({ exceptions, therapistID: event.therapistID.slice(), day: this.currentSingleDay });
-    }
-  }
-
-  private searchPatients(searchQuery : string | undefined) : void {
-    if (searchQuery && searchQuery.length > 2 && this.localBackup) {
-      this.patientsLoading = true;
-      this.foundPatients = Util.searchPatientNames(this.localBackup, searchQuery);
-      this.patientsLoading = false;
-    }
-  }
-
-  public printAppointment(): void {
-    // const printer = new Printer(
-    //   this.singleAppointmentToOpen.id,
-    //   this.singleAppointmentToOpen.patient,
-    //   this.selectedAppointment.therapist,
-    //   this.singleAppointmentToOpen.startTime,
-    //   this.singleAppointmentToOpen.endTime,
-    //   Dateconversions.convertReadableStringToDate(this.currentSingleDay),
-    //   0,
-    //   undefined,
-    //   undefined,
-    //   undefined,
-    //   new Date(),
-    // );
-    // this.appointmentsForPatient = [];
-    // this.searchAppointmentsForPatient(this.singleAppointmentToOpen.patient);
-    // printer.printSingleAppointment(this.appointmentsForPatient);
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  private calculateRowspan(appointment : string | AppointmentSeries | SingleAppointment) : number {
-    if (typeof appointment === 'string') {
-      return 1;
-    }
-    return appointment.calculateLength();
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  private convertStringToDate(date: string) : Date {
-    return Dateconversions.convertReadableStringToDate(date);
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  private convertDateToString(date: Date): string {
-    return Dateconversions.convertDateToReadableString(date);
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  private getAllTimes(): string[] {
-    return Dateconversions.getAllTimes();
-  }
-
-  public getCombinedStartDate(dateString: string): Date {
-    const date = dateString;
-    // console.log(dateString);
-    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
-    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
-    return new Date(`${date}T04:00:00.000${offsetSuffix}`);
-  }
-
-  public getCombinedEndDate(dateString: string): Date {
-    const date = dateString;
-    // console.log(dateString);
-    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
-    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
-    return new Date(`${date}T04:00:00.000${offsetSuffix}`);
-  }
-
-  public convertGermanToEnglishReadableString(string: string): string {
-    return Dateconversions.convertGermanToEnglishReadableString(string);
-  }
-
-  public convertEnglishToGermanReadableString(string: string): string {
-    return Dateconversions.convertEnglishToGermanReadableString(string);
-  }
-
-  public dateIsAllowed(dateVal: string | Date): boolean {
-    if (typeof dateVal === 'string') {
-      if (this.holidays.includes(dateVal)) {
-        return false;
-      }
-      const day = this.getCombinedStartDate(dateVal).getDay();
-      return day > 0 && day < 6;
-    }
-    const readableString = Dateconversions.convertGermanToEnglishReadableString(Dateconversions.convertDateToReadableString(dateVal));
-    if (this.holidays.includes(readableString)) {
-      return false;
-    }
-    const day = dateVal.getDay();
-    return day > 0 && day < 6;
+    return '';
   }
 }
-
 </script>
 
 <style scoped>

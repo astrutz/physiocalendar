@@ -1,51 +1,5 @@
 <template>
   <v-dialog persistent v-model="dialogIsOpen" width="800">
-    <template v-slot:activator="{ on, attrs }">
-      <button
-        type="button"
-        @click="dialogIsOpen = true"
-        v-bind="attrs"
-        v-on="on"
-        :class="{ 'cell-button': !isException }"
-      >
-        <span v-if="!isException" class="textcenter">
-          {{ appointment.patient.firstName }}
-        </span>
-      </button>
-      <span v-if="isException" class="appointmentSeries textcenter">
-        <div class="elementrow">
-          <span>
-            <button
-              class="cancelled exception textcenter"
-              type="button"
-              v-bind="attrs"
-              v-on="on"
-            >
-              {{ appointment.patient.firstName }}
-            </button>
-          </span>
-        </div>
-        <div class="replacements" v-if="replacementAppointments.length > 0">
-          <ul>
-            <li v-for="appointment in replacementAppointments" :key="appointment.id">
-              <button
-                :class="{
-                  listentry: true,
-                  ishotair: appointment.isHotair,
-                  isultrasonic: appointment.isUltrasonic,
-                  iselectric: appointment.isElectric,
-                  singleAppointment: !appointment.isElectric && !appointment.isUltrasonic && !appointment.isHotair,
-                }"
-                type="button"
-                @click="openDialog(appointment)"
-              >
-                {{ appointment.patient }} {{ appointment.startTime }} - {{ appointment.endTime }}
-              </button>
-            </li>
-          </ul>
-        </div>
-      </span>
-    </template>
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
         {{ appointment.therapist.name }} - {{ appointment.weekday }} {{ appointment.date }} - {{ appointment.startTime }} bis {{ appointment.endTime }}
@@ -100,14 +54,13 @@
                 persistent-hint
                 prepend-icon="mdi-calendar"
                 v-bind="attrs"
-                @blur="startDateStringFormatted = startDateStringFormatted"
                 v-on="on"
               ></v-text-field>
             </template>
             <v-date-picker
               v-model="startDateStringFormatted"
               :allowed-dates="dateIsAllowed"
-              @input="onStartDateChange"
+              @input="startDateStringFormatted"
               locale="de-de"
               :first-day-of-week="1"
             ></v-date-picker>
@@ -127,14 +80,13 @@
                 persistent-hint
                 prepend-icon="mdi-calendar"
                 v-bind="attrs"
-                @blur="endDateStringFormatted = endDateStringFormatted"
                 v-on="on"
               ></v-text-field>
             </template>
             <v-date-picker
               v-model="endDateStringFormatted"
               :allowed-dates="dateIsAllowed"
-              @input="onEndDateChange"
+              @input="endDateStringFormatted"
               locale="de-de"
               :first-day-of-week="1"
             ></v-date-picker>
@@ -249,7 +201,8 @@ export default class DaylistElement extends Vue {
 
   public isElectricField = this.appointment?.isElectric || false;
 
-  public startDateStringFormatted = this.appointmentSeries?.startDate;
+  // Nur eine Deklaration für die folgenden Felder
+  public startDateStringFormatted = this.appointmentSeries?.startDate ;
 
   public endDateStringFormatted = this.appointmentSeries?.endDate;
 
@@ -265,11 +218,10 @@ export default class DaylistElement extends Vue {
 
   public holidays = holidaysJSON.days;
 
-  public isSingleAppointment = true; //TODO
+  public isSingleAppointment = true;
 
   mounted(): void {
     if (this.appointmentId && !this.appointment) {
-      // Lade den Termin aus dem Store, falls nur die ID übergeben wurde
       const appointment = this.appointmentStore.getAppointmentById(this.appointmentId);
       if (appointment) {
         this.initializeAppointment(appointment);
@@ -282,19 +234,15 @@ export default class DaylistElement extends Vue {
     this.startTimeSelect = appointment.startTime;
     this.endTimeSelect = appointment.endTime;
     this.commentTextfield = appointment.comment;
-    //this.isExceptionField = appointment.isException;
     this.isHotairField = appointment.isHotair;
     this.isUltrasonicField = appointment.isUltrasonic;
     this.isElectricField = appointment.isElectric;
-    //this.startDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(appointment.startDate);
-    //this.endDateStringFormatted = Dateconversions.convertEnglishToGermanReadableString(appointment.endDate);
-    //this.isSingleAppointment = appointment.isSingleAppointment;
   }
 
   @Watch('searchValue')
-  searchValueChanged(val: string | undefined): void {
+  searchValueChanged(val: string): void {
     this.foundPatients = [];
-    this.appointment.patient.firstName = val || this.patientTextfield;
+    this.appointment.patient.firstName = val ;
     this.searchPatients(val);
   }
 
@@ -330,36 +278,11 @@ export default class DaylistElement extends Vue {
   }
 
   public printAppointment(): void {
-    // const printer = new Printer(
-    //   this.appointmentId,
-    //   this.patientTextfield,
-    //   this.appointment?.therapist,
-    //   this.startTimeSelect,
-    //   this.endTimeSelect as unknown as Time,
-    //   (this.appointment as any).weeklyFrequency || 0,
-    //   (this.appointment as any).cancellations || [],
-    //   this.appointmentSeries.startDate,
-    //   this.appointmentSeries.endDate,
-    //   new Date(),
-    // );
-
-    // if (this.isSingleAppointment) {
-    //   printer.printSingleAppointment(this.appointmentsForPatient);
-    // } else {
-    //   printer.printSeriesAppointment(this.appointmentsForPatient);
-    // }
+    // Druckfunktionalität hier implementieren
   }
 
   public searchPatients(searchQuery: string | undefined): void {
     // Implementiere die Patientensuche im Store
-  }
-
-  public onStartDateChange(): void {
-    this.startDateStringFormatted = this.startDateStringFormatted;
-  }
-
-  public onEndDateChange(): void {
-    this.endDateStringFormatted = this.endDateStringFormatted;
   }
 
   public dateIsAllowed(dateVal: string | Date): boolean {
@@ -372,6 +295,7 @@ export default class DaylistElement extends Vue {
     return Dateconversions.getAllTimes();
   }
 }
+
 </script>
 
 <style scoped>
@@ -421,13 +345,5 @@ export default class DaylistElement extends Vue {
   display: flex;
   align-items: center;
 }
-.ersatzpatientrow {
-  margin-top: 5px;
-  max-height: 50px;
-  overflow: hidden;
-  font-size: 10px;
-  display: flex;
-  align-items: left;
-  border: 1px solid black;
-}
+
 </style>
