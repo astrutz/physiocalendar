@@ -10,8 +10,8 @@
       prepend-icon="mdi-magnify"
       single-line
       v-model="searchTextfield"
-      @click:prepend="search()"
-      @keydown.enter="search()"
+      @click:prepend="search"
+      @keydown.enter="search"
     ></v-text-field>
     <v-card
       v-if="showSearchResults"
@@ -33,7 +33,7 @@
       </ul>
       <p v-else>Keine Termine gefunden.</p>
       <v-card-actions>
-        <v-btn color="primary" @click="closeSearchResults()">Schließen</v-btn>
+        <v-btn color="primary" @click="closeSearchResults">Schließen</v-btn>
       </v-card-actions>
     </v-card>
     <Menu />
@@ -41,82 +41,86 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { defineComponent, ref } from 'vue';
 import Menu from '@/components/Menu.vue';
-import { getModule } from 'vuex-module-decorators';
+import { useAppointmentStore } from '@/store/AppointmentStore';
+import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
 import Dateconversions from '@/class/Dateconversions';
-import AppointmentStore from '../store/AppointmentStore';
-import EventBus from '../class/EventBus';
 import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
 
-@Component({
+export default defineComponent({
   components: {
     Menu,
-    EventBus,
   },
-})
+  setup() {
+    const searchTextfield = ref('');
+    const showSearchResults = ref(false);
+    const searchResults = ref<Array<SingleAppointment | AppointmentSeries>>([]);
 
-export default class AppBar extends Vue {
-  public searchTextfield = '';
+    const appointmentStore = useAppointmentStore();
+    const appointmentSeriesStore = useAppointmentSeriesStore();
 
-  public showSearchResults = false;
+    const search = () => {
+      // searchResults.value = [];
+      // if (searchTextfield.value.length > 2) {
+      //   const searchText = searchTextfield.value.toLowerCase();
 
-  public searchResults: Array<SingleAppointment | AppointmentSeries> = [];
+      //   const singleAppointments: SingleAppointment[] = appointmentStore.getAllAppointments.filter(
+      //     (appointment: SingleAppointment) => appointment.patient?.lastName.toLowerCase().includes(searchText)
+      //   );
 
-  public appointmentStore = getModule(AppointmentStore);
+      //   const seriesAppointments: AppointmentSeries[] = appointmentSeriesStore.getAllAppointmentSeriess.filter(
+      //     (appointment: AppointmentSeries) => appointment.patient?.firstName.toLowerCase().includes(searchText)
+      //   );
 
-  search(): void {
-    this.searchResults = [];
-    if (this.searchTextfield.length > 2) {
-      const searchText = this.searchTextfield.toLowerCase();
+      //   searchResults.value = [...singleAppointments, ...seriesAppointments];
+      //   searchResults.value.sort((a, b) => {
+      //     const dateA = a instanceof AppointmentSeries ? a.startDate : a.date;
+      //     const dateB = b instanceof AppointmentSeries ? b.startDate : b.date;
+      //     return dateA.getTime() - dateB.getTime();
+      //   });
 
-      // Suchen in Einzelterminen
-      const singleAppointments = this.appointmentStore.getAllAppointments.filter(appointment =>
-        appointment.patient?.lastName.toLowerCase().includes(searchText)
-      );
+      //   showSearchResults.value = true;
+      // }
+    };
 
-      // Suchen in Serienterminen
-      const seriesAppointments = this.appointmentStore.getAllAppointments.filter(appointment =>
-      appointment.patient?.firstName.toLowerCase().includes(searchText)
-      );
+    const closeSearchResults = () => {
+      searchResults.value = [];
+      searchTextfield.value = '';
+      showSearchResults.value = false;
+    };
 
-      this.searchResults = [...singleAppointments, ...seriesAppointments];
-      this.searchResults.sort((a, b) => {
-        const dateA = a instanceof AppointmentSeries ? (a as AppointmentSeries).startDate : (a as SingleAppointment).date;
-        const dateB = b instanceof AppointmentSeries ? (b as AppointmentSeries).startDate : (b as SingleAppointment).date;
-        return dateA.getTime() - dateB.getTime();
-      });
+    const navigateTargetDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const dateFormatted = `${day}.${month}.${year}`;
 
-      this.showSearchResults = true;
-    }
-  }
+      if (year >= 2000) {
+        //EventBus.$emit('currentDayChanged1', dateFormatted);
+      }
+      showSearchResults.value = false;
+    };
 
-  closeSearchResults(): void {
-    this.searchResults = [];
-    this.searchTextfield = '';
-    this.showSearchResults = false;
-  }
+    const getReadableDate = (date: Date) => {
+      return Dateconversions.convertDateToReadableString(date);
+    };
 
-  navigateTargetDate(date: Date): void {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const dateFormatted = `${day}.${month}.${year}`;
-
-    if (year >= 2000) {
-      EventBus.$emit('currentDayChanged1', dateFormatted);
-    }
-    this.showSearchResults = false;
-  }
-
-  getReadableDate(date: Date): string {
-    return Dateconversions.convertDateToReadableString(date);
-  }
-}
+    return {
+      searchTextfield,
+      showSearchResults,
+      searchResults,
+      search,
+      closeSearchResults,
+      navigateTargetDate,
+      getReadableDate,
+    };
+  },
+});
 </script>
 
-<style>
+<style scoped>
 .search-results {
   position: absolute;
   top: 100px;

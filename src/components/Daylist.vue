@@ -6,33 +6,33 @@
           <tr>
             <th v-for="header in headers" :key="header.value" class="text-center text-subtitle-2">
               <DaylistHeader
-                :therapist="header.text"
+                :therapist="header.therapist"
                 :therapistID="header.id"
                 :date="currentSingleDay"
-                @absencesChanged="saveAbsences($event)"
+                @absencesChanged="console.log('absence changed')"
               />
             </th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, rowIndex) in rows" :key="row.startTimeString">
-            <td
+          <tr v-for="(row, rowIndex) in rows" :key="rowIndex" v-if="rows.length>0">
+            <td 
               v-for="header in headers"
               :key="header.value"
-              @click="openCreateDialog((header.text, header.id), row.startTime)"
+              @click="openCreateDialog(header.id)"
               :class="getClassForCell(row[header.value])"
             >
               <div v-if="!row[header.value]">
-                <v-btn text @click="openCreateDialog(header.text, header.id, row.startTime)">+</v-btn>
+                <v-btn @click="openCreateDialog(header.id)">+</v-btn>
               </div>
-              <div v-else-if="row[header.value] instanceof SingleAppointment">
-                <v-btn text @click="openSingleAppointmentDialog(row[header.value])">
-                  {{ row[header.value].patient }}
+              <div v-else-if="row[header.value] && row[rowIndex]">
+                <v-btn @click="openSingleAppointmentDialog(row[rowIndex])">
+                  {{ row[rowIndex].patient }}
                 </v-btn>
               </div>
-              <div v-else-if="row[header.value] instanceof AppointmentSeries">
-                <v-btn text @click="openSeriesAppointmentDialog(row[header.value])">
-                  {{ row[header.value].patient }} (Serie)
+              <div v-else-if="row[header.value] && row[rowIndex]">
+                <v-btn @click="openSeriesAppointmentDialog(row[rowIndex] as AppointmentSeries)">
+                  {{ row[rowIndex].patient }} (Serie)
                 </v-btn>
               </div>
             </td>
@@ -42,199 +42,219 @@
     </v-simple-table>
 
     <!-- Dialog für das Erstellen eines Termins -->
-    <create-appointment-dialog
+    <CreateAppointmentDialog
       v-if="createDialog"
-      :therapist="selectedTherapist"
       :currentDay="currentSingleDay"
+      :appointment="initAppointment"
       v-model="createDialog"
       @saveSingle="addAppointment"
       @saveSeries="addSeriesAppointment"
     />
 
     <!-- Dialog für das Anzeigen und Bearbeiten eines Einzeltermins -->
-    <single-appointment-dialog
-      v-if="openSingleAppointmentDialog"
+    <SingleAppointmentDialog
+      v-if="singleAppointmentDialog && selectedAppointment"
       :appointment="selectedAppointment"
+      :currentDay="currentSingleDay"
       @save="changeSingleAppointment"
       @delete="deleteSingleAppointment"
-      v-model="openSingleAppointmentDialog"
+      v-model="singleAppointmentDialog"
     />
 
     <!-- Dialog für das Anzeigen und Bearbeiten eines Serientermins -->
-    <appointment-series-dialog
-      v-if="openSeriesAppointmentDialog"
+    <AppointmentSeriesDialog 
+      v-if="seriesAppointmentDialog && selectedSeriesAppointment"
       :appointment="selectedSeriesAppointment"
+      :currentDay="currentSingleDay"
       @save="changeSeriesAppointment"
       @delete="deleteSeriesAppointment"
-      v-model="openSeriesAppointmentDialog"
+      v-model="seriesAppointmentDialog"
     />
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, watch, onMounted } from 'vue';
 import DaylistHeader from './DaylistHeader.vue';
 import CreateAppointmentDialog from './CreateAppointmentDialog.vue';
 import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
 import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
-import { getModule } from 'vuex-module-decorators';
-import AppointmentStore from '@/store/AppointmentStore';
-import AppointmentSeriesStore from '@/store/AppointmentSeriesStore';
-import { Time } from '@/class/Enums';
-import Dateconversions from '@/class/Dateconversions';
+import { useAppointmentStore } from '@/store/AppointmentStore';
+import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
+import { useAbsenceStore } from '../store/AbsenceStore';
+import { TimeUtils } from '@/class/TimeUtils';
 import Therapist from '@/class/Therapist';
 import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
-import { TimeUtils } from '@/class/TimeUtils';
 import Absence from '@/class/Absence';
-import AbsenceStore from '../store/AbsenceStore';
+import Appointment from '@/class/Appointment';
 
-@Component({
+export default defineComponent({
   components: {
     DaylistHeader,
     CreateAppointmentDialog,
     SingleAppointmentDialog,
     AppointmentSeriesDialog,
   },
-})
-export default class Daylist extends Vue {
+  props: {
+    currentSingleDay: {
+      type: Date,
+      required: true,
+    },
+  },
+  setup(props, { emit }) {
+    const createDialog = ref(false);
+    const singleAppointmentDialog = ref(false);
+    const seriesAppointmentDialog = ref(false);
+    const selectedTherapist = ref<Therapist | null>(null);
+    const selectedAppointment = ref<SingleAppointment | null>(null);
+    const selectedSeriesAppointment = ref<AppointmentSeries | null>(null);
+    const initAppointment = ref(Appointment.createEmpty());
 
-  @Prop({ required: true }) currentSingleDay!: Date;
+    const appointmentStore = useAppointmentStore();
+    const appointmentSeriesStore = useAppointmentSeriesStore();
+    const absenceStore = useAbsenceStore();
 
-  public createDialog: boolean = false;
-  public singleAppointmentDialog: boolean = false;
-  public seriesAppointmentDialog: boolean = false;
-  public selectedTherapist: Therapist | null = null;
-  public selectedAppointment: SingleAppointment | null = null;
-  public selectedSeriesAppointment: AppointmentSeries | null = null;
+    const headers = ref<{ id: number; text: string; value: number; therapist: Therapist }[]>([]);
+    const rows = ref<Record<string, SingleAppointment | AppointmentSeries | null>[]>([]);
 
-  appointmentStore = getModule(AppointmentStore);
-  appointmentSeriesStore = getModule(AppointmentSeriesStore);
-  absenceStore = getModule(AbsenceStore)
-
-  public headers: Array<{ id: number; text: string; value: number}> = [];
-  public rows: Array<Record<string, any>> = [];
-
-  @Watch('currentSingleDay')
-  async onDateChange() {
-    await this.loadAppointments();
-  }
-
-  mounted() {
-    this.createHeaders();
-    this.loadAppointments();
-  }
-
-  private createHeaders(): void {
-    // Beispielhafte Header-Daten; sollte auf Basis deiner Datenquelle erstellt werden.
-    this.headers = this.getTherapists().map(therapist => ({
-      id: therapist.id,
-      text: therapist.name,
-      value: therapist.id,
-    }));
-  }
-
-  private async loadAppointments(): Promise<void> {
-    const date: string = this.currentSingleDay.toISOString();
-    await this.appointmentStore.loadAppointmentsForDate(date);
-    await this.appointmentSeriesStore.loadSeriesAppointmentsForDate(date);
-    this.createRows();
-  }
-
-  private createRows(): void {
-    TimeUtils.initializeTimes(); // Sicherstellen, dass die Zeiten initialisiert sind
-    const startTimes = TimeUtils.getTimes();
-    this.rows = startTimes.map((time) => {
-      const row: Record<string, any> = { startTimeString: TimeUtils.formatTime(time), startTime: time };
-      this.headers.forEach((header) => {
-        const singleAppointment: SingleAppointment | undefined = this.appointmentStore.getAppointmentByTherapistAndTime(header.id, this.currentSingleDay, time);
-        const seriesAppointment = this.appointmentSeriesStore.getAppointmentSeriesByTherapistAndTime(header.id, this.currentSingleDay, time);
-
-        if (singleAppointment) {
-          row[header.value] = singleAppointment;
-        } else if (seriesAppointment) {
-          row[header.value] = seriesAppointment;
-        } else {
-          row[header.value] = null;
-        }
-      });
-      return row;
+    watch(() => props.currentSingleDay, async () => {
+      await loadAppointments();
     });
-}
+
+    onMounted(() => {
+      createHeaders();
+      loadAppointments();
+    });
+
+    const createHeaders = () => {
+      // Example headers; should be created based on your data source
+      headers.value = getTherapists().map(therapist => ({
+        id: therapist.id,
+        text: therapist.name,
+        value: therapist.id,
+        therapist: therapist
+      }));
+    };
+
+    const loadAppointments = async () => {
+      const date: string = props.currentSingleDay.toISOString();
+      await appointmentStore.loadAppointmentsForDate(date);
+      await appointmentSeriesStore.loadSeriesAppointmentsForDate(date);
+      createRows();
+    };
+
+    const createRows = () => {
+      TimeUtils.initializeTimes();
+      const startTimes = TimeUtils.getTimes();
+      rows.value = startTimes.map((time) => {
+        const row: Record<string, any> = { startTimeString: TimeUtils.formatTime(time), startTime: time };
+        headers.value.forEach((header) => {
+          const singleAppointment = appointmentStore.getAppointmentByTherapistAndTime(header.id, props.currentSingleDay, time);
+          const seriesAppointment = appointmentSeriesStore.getAppointmentSeriesByTherapistAndTime(header.id, props.currentSingleDay, time);
+
+          row[header.value] = singleAppointment || seriesAppointment || null;
+        });
+        return row;
+      });
+    };
+
+    const getTherapists = (): Therapist[] => {
+      return []; // Replace with the method to load therapists from the store or API
+    };
+
+    const openCreateDialog = (id: number) => {
+      const therapist = getTherapists().find(t => t.id === id);
+      if (therapist) {
+        selectedTherapist.value = therapist;
+        createDialog.value = true;
+      }
+    };
+
+    const openSingleAppointmentDialog = (appointment: SingleAppointment | AppointmentSeries | null) => {
+      if (appointment instanceof SingleAppointment) {
+        selectedAppointment.value = appointment;
+        singleAppointmentDialog.value = true;
+      }
+    };
 
 
+    const openSeriesAppointmentDialog = (appointment: AppointmentSeries) => {
+      selectedSeriesAppointment.value = appointment;
+      seriesAppointmentDialog.value = true;
+    };
 
-  private getTherapists(): Therapist[] {
-    // Diese Methode sollte die Liste der Therapeuten aus dem Store oder einer API laden.
-    return [];
-  }
+    const addAppointment = (appointment: SingleAppointment) => {
+      appointmentStore.addAppointment(appointment);
+      loadAppointments();
+    };
 
-  public openCreateDialog(header: { text: string, id: number }, startTime: Date): void {
-    const therapist = this.getTherapists().find(t => t.id === header.id);
-    if (therapist) {
-      this.selectedTherapist = therapist;
-      this.createDialog = true;
-    }
-  }
+    const addSeriesAppointment = (appointment: AppointmentSeries) => {
+      appointmentSeriesStore.addAppointmentSeries(appointment);
+      loadAppointments();
+    };
 
-  public openSingleAppointmentDialog(appointment: SingleAppointment): void {
-    this.selectedAppointment = appointment;
-    this.singleAppointmentDialog = true;
-  }
+    const changeSingleAppointment = (appointment: SingleAppointment) => {
+      appointmentStore.updateAppointment(appointment.id, appointment);
+      loadAppointments();
+    };
 
-  public openSeriesAppointmentDialog(appointment: AppointmentSeries): void {
-    this.selectedSeriesAppointment = appointment;
-    this.singleAppointmentDialog = true;
-  }
+    const changeSeriesAppointment = (appointment: AppointmentSeries) => {
+      appointmentSeriesStore.updateAppointmentSeries(appointment.id, appointment);
+      loadAppointments();
+    };
 
-  public addAppointment(appointment: SingleAppointment): void {
-    this.appointmentStore.addAppointment(appointment);
-    this.loadAppointments();
-  }
+    const changeAbsence = (updatedAbsences: Absence[]) => {
+      // Implementiere die Logik zum Speichern der Abwesenheiten hier
+      console.log('Absences saved:', updatedAbsences);
+    };
 
-  public addSeriesAppointment(appointment: AppointmentSeries): void {
-    this.appointmentSeriesStore.addAppointmentSeries(appointment);
-    this.loadAppointments();
-  }
 
-  public changeSingleAppointment(appointment: SingleAppointment): void {
-    this.appointmentStore.updateAppointment(appointment.id, appointment);
-    this.loadAppointments();
-  }
+    const deleteSingleAppointment = (id: number) => {
+      appointmentStore.deleteAppointment(id);
+      loadAppointments();
+    };
 
-  public changeSeriesAppointment(appointment: AppointmentSeries): void {
-    this.appointmentSeriesStore.updateAppointmentSeries(appointment.id, appointment);
-    this.loadAppointments();
-  }
+    const deleteSeriesAppointment = (id: number) => {
+      appointmentSeriesStore.deleteAppointmentSeries(id);
+      loadAppointments();
+    };
 
-  public changeAbsences(absence: Absence): void {
-    this.absenceStore.updateAbsence(absence.id, absence);
-    this.loadAppointments();
-  }
+    const getClassForCell = (entry: SingleAppointment | AppointmentSeries | null) => {
+      if (!entry) return '';
+      if (entry instanceof SingleAppointment) {
+        return entry.isHotair ? 'cell-hotair' : entry.isUltrasonic ? 'cell-ultrasonic' : entry.isElectric ? 'cell-electric' : '';
+      }
+      if (entry instanceof AppointmentSeries) {
+        return entry.isBWO ? 'cell-bwo' : '';
+      }
+      return '';
+    };
 
-  public deleteSingleAppointment(id: number): void {
-    this.appointmentStore.deleteAppointment(id);
-    this.loadAppointments();
-  }
-
-  public deleteSeriesAppointment(id: number): void {
-    this.appointmentSeriesStore.deleteAppointmentSeries(id);
-    this.loadAppointments();
-  }
-
-  public getClassForCell(entry: SingleAppointment | AppointmentSeries | null): string {
-    if (!entry) return '';
-    if (entry instanceof SingleAppointment) {
-      return entry.isHotair ? 'cell-hotair' : entry.isUltrasonic ? 'cell-ultrasonic' : entry.isElectric ? 'cell-electric' : '';
-    }
-    if (entry instanceof AppointmentSeries) {
-      return entry.isBWO ? 'cell-bwo' : '';
-    }
-    return '';
-  }
-}
+    return {
+      createDialog,
+      singleAppointmentDialog,
+      seriesAppointmentDialog,
+      selectedTherapist,
+      initAppointment,
+      selectedAppointment,
+      selectedSeriesAppointment,
+      headers,
+      rows,
+      openCreateDialog,
+      openSingleAppointmentDialog,
+      openSeriesAppointmentDialog,
+      addAppointment,
+      addSeriesAppointment,
+      changeSingleAppointment,
+      changeSeriesAppointment,
+      deleteSingleAppointment,
+      deleteSeriesAppointment,
+      getClassForCell,
+    };
+  },
+});
 </script>
-
 <style scoped>
 th:first-child {
   border-left: 1px solid #2a2f79;

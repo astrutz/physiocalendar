@@ -9,16 +9,16 @@ import AbsenceException from '@/class/AbsenceException';
 import { Weekday } from '../class/Enums';
 import Patient from '@/class/Patient';
 
-export function convertToTherapist(dto: any): Therapist {
+export function convertToTherapist(therapist: JSONTherapistDTO): Therapist {
   return new Therapist(
-    dto.name,
-    dto.id,
-    new Date(dto.activeSince),
-    new Date(dto.activeUntil),
-    dto.absences ? dto.absences.map(convertToAbsence) : [],
-    dto.absenceIds ? dto.absenceIds : [],
-    dto.absenceExceptions ? dto.absenceExceptions.map(convertToAbsenceException) : [],
-    dto.absenceExceptionIds ? dto.absenceExceptionIds : [],
+    therapist.id,
+    therapist.name,
+    new Date(therapist.activeSince),
+    new Date(therapist.activeUntil),
+    therapist.absences ? therapist.absences.map(convertToAbsence) : [],
+    therapist.absenceIds ? therapist.absenceIds : [],
+    therapist.absenceExceptions ? therapist.absenceExceptions.map(convertToAbsenceException) : [],
+    therapist.absenceExceptionIds ? therapist.absenceExceptionIds : [],
   );
 }
 
@@ -57,8 +57,8 @@ export function convertToPatient(patient: JSONPatientDTO): Patient {
     };
   }
 
-export function convertToAbsence(dto: any): Absence {
-  return new Absence(dto.id, dto.date, dto.weekday, dto.start, dto.end);
+export function convertToAbsence(absence: JSONAbsenceDTO): Absence {
+  return new Absence(absence.id, absence.date, absence.weekday, absence.startTime, absence.endTime);
 }
 
 export function convertToAbsenceDTO(absence: Absence): JSONAbsenceDTO {
@@ -121,8 +121,8 @@ export function convertToAppointmentDTO(appointment: SingleAppointment): JSONSin
 export function convertToAppointmentSeries(appointmentSeries: JSONAppointmentSeriesDTO): AppointmentSeries {
   return new AppointmentSeries(
     appointmentSeries.id,
-    appointmentSeries.therapistId,
     convertToTherapist(appointmentSeries.therapist),
+    appointmentSeries.therapistId,
     appointmentSeries.patient,
     appointmentSeries.patientId,
     new Date(appointmentSeries.startTime),

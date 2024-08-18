@@ -89,7 +89,7 @@ export interface JSONTherapistDTO {
 }
 
 export interface JSONPatientDTO {
-  id: string;
+  id: number;
   firstName: string;
   lastName: string;
   activeSince: Date;

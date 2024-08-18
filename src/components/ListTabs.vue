@@ -15,18 +15,21 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { defineComponent, ref } from 'vue';
 import CalendarList from './CalendarList.vue';
 
-@Component({
+export default defineComponent({
   components: {
     CalendarList,
   },
-})
+  setup() {
+    const tab = ref(null);
+    const lists = ref([{ name: 'Terminliste', type: 'daylist' }]);
 
-export default class ListTabs extends Vue {
-  public tab = null;
-
-  public lists: Array<Record<string, string>> = [{ name: 'Terminliste', type: 'daylist' }]
-}
+    return {
+      tab,
+      lists,
+    };
+  },
+});
 </script>

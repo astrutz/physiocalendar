@@ -65,7 +65,7 @@
         <v-divider></v-divider>
   
         <v-card-actions>
-          <v-btn color="normal" text @click="closeDialog">Abbrechen</v-btn>
+          <v-btn color="normal" @click="closeDialog">Abbrechen</v-btn>
           <v-spacer></v-spacer>
           <v-btn color="success" @click="saveAppointment">Speichern</v-btn>
         </v-card-actions>
@@ -74,35 +74,51 @@
   </template>
   
   <script lang="ts">
-  import { Component, Prop, Vue } from 'vue-property-decorator';
+  import { defineComponent, ref } from 'vue';
   import AppointmentSeries from '@/class/AppointmentSeries';
   import Dateconversions from '@/class/Dateconversions';
   
-  @Component
-  export default class AppointmentSeriesDialog extends Vue {
-    @Prop({ required: true }) appointment!: AppointmentSeries;
-    @Prop({ required: true }) currentDay!: string;
+  export default defineComponent({
+    props: {
+      appointment: {
+        type: AppointmentSeries,
+        required: true,
+      },
+      currentDay: {
+        type: Date,
+        required: true,
+      },
+    },
+    setup(props, { emit }) {
+      const dialogIsOpen = ref(false);
+      const searchValue = ref('');
+      const times = ref(Dateconversions.getAllTimes());
   
-    public dialogIsOpen = false;
-    public searchValue = '';
-    public times = Dateconversions.getAllTimes();
+      const foundPatients = ref<string[]>([]); // Implementiere die Logik zur Suche von Patienten
   
-    get foundPatients(): string[] {
-      return []; // Implementiere die Logik zur Suche von Patienten
-    }
+      const searchPatients = (query: string) => {
+        // Implementiere die Patientensuche
+      };
   
-    public searchPatients(query: string): void {
-      // Implementiere die Patientensuche
-    }
+      const saveAppointment = () => {
+        emit('save', props.appointment);
+        closeDialog();
+      };
   
-    public saveAppointment(): void {
-      this.$emit('save', this.appointment);
-      this.closeDialog();
-    }
+      const closeDialog = () => {
+        dialogIsOpen.value = false;
+      };
   
-    public closeDialog(): void {
-      this.dialogIsOpen = false;
-    }
-  }
+      return {
+        dialogIsOpen,
+        searchValue,
+        times,
+        foundPatients,
+        searchPatients,
+        saveAppointment,
+        closeDialog,
+      };
+    },
+  });
   </script>
   

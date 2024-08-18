@@ -28,8 +28,8 @@ export default class AppointmentSeries extends Appointment {
 
   constructor(
     id: number,
-    therapistId: number,
     therapist: Therapist,
+    therapistId: number,
     patient: Patient,
     patientId: number,
     startTime: Date,

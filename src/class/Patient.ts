@@ -1,5 +1,5 @@
 export default class Patient {
-  id: string;
+  id: number;
   
   firstName: string;
 
@@ -12,7 +12,7 @@ export default class Patient {
   isBWO: boolean;
 
   constructor(
-    id: string,
+    id: number,
     firstName: string,
     lastName: string,
     activeSince: Date,
@@ -25,5 +25,16 @@ export default class Patient {
     this.activeSince = activeSince;
     this.activeUntil = activeUntil;
     this.isBWO = isBWO;
+  }
+
+  static createEmpty(): Patient {
+    return new Patient(
+      0, // Initiale ID
+      '', // Leerer Vorname
+      '', // Leerer Nachname
+      new Date(), // Aktives Datum seit heute
+      new Date('2050-01-01'), // Aktives Datum bis in die Zukunft
+      false // Standardwert für BWO
+    );
   }
 }

@@ -18,10 +18,10 @@
           <v-checkbox label="BWO" v-model="patientInput.isBWO"></v-checkbox>
         </v-col>
         <v-col>
-          <v-text-field label="Aktiv seit" :value="formatDate(patientInput.activeSince)" v-model="patientInput.activeSince" clearable></v-text-field>
+          <v-text-field label="Aktiv seit" :value="formatDate(patientInput.activeSince)" clearable></v-text-field>
         </v-col>
         <v-col>
-          <v-text-field label="Aktiv bis" :value="formatDate(patientInput.activeUntil)" v-model="patientInput.activeUntil" clearable></v-text-field>
+          <v-text-field label="Aktiv bis" :value="formatDate(patientInput.activeUntil)" clearable></v-text-field>
         </v-col>
       </v-row>
       <v-row>
@@ -47,32 +47,60 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { defineComponent, ref, watch } from 'vue';
 import Patient from '@/class/Patient';
 import Appointment from '@/class/Appointment';
 
-@Component
-export default class PatientDetail extends Vue {
-  @Prop({ required: true }) patient!: Patient;
-  @Prop({ required: true }) appointments!: Appointment[];
+export default defineComponent({
+  props: {
+    patient: {
+      type: Object as () => Patient,
+      required: true,
+    },
+    appointments: {
+      type: Array as () => Appointment[],
+      required: true,
+    },
+  },
+  setup(props, { emit }) {
+    const patientInput = ref<Patient>({ ...props.patient });
 
-  patientInput: Patient = { ...this.patient };
+    watch(
+      () => props.patient,
+      (newPatient) => {
+        patientInput.value = { ...newPatient };
+      },
+      { immediate: true }
+    );
 
-  cancelChanges(): void {
-    this.$emit('cancel');
-  }
+    const cancelChanges = () => {
+      emit('cancel');
+    };
 
-  saveChanges(): void {
-    this.$emit('save', { patient: this.patientInput });
-  }
+    const saveChanges = () => {
+      emit('save', { patient: patientInput.value });
+    };
 
-  deletePatient(): void {
-    this.$emit('deletePatient', { patient: this.patientInput });
-  }
+    const deletePatient = () => {
+      emit('deletePatient', { patient: patientInput.value });
+    };
 
-  formatDate(date: Date | undefined): string {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('de-DE', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  }
-}
+    const formatDate = (date: Date | undefined): string => {
+      if (!date) return '';
+      return new Date(date).toLocaleDateString('de-DE', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+    };
+
+    return {
+      patientInput,
+      cancelChanges,
+      saveChanges,
+      deletePatient,
+      formatDate,
+    };
+  },
+});
 </script>

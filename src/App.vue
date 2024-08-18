@@ -8,19 +8,14 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
-
+import { defineComponent } from 'vue';
 import AppBar from './components/AppBar.vue';
 import ListTabs from './components/ListTabs.vue';
 
-@Component({
+export default defineComponent({
   components: {
     AppBar,
     ListTabs,
   },
-})
-
-export default class App extends Vue {
-
-}
+});
 </script>

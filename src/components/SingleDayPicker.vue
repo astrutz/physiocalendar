@@ -1,7 +1,7 @@
 <template>
   <v-row align="center" justify="center">
-    <v-col cols="auto"
-      ><v-btn text @click="setPreviousDate">
+    <v-col cols="auto">
+      <v-btn @click="setPreviousDate">
         <v-icon>mdi-arrow-left</v-icon>
       </v-btn>
     </v-col>
@@ -15,28 +15,20 @@
         min-width="auto"
       >
         <template v-slot:activator="{ on, attrs }">
-          <v-btn
-            color="primary"
-            v-model="dateFormatted"
-            v-bind="attrs"
-            v-on="on"
-            >{{ weekday }} {{ dateFormatted }}</v-btn
-          >
+          <v-btn color="primary" v-bind="attrs" v-on="on">
+            {{ weekday }} {{ dateFormatted }}
+          </v-btn>
         </template>
         <v-date-picker
           v-model="date"
           :allowed-dates="dateIsAllowed"
-          @input="
-            menu = false;
-            getCombinedDate();
-          "
           locale="de-de"
           :first-day-of-week="1"
         ></v-date-picker>
       </v-menu>
     </v-col>
     <v-col cols="auto">
-      <v-btn text @click="setNextDate">
+      <v-btn @click="setNextDate">
         <v-icon>mdi-arrow-right</v-icon>
       </v-btn>
     </v-col>
@@ -44,96 +36,87 @@
 </template>
 
 <script lang="ts">
+import { defineComponent, ref, computed, watch } from 'vue';
 import Dateconversions from '@/class/Dateconversions';
-import EventBus from '@/class/EventBus';
-import {
-  Component, Prop, Watch, Vue,
-} from 'vue-property-decorator';
-import holidaysJSON from '@/data/holidays.json';
+import holidays from '@/data/holidays.json'; // Correctly import JSON file
 
-@Component({
-  components: {
-    EventBus,
+export default defineComponent({
+  props: {
+    currentSingleDay: {
+      type: Date,
+      required: true,
+    },
   },
-})
-export default class SingleDayPicker extends Vue {
-  @Prop() readonly currentSingleDay!: string;
+  emits: ['currentDayChanged'],
+  setup(props, { emit }) {
+    const date = ref<string>(new Date().toISOString().substr(0, 10));
+    const holidaysSet = new Set(holidays.days);
 
-  public date: string = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10)
+    const dateFormatted = computed(() =>
+      Dateconversions.convertEnglishToGermanReadableString(date.value)
+    );
 
-  private dateFormatted: string = Dateconversions.convertEnglishToGermanReadableString(this.date);
+    const weekday = computed(() => getWeekdaybyDate(new Date(date.value)));
 
-  private weekday = this.getWeekdaybyDate(new Date());
+    const menu = ref(false);
 
-  private menu = false;
+    const closeMenu = (): void => {
+      menu.value = false;
+    };
 
-  private holidays = holidaysJSON.days;
-
-  mounted() : void {
-    if (!this.dateIsAllowed(this.date)) {
-      this.setNextDate();
-    }
+    const dateIsAllowed = (dateVal: any): boolean => {
+  const dateToCheck = typeof dateVal === 'string' ? dateVal : dateVal.toISOString().substr(0, 10);
+  if (holidaysSet.has(dateToCheck)) {
+    return false;
   }
+  const day = new Date(dateToCheck).getDay();
+  return day > 0 && day < 6;
+};
 
-  @Watch('currentSingleDay')
-  private oncurrentSingleDayChanged(): void {
-    this.dateFormatted = Dateconversions.convertGermanToEnglishReadableString(this.currentSingleDay);
-    this.date = this.dateFormatted;
-    this.dateFormatted = Dateconversions.convertEnglishToGermanReadableString(this.date);
-  }
 
-  @Watch('date')
-  private dateChanged(): void {
-    this.dateFormatted = Dateconversions.convertEnglishToGermanReadableString(this.date);
-    this.weekday = this.getWeekdaybyDate();
-    this.$emit('currentDayChanged', this.dateFormatted);
-  }
+    const getCombinedDate = (dateString?: string): Date => {
+      const dateStr = dateString || date.value;
+      const timezoneOffsetInHours = new Date(`${dateStr}T00:00:00.000Z`).getTimezoneOffset() * -1;
+      const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
+      return new Date(`${dateStr}T00:00:00.000${offsetSuffix}`);
+    };
 
-  private dateIsAllowed(dateVal: string | Date): boolean {
-    if (typeof dateVal === 'string') {
-      if (this.holidays.includes(dateVal)) {
-        return false;
+    const getWeekdaybyDate = (date?: Date): string => {
+      const dateToCheck = date || getCombinedDate();
+      return Dateconversions.getWeekdayStringForDate(dateToCheck);
+    };
+
+    const setPreviousDate = (): void => {
+      const newDate = getCombinedDate();
+      newDate.setDate(newDate.getDate() - 1);
+      while (!dateIsAllowed(newDate)) {
+        newDate.setDate(newDate.getDate() - 1);
       }
-      const day = this.getCombinedDate(dateVal).getDay();
-      return day > 0 && day < 7;
-    }
-    const readableString = Dateconversions.convertGermanToEnglishReadableString(Dateconversions.convertDateToReadableString(dateVal));
-    if (this.holidays.includes(readableString)) {
-      return false;
-    }
-    const day = dateVal.getDay();
-    return day > 0 && day < 7;
-  }
+      date.value = newDate.toISOString().substr(0, 10);
+    };
 
-  private getCombinedDate(dateString?: string): Date {
-    const date = dateString || this.date;
-    const timezoneOffsetInHours = new Date(`${date}T00:00:00.000Z`).getTimezoneOffset() * -1;
-    const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
-    return new Date(`${date}T00:00:00.000${offsetSuffix}`);
-  }
+    const setNextDate = (): void => {
+      const newDate = getCombinedDate();
+      newDate.setDate(newDate.getDate() + 1);
+      while (!dateIsAllowed(newDate)) {
+        newDate.setDate(newDate.getDate() + 1);
+      }
+      date.value = newDate.toISOString().substr(0, 10);
+    };
 
-  private getWeekdaybyDate(date? : Date) : string {
-    const dateToCheck = date || this.getCombinedDate();
-    return Dateconversions.getWeekdayStringForDate(dateToCheck);
-  }
+    watch(date, () => {
+      emit('currentDayChanged', dateFormatted.value);
+    });
 
-  private setPreviousDate(): void {
-    const date = this.getCombinedDate();
-    date.setDate(date.getDate() - 1);
-    while (!this.dateIsAllowed(date)) {
-      date.setDate(date.getDate() - 1);
-    }
-    this.date = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-  }
-
-  private setNextDate(): void {
-    const date = this.getCombinedDate();
-    date.setDate(date.getDate() + 1);
-    while (!this.dateIsAllowed(date)) {
-      date.setDate(date.getDate() + 1);
-    }
-    this.date = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-  }
-}
-
+    return {
+      date,
+      dateFormatted,
+      weekday,
+      menu,
+      dateIsAllowed,
+      setPreviousDate,
+      setNextDate,
+    };
+  },
+});
 </script>

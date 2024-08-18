@@ -19,8 +19,8 @@ export default class Therapist {
   absenceExceptionIds: number[]
 
   constructor(
-    name: string,
     id: number,
+    name: string,
     activeSince: Date,
     activeUntil: Date,
     absences: Absence[],
@@ -28,13 +28,26 @@ export default class Therapist {
     absenceExceptions: Exception[],
     absenceExceptionIds: number[],
   ) {
-    this.name = name;
     this.id = id;
+    this.name = name;
     this.activeSince = activeSince;
     this.activeUntil = activeUntil;
     this.absences = absences;
     this.absenceIds = absenceIds;
     this.absenceExceptions = absenceExceptions;
     this.absenceExceptionIds = absenceExceptionIds;
+  }
+
+  static createEmpty(): Therapist {
+    return new Therapist(
+      0, // Initiale ID
+      '', // Leerer Name
+      new Date(), // Aktives Datum seit heute
+      new Date('2050-01-01'), // Aktives Datum bis in die Zukunft
+    [],
+    [],
+    [],
+    []
+    );
   }
 }

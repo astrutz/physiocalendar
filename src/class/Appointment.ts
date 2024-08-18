@@ -43,4 +43,17 @@ export default class Appointment {
   calculateLength() : number {
     return this.endTime.getTime() - this.startTime.getTime();
   }
+
+  static createEmpty(): Appointment {
+    return new Appointment(
+      0, // Initiale ID, könnte auch null oder -1 sein, wenn noch keine ID vergeben wurde
+      Therapist.createEmpty(), // Leerer Therapeut
+      0, // Leere Therapist ID
+      Patient.createEmpty(), // Leerer Patient
+      0, // Leere Patient ID
+      new Date(), // Startzeit auf das aktuelle Datum setzen
+      new Date(), // Endzeit auf das aktuelle Datum setzen
+      '' // Leerer Kommentar
+    );
+  }
 }

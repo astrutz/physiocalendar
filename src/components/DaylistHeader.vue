@@ -45,7 +45,7 @@
     </v-card>
 
     <!-- Dialog für das Hinzufügen/Bearbeiten von Abwesenheiten -->
-    <absence-dialog
+    <AbsenceDialog
       v-if="absenceDialogOpen"
       :absence="selectedAbsence"
       @save="saveAbsence"
@@ -55,101 +55,120 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { getModule } from 'vuex-module-decorators';
+import { defineComponent, ref, onMounted, computed } from 'vue';
 import AbsenceDialog from './AbsenceDialog.vue';
-import AbsenceStore from '@/store/AbsenceStore';
+import { useAbsenceStore } from '@/store/AbsenceStore';
 import Absence from '@/class/Absence';
 import Therapist from '@/class/Therapist';
 import { Weekday } from '@/class/Enums';
 import Dateconversions from '@/class/Dateconversions';
 import { TimeUtils } from '@/class/TimeUtils';
 
-@Component({
+export default defineComponent({
   components: {
     AbsenceDialog,
   },
-})
-export default class DaylistHeader extends Vue {
-  @Prop({ required: true }) therapist!: Therapist;
+  props: {
+    therapist: {
+      type: Object as () => Therapist,
+      required: true,
+    },
+  },
+  setup(props) {
+    const absenceDialogOpen = ref(false);
+    const selectedAbsence = ref<Absence | null>(null);
+    const absences = ref<Absence[]>([]);
 
-  public absenceDialogOpen: boolean = false;
-  public selectedAbsence: Absence | null = null;
-  public absences: Absence[] = [];
+    const absenceStore = useAbsenceStore();
 
-  absenceStore = getModule(AbsenceStore);
+    onMounted(async () => {
+      await loadAbsences();
+    });
 
-  async mounted() {
-    await this.loadAbsences();
-  }
+    const loadAbsences = async () => {
+      await absenceStore.loadAbsences(props.therapist.id);
+      absences.value = absenceStore.getAllAbsences;
+    };
 
-  private async loadAbsences() {
-    await this.absenceStore.loadAbsences(this.therapist.id);
-    this.absences = this.absenceStore.getAllAbsences;
-  }
+    const weekdayAbsences = computed(() =>
+      absences.value.filter(absence => absence.weekday !== null && absence.date === null)
+    );
 
-  get weekdayAbsences(): Absence[] {
-    return this.absences.filter(absence => absence.weekday !== null && absence.date === null);
-  }
+    const specificDateAbsences = computed(() =>
+      absences.value.filter(absence => absence.date !== null)
+    );
 
-  get specificDateAbsences(): Absence[] {
-    return this.absences.filter(absence => absence.date !== null);
-  }
+    const formatWeekday = (weekday: Weekday): string => {
+      switch (weekday) {
+        case Weekday.MONDAY:
+          return 'Montag';
+        case Weekday.TUESDAY:
+          return 'Dienstag';
+        case Weekday.WEDNESDAY:
+          return 'Mittwoch';
+        case Weekday.THURSDAY:
+          return 'Donnerstag';
+        case Weekday.FRIDAY:
+          return 'Freitag';
+        default:
+          return '';
+      }
+    };
 
-  public formatWeekday(weekday: Weekday): string {
-    switch (weekday) {
-      case Weekday.MONDAY:
-        return 'Montag';
-      case Weekday.TUESDAY:
-        return 'Dienstag';
-      case Weekday.WEDNESDAY:
-        return 'Mittwoch';
-      case Weekday.THURSDAY:
-        return 'Donnerstag';
-      case Weekday.FRIDAY:
-        return 'Freitag';
-      default:
-        return '';
-    }
-  }
+    const formatDate = (date: Date): string => {
+      return Dateconversions.convertDateToReadableString(date);
+    };
 
-  public formatDate(date: Date): string {
-    return Dateconversions.convertDateToReadableString(date);
-  }
+    const formatTimeRange = (startTime: Date, endTime: Date): string => {
+      return TimeUtils.formatTimeRange(startTime, endTime);
+    };
 
-  public formatTimeRange(startTime: Date, endTime: Date): string {
-    return TimeUtils.formatTimeRange(startTime, endTime);
-}
+    const openAbsenceDialog = () => {
+      selectedAbsence.value = new Absence(0, new Date(), Weekday.MONDAY, new Date(), new Date());
+      absenceDialogOpen.value = true;
+    };
 
-  public openAbsenceDialog(): void {
-    this.selectedAbsence = new Absence(0, new Date(), Weekday.MONDAY, new Date(), new Date());
-    this.absenceDialogOpen = true;
-  }
+    const closeAbsenceDialog = () => {
+      absenceDialogOpen.value = false;
+    };
 
-  public closeAbsenceDialog(): void {
-    this.absenceDialogOpen = false;
-  }
+    const saveAbsence = async (absence: Absence) => {
+      if (absence.id) {
+        await absenceStore.updateAbsence(props.therapist.id, absence);
+      } else {
+        await absenceStore.addAbsence(props.therapist.id, absence);
+      }
+      closeAbsenceDialog();
+      await loadAbsences();
+    };
 
-  public async saveAbsence(absence: Absence): Promise<void> {
-    if (absence.id) {
-      await this.absenceStore.updateAbsence(this.therapist.id, absence);
-    } else {
-      await this.absenceStore.addAbsence(this.therapist.id, absence);
-    }
-    this.closeAbsenceDialog();
-    await this.loadAbsences();
-  }
+    const deleteAbsence = async (absence: Absence) => {
+      await absenceStore.deleteAbsence(props.therapist.id, absence.id);
+      await loadAbsences();
+    };
 
-  public async deleteAbsence(absence: Absence): Promise<void> {
-    await this.absenceStore.deleteAbsence(this.therapist.id, absence.id);
-    await this.loadAbsences();
-  }
+    const editAbsence = (absence: Absence) => {
+      selectedAbsence.value = absence;
+      absenceDialogOpen.value = true;
+    };
 
-  public editAbsence(absence: Absence): void {
-    this.selectedAbsence = absence; 
-    this.absenceDialogOpen = true;
-  }
-}
+    return {
+      absenceDialogOpen,
+      selectedAbsence,
+      absences,
+      weekdayAbsences,
+      specificDateAbsences,
+      formatWeekday,
+      formatDate,
+      formatTimeRange,
+      openAbsenceDialog,
+      closeAbsenceDialog,
+      saveAbsence,
+      deleteAbsence,
+      editAbsence,
+    };
+  },
+});
 </script>
 
 <style scoped>

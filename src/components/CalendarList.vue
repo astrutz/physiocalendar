@@ -2,7 +2,7 @@
   <v-container>
     <SingleDayPicker
       :currentSingleDay="currentSingleDay"
-      @currentDayChanged="currentSingleDay = $event"
+      @currentDayChanged="updateCurrentSingleDay"
       v-if="listType === 'daylist'"
     />
     <Daylist
@@ -10,52 +10,50 @@
       v-if="listType === 'daylist'"
     />
     <AppBar
-      @currentDayChanged1="console.log($event)"
-      v-show="false"
+      @currentDayChanged="updateCurrentSingleDayFromAppBar"
     />
   </v-container>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
-import { Weekday } from '@/class/Enums';
+import { defineComponent, ref, onMounted } from 'vue';
 import Dateconversions from '@/class/Dateconversions';
-import EventBus from '@/class/EventBus';
 import SingleDayPicker from './SingleDayPicker.vue';
 import Daylist from './Daylist.vue';
 import AppBar from './AppBar.vue';
 
-@Component({
+export default defineComponent({
   components: {
     SingleDayPicker,
     Daylist,
     AppBar,
-    EventBus,
   },
-})
-
-export default class CalendarList extends Vue {
-  @Prop() readonly listType!: string;
-
-  // eslint-disable-class-methods-use-this
-  mounted(): void {
-    EventBus.$on('currentDayChanged1', (dateFormatted: string) => {
-      this.currentSingleDay = dateFormatted;
-      // console.log(this.currentSingleDay);
-    });
-  }
-
-  private dateFormatted: string = Dateconversions.convertEnglishToGermanReadableString(
-    new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10),
-  );
-
-  public currentSingleDay =
-    Dateconversions.convertEnglishToGermanReadableString(
-      (new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().substr(0, 10)),
+  props: {
+    listType: {
+      type: String,
+      required: true,
+    },
+  },
+  setup() {
+    const currentSingleDay = ref<Date>(
+      new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
     );
 
-  currentWeekDay = Weekday.MONDAY;
-}
+    const updateCurrentSingleDay = (newDate: Date) => {
+      currentSingleDay.value = newDate;
+    };
+
+    const updateCurrentSingleDayFromAppBar = (dateFormatted: string) => {
+      currentSingleDay.value = Dateconversions.convertReadableStringToDate(dateFormatted);
+    };
+
+    return {
+      currentSingleDay,
+      updateCurrentSingleDay,
+      updateCurrentSingleDayFromAppBar,
+    };
+  },
+});
 </script>
 
 <style>

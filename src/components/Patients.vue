@@ -28,17 +28,17 @@
 
     <v-dialog v-model="createPatientDialog" max-width="600">
       <v-card>
-        <CreatePatient @save="createPatient($event)" @cancel="closeCreatePatientDialog" />
+        <CreatePatient @save="createPatient" @cancel="closeCreatePatientDialog" />
       </v-card>
     </v-dialog>
 
     <v-dialog v-model="detailDialog" max-width="600">
-      <v-card>
+      <v-card  v-if="selectedPatient">
         <PatientDetail
           :patient="selectedPatient"
           :appointments="selectedPatientAppointments"
           @save="savePatientChanges"
-          @deletePatient="deletePatient($event)"
+          @deletePatient="deletePatient"
           @cancel="closeDetailDialog"
         />
       </v-card>
@@ -47,100 +47,126 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { defineComponent, ref, onMounted } from 'vue';
 import PatientDetail from '@/components/PatientDetail.vue';
 import CreatePatient from '@/components/CreatePatient.vue';
 import PatientService from '@/services/PatientService';
 import Patient from '@/class/Patient';
 import Appointment from '@/class/Appointment';
 
-@Component({
+export default defineComponent({
   components: {
     PatientDetail,
     CreatePatient,
   },
-})
+  setup() {
+    const headers = ref([
+      { text: 'Vorname', value: 'firstName' },
+      { text: 'Nachname', value: 'lastName' },
+      { text: 'Aktiv seit', value: 'activeSince' },
+      { text: 'Aktiv bis', value: 'activeUntil' },
+      { text: 'BWO', value: 'isBWO' },
+    ]);
 
-export default class Patients extends Vue {
-  headers = [
-    { text: 'Vorname', value: 'firstName' },
-    { text: 'Nachname', value: 'lastName' },
-    { text: 'Aktiv seit', value: 'activeSince' },
-    { text: 'Aktiv bis', value: 'activeUntil' },
-    { text: 'BWO', value: 'isBWO' },
-  ];
+    const detailDialog = ref(false);
+    const createPatientDialog = ref(false);
+    const selectedPatient = ref<Patient | null>(null);
+    const selectedPatientAppointments = ref<Appointment[]>([]);
+    const patients = ref<Patient[]>([]);
+    const filteredPatients = ref<Patient[]>([]);
+    const search = ref('');
 
-  detailDialog = false;
-  createPatientDialog = false;
-  selectedPatient: Patient | null = null;
-  selectedPatientAppointments: Appointment[] = [];
-  patients: Patient[] = [];
-  filteredPatients: Patient[] = [];
-  search = '';
+    const loadPatients = async () => {
+      patients.value = await PatientService.getAllPatients();
+      filteredPatients.value = [...patients.value];
+    };
 
-  async created(): Promise<void> {
-    await this.loadPatients();
-  }
+    const showDetail = async (patient: Patient) => {
+      selectedPatient.value = patient;
+      selectedPatientAppointments.value = await PatientService.getPatientAppointments(patient.id);
+      detailDialog.value = true;
+    };
 
-  async loadPatients(): Promise<void> {
-    this.patients = await PatientService.getAllPatients();
-    this.filteredPatients = [...this.patients];
-  }
+    const savePatientChanges = async (event: { patient: Patient }) => {
+      if (event.patient) {
+        await PatientService.updatePatient(event.patient.id, event.patient);
+        loadPatients();
+        closeDetailDialog();
+      }
+    };
 
-  async showDetail(patient: Patient): Promise<void> {
-    this.selectedPatient = patient;
-    this.selectedPatientAppointments = await PatientService.getPatientAppointments(patient.id); // Wenn verfügbar
-    this.detailDialog = true;
-  }
+    const deletePatient = async (event: { patient: Patient }) => {
+      if (event.patient) {
+        await PatientService.deletePatient(event.patient.id);
+        loadPatients();
+        closeDetailDialog();
+      }
+    };
 
-  async savePatientChanges(event: { patient: Patient }): Promise<void> {
-    if (event.patient) {
-      await PatientService.updatePatient(event.patient.id, event.patient);
-      this.loadPatients();
-      this.closeDetailDialog();
-    }
-  }
+    const createPatient = async (event: { patient: Patient }) => {
+      if (event.patient) {
+        await PatientService.createPatient(event.patient);
+        loadPatients();
+        closeCreatePatientDialog();
+      }
+    };
 
-  async deletePatient(event: { patient: Patient }): Promise<void> {
-    if (event.patient) {
-      await PatientService.deletePatient(event.patient.id);
-      this.loadPatients();
-      this.closeDetailDialog();
-    }
-  }
+    const closeDetailDialog = () => {
+      detailDialog.value = false;
+      selectedPatient.value = null;
+      selectedPatientAppointments.value = [];
+    };
 
-  async createPatient(event: { patient: Patient }): Promise<void> {
-    if (event.patient) {
-      await PatientService.createPatient(event.patient);
-      this.loadPatients();
-      this.closeCreatePatientDialog();
-    }
-  }
+    const closeCreatePatientDialog = () => {
+      createPatientDialog.value = false;
+    };
 
-  closeDetailDialog(): void {
-    this.detailDialog = false;
-    this.selectedPatient = null;
-    this.selectedPatientAppointments = [];
-  }
+    const openCreatePatientDialog = () => {
+      createPatientDialog.value = true;
+    };
 
-  closeCreatePatientDialog(): void {
-    this.createPatientDialog = false;
-  }
+    const filterPatients = () => {
+      const searchTerm = search.value.toLowerCase();
+      filteredPatients.value = patients.value.filter(
+        patient =>
+          patient.firstName.toLowerCase().includes(searchTerm) ||
+          patient.lastName.toLowerCase().includes(searchTerm)
+      );
+    };
 
-  openCreatePatientDialog(): void {
-    this.createPatientDialog = true;
-  }
+    const formatDate = (date: Date | undefined): string => {
+      if (!date) return '';
+      return new Date(date).toLocaleDateString('de-DE', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+    };
 
-  filterPatients(): void {
-    const searchTerm = this.search.toLowerCase();
-    this.filteredPatients = this.patients.filter(
-      patient => patient.firstName.toLowerCase().includes(searchTerm) || patient.lastName.toLowerCase().includes(searchTerm)
-    );
-  }
+    onMounted(() => {
+      loadPatients();
+    });
 
-  formatDate(date: Date | undefined): string {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('de-DE', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  }
-}
+    return {
+      headers,
+      detailDialog,
+      createPatientDialog,
+      selectedPatient,
+      selectedPatientAppointments,
+      patients,
+      filteredPatients,
+      search,
+      loadPatients,
+      showDetail,
+      savePatientChanges,
+      deletePatient,
+      createPatient,
+      closeDetailDialog,
+      closeCreatePatientDialog,
+      openCreatePatientDialog,
+      filterPatients,
+      formatDate,
+    };
+  },
+});
 </script>

@@ -1,83 +1,68 @@
-import { Action, Module, Mutation, VuexModule } from 'vuex-module-decorators';
+import { defineStore } from 'pinia';
 import axios from 'axios';
 import Therapist from '@/class/Therapist';
 import { JSONTherapistDTO } from '@/class/JSONStructures';
-import store from './index';
 import { convertToTherapist, convertToTherapistDTO } from './convert';
 
-@Module({ name: 'TherapistStore', dynamic: true, store })
-class TherapistStore extends VuexModule {
-  public therapists: Therapist[] = [];
-  public therapist!: Therapist;
+export const useTherapistStore = defineStore('therapist', {
+  state: () => ({
+    therapists: [] as Therapist[],
+    therapist: {} as Therapist | null,
+  }),
 
-  @Action
-  public async loadTherapists(): Promise<void> {
-    try {
-      const responseData: JSONTherapistDTO[] = (await axios.get('http://localhost:8080/api/therapists')).data;
-      const therapists = responseData.map((dto) => convertToTherapist(dto));
-      this.context.commit('setTherapists', therapists);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+  actions: {
+    async loadTherapists(): Promise<void> {
+      try {
+        const responseData: JSONTherapistDTO[] = (await axios.get('http://localhost:8080/api/therapists')).data;
+        this.therapists = responseData.map((dto) => convertToTherapist(dto));
+      } catch (err) {
+        console.error(err);
+      }
+    },
 
-  @Action
-  public async loadTherapist(id: number): Promise<void> {
-    try {
-      const responseData: JSONTherapistDTO[] = (await axios.get('http://localhost:8080/api/therapist/'+ id)).data;
-      const therapist = responseData.map((dto) => convertToTherapist(dto));
-      this.context.commit('setTherapist', therapist);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+    async loadTherapist(id: number): Promise<void> {
+      try {
+        const responseData: JSONTherapistDTO = (await axios.get(`http://localhost:8080/api/therapist/${id}`)).data;
+        this.therapist = convertToTherapist(responseData);
+      } catch (err) {
+        console.error(err);
+      }
+    },
 
-  @Action
-  public async addTherapist(therapist: Therapist): Promise<void> {
-    try {
-      const therapistDTO = convertToTherapistDTO(therapist);
-      await axios.post('http://localhost:8080/api/therapists', therapistDTO);
-      this.loadTherapists();
-    } catch (err) {
-      console.error(err);
-    }
-  }
+    async addTherapist(therapist: Therapist): Promise<void> {
+      try {
+        const therapistDTO = convertToTherapistDTO(therapist);
+        await axios.post('http://localhost:8080/api/therapists', therapistDTO);
+        this.loadTherapists();
+      } catch (err) {
+        console.error(err);
+      }
+    },
 
-  @Action
-  public async updateTherapist(id: number, therapist: Therapist ): Promise<void> {
-    try {
-      const therapistDTO = convertToTherapistDTO(therapist);
-      await axios.put(`http://localhost:8080/api/therapists/${id}`, therapistDTO);
-      this.loadTherapists();
-    } catch (err) {
-      console.error(err);
-    }
-  }
+    async updateTherapist(id: number, therapist: Therapist): Promise<void> {
+      try {
+        const therapistDTO = convertToTherapistDTO(therapist);
+        await axios.put(`http://localhost:8080/api/therapists/${id}`, therapistDTO);
+        this.loadTherapists();
+      } catch (err) {
+        console.error(err);
+      }
+    },
 
-  @Action
-  public async deleteTherapist(id: number): Promise<void> {
-    try {
-      await axios.delete(`http://localhost:8080/api/therapists/${id}`);
-      this.loadTherapists();
-    } catch (err) {
-      console.error(err);
-    }
-  }
+    async deleteTherapist(id: number): Promise<void> {
+      try {
+        await axios.delete(`http://localhost:8080/api/therapists/${id}`);
+        this.loadTherapists();
+      } catch (err) {
+        console.error(err);
+      }
+    },
+  },
 
-  @Mutation
-  public setTherapists(therapists: Therapist[]): void {
-    this.therapists = therapists;
-  }
-
-  get getAllTherapists(): Therapist[] {
-    return this.therapists;
-  }
-
-  public get getTherapistById(): (id: number) => Therapist | undefined {
-    return (id: number) => {
-      return this.therapists.find(therapist => therapist.id === id);
-    };
-  }
-}
-
-export default TherapistStore;
+  getters: {
+    getAllTherapists: (state) => state.therapists,
+    getTherapistById: (state) => {
+      return (id: number) => state.therapists.find(therapist => therapist.id === id);
+    },
+  },
+});
