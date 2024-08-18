@@ -37,7 +37,7 @@
   import { Component, Vue } from 'vue-property-decorator';
   import TherapistDetail from './TherapistDetail.vue';
   import { getModule } from 'vuex-module-decorators';
-  import TherapistStore from '@/store/therapistStore';
+  import TherapistStore from '@/store/TherapistStore';
 
   
   @Component({

@@ -23,6 +23,15 @@ class AppointmentStore extends VuexModule {
   }
 
   @Action
+  public async loadAppointmentsForDate(date: string): Promise<void> {
+    try {
+      await this.loadAppointments({ date });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  @Action
   public async addAppointment(appointment: SingleAppointment): Promise<void> {
     try {
       const appointmentDTO = convertToAppointmentDTO(appointment);
@@ -34,7 +43,7 @@ class AppointmentStore extends VuexModule {
   }
 
   @Action
-  public async updateAppointment({ id, appointment }: { id: number; appointment: SingleAppointment }): Promise<void> {
+  public async updateAppointment( id: number, appointment: SingleAppointment ): Promise<void> {
     try {
       const appointmentDTO = convertToAppointmentDTO(appointment);
       await axios.put(`http://localhost:8080/api/appointments/${id}`, appointmentDTO);
@@ -91,6 +100,7 @@ class AppointmentStore extends VuexModule {
       );
     };
   }
+  
   private buildQueryString(params: { date?: string; therapistId?: number; patientId?: number }): string {
     const queryParts: string[] = [];
   

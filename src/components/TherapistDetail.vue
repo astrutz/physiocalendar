@@ -44,7 +44,7 @@
   import { Component, Prop, Vue } from 'vue-property-decorator';
   import Therapist from '@/class/Therapist';
   import { getModule } from 'vuex-module-decorators';
-import TherapistStore from '@/store/therapistStore';
+import TherapistStore from '@/store/TherapistStore';
   
   @Component
   export default class TherapistDetail extends Vue {

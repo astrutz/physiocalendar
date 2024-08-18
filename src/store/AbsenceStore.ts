@@ -21,7 +21,7 @@ class AbsenceStore extends VuexModule {
   }
 
   @Action
-  public async addAbsence({ therapistId, absence }: { therapistId: number, absence: Absence }): Promise<void> {
+  public async addAbsence(therapistId: number, absence: Absence ): Promise<void> {
     try {
       const absenceDTO = convertToAbsenceDTO(absence);
       await axios.post(`http://localhost:8080/api/therapists/${therapistId}/absences`, absenceDTO);
@@ -32,7 +32,7 @@ class AbsenceStore extends VuexModule {
   }
 
   @Action
-  public async updateAbsence({ therapistId, absence }: { therapistId: number, absence: Absence }): Promise<void> {
+  public async updateAbsence(therapistId: number, absence: Absence ): Promise<void> {
     try {
       const absenceDTO = convertToAbsenceDTO(absence);
       await axios.put(`http://localhost:8080/api/therapists/${therapistId}/absences/${absence.id}`, absenceDTO);
@@ -43,7 +43,7 @@ class AbsenceStore extends VuexModule {
   }
 
   @Action
-  public async deleteAbsence({ therapistId, absenceId }: { therapistId: number, absenceId: number }): Promise<void> {
+  public async deleteAbsence(therapistId: number, absenceId: number ): Promise<void> {
     try {
       await axios.delete(`http://localhost:8080/api/therapists/${therapistId}/absences/${absenceId}`);
       this.loadAbsences(therapistId);

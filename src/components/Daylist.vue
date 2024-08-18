@@ -19,7 +19,7 @@
             <td
               v-for="header in headers"
               :key="header.value"
-              @click="openCreateDialog(header.text, header.id, row.startTime)"
+              @click="openCreateDialog((header.text, header.id), row.startTime)"
               :class="getClassForCell(row[header.value])"
             >
               <div v-if="!row[header.value]">
@@ -72,7 +72,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import DaylistHeader from './DaylistHeader.vue';
 import CreateAppointmentDialog from './CreateAppointmentDialog.vue';
 import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
@@ -85,6 +85,9 @@ import Dateconversions from '@/class/Dateconversions';
 import Therapist from '@/class/Therapist';
 import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
+import { TimeUtils } from '@/class/TimeUtils';
+import Absence from '@/class/Absence';
+import AbsenceStore from '../store/AbsenceStore';
 
 @Component({
   components: {
@@ -95,16 +98,19 @@ import AppointmentSeries from '@/class/AppointmentSeries';
   },
 })
 export default class Daylist extends Vue {
-  public currentSingleDay: Date = Dateconversions.getCurrentDateString();
+
+  @Prop({ required: true }) currentSingleDay!: Date;
+
   public createDialog: boolean = false;
   public singleAppointmentDialog: boolean = false;
   public seriesAppointmentDialog: boolean = false;
-  public selectedTherapist: string = '';
+  public selectedTherapist: Therapist | null = null;
   public selectedAppointment: SingleAppointment | null = null;
   public selectedSeriesAppointment: AppointmentSeries | null = null;
 
   appointmentStore = getModule(AppointmentStore);
   appointmentSeriesStore = getModule(AppointmentSeriesStore);
+  absenceStore = getModule(AbsenceStore)
 
   public headers: Array<{ id: number; text: string; value: number}> = [];
   public rows: Array<Record<string, any>> = [];
@@ -129,17 +135,19 @@ export default class Daylist extends Vue {
   }
 
   private async loadAppointments(): Promise<void> {
-    await this.appointmentStore.loadAppointments();
-    await this.appointmentSeriesStore.loadAppointmentSeries();
+    const date: string = this.currentSingleDay.toISOString();
+    await this.appointmentStore.loadAppointmentsForDate(date);
+    await this.appointmentSeriesStore.loadSeriesAppointmentsForDate(date);
     this.createRows();
   }
 
   private createRows(): void {
-    const startTimes = new Time());
+    TimeUtils.initializeTimes(); // Sicherstellen, dass die Zeiten initialisiert sind
+    const startTimes = TimeUtils.getTimes();
     this.rows = startTimes.map((time) => {
-      const row: Record<string, any> = { startTimeString: time, startTime: time };
+      const row: Record<string, any> = { startTimeString: TimeUtils.formatTime(time), startTime: time };
       this.headers.forEach((header) => {
-        const singleAppointment: SingleAppointment = this.appointmentStore.getAppointmentByTherapistAndTime(header.id, this.currentSingleDay, time);
+        const singleAppointment: SingleAppointment | undefined = this.appointmentStore.getAppointmentByTherapistAndTime(header.id, this.currentSingleDay, time);
         const seriesAppointment = this.appointmentSeriesStore.getAppointmentSeriesByTherapistAndTime(header.id, this.currentSingleDay, time);
 
         if (singleAppointment) {
@@ -152,59 +160,69 @@ export default class Daylist extends Vue {
       });
       return row;
     });
-  }
+}
+
+
 
   private getTherapists(): Therapist[] {
     // Diese Methode sollte die Liste der Therapeuten aus dem Store oder einer API laden.
     return [];
   }
 
-  private openCreateDialog(therapist: Therapist, therapistId: number, startTime: Date): void {
-    this.selectedTherapist = therapist;
-    this.createDialog = true;
+  public openCreateDialog(header: { text: string, id: number }, startTime: Date): void {
+    const therapist = this.getTherapists().find(t => t.id === header.id);
+    if (therapist) {
+      this.selectedTherapist = therapist;
+      this.createDialog = true;
+    }
   }
 
-  private openSingleAppointmentDialog(appointment: SingleAppointment): void {
+  public openSingleAppointmentDialog(appointment: SingleAppointment): void {
     this.selectedAppointment = appointment;
     this.singleAppointmentDialog = true;
   }
 
-  private openSeriesAppointmentDialog(appointment: AppointmentSeries): void {
+  public openSeriesAppointmentDialog(appointment: AppointmentSeries): void {
     this.selectedSeriesAppointment = appointment;
     this.singleAppointmentDialog = true;
   }
 
-  private addAppointment(appointment: SingleAppointment): void {
+  public addAppointment(appointment: SingleAppointment): void {
     this.appointmentStore.addAppointment(appointment);
     this.loadAppointments();
   }
 
-  private addSeriesAppointment(appointment: AppointmentSeries): void {
+  public addSeriesAppointment(appointment: AppointmentSeries): void {
     this.appointmentSeriesStore.addAppointmentSeries(appointment);
     this.loadAppointments();
   }
 
-  private changeSingleAppointment(appointment: SingleAppointment): void {
-    this.appointmentStore.updateAppointment(appointment);
+  public changeSingleAppointment(appointment: SingleAppointment): void {
+    this.appointmentStore.updateAppointment(appointment.id, appointment);
     this.loadAppointments();
   }
 
-  private changeSeriesAppointment(appointment: AppointmentSeries): void {
-    this.appointmentSeriesStore.updateAppointmentSeries(appointment);
+  public changeSeriesAppointment(appointment: AppointmentSeries): void {
+    this.appointmentSeriesStore.updateAppointmentSeries(appointment.id, appointment);
     this.loadAppointments();
   }
 
-  private deleteSingleAppointment(id: string): void {
+  public changeAbsences(absence: Absence): void {
+    this.absenceStore.updateAbsence(absence.id, absence);
+    this.loadAppointments();
+  }
+
+  public deleteSingleAppointment(id: number): void {
     this.appointmentStore.deleteAppointment(id);
     this.loadAppointments();
   }
 
-  private deleteSeriesAppointment(id: string): void {
+  public deleteSeriesAppointment(id: number): void {
     this.appointmentSeriesStore.deleteAppointmentSeries(id);
     this.loadAppointments();
   }
 
-  private getClassForCell(entry: SingleAppointment | AppointmentSeries | null): string {
+  public getClassForCell(entry: SingleAppointment | AppointmentSeries | null): string {
     if (!entry) return '';
     if (entry instanceof SingleAppointment) {
       return entry.isHotair ? 'cell-hotair' : entry.isUltrasonic ? 'cell-ultrasonic' : entry.isElectric ? 'cell-electric' : '';

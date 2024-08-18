@@ -11,7 +11,7 @@ class AppointmentSeriesStore extends VuexModule {
   public seriesAppointments: AppointmentSeries[] = [];
 
   @Action
-  public async loadAppointmentSeriess(params?: { date?: string; therapistId?: number; patientId?: number }): Promise<void> {
+  public async loadAppointmentSeries(params?: { date?: string; therapistId?: number; patientId?: number }): Promise<void> {
     try {
       const queryString = params ? this.buildQueryString(params) : '';
       const responseData: JSONAppointmentSeriesDTO[] = (await axios.get(`http://localhost:8080/api/seriesAppointments${queryString}`)).data;
@@ -23,22 +23,31 @@ class AppointmentSeriesStore extends VuexModule {
   }
 
   @Action
-  public async addAppointmentSeries(appointment: AppointmentSeries): Promise<void> {
+  public async loadSeriesAppointmentsForDate(date: string): Promise<void> {
     try {
-      const appointmentDTO = convertToAppointmentSeriesDTO(appointment);
-      await axios.post('http://localhost:8080/api/seriesAppointments', appointmentDTO);
-      this.loadAppointmentSeriess({ date: appointment.startDate.toISOString().split('T')[0] });
+      await this.loadAppointmentSeries({ date });
     } catch (err) {
       console.error(err);
     }
   }
 
   @Action
-  public async updateAppointmentSeries({ id, appointment }: { id: number; appointment: AppointmentSeries }): Promise<void> {
+  public async addAppointmentSeries(appointment: AppointmentSeries): Promise<void> {
+    try {
+      const appointmentDTO = convertToAppointmentSeriesDTO(appointment);
+      await axios.post('http://localhost:8080/api/seriesAppointments', appointmentDTO);
+      this.loadAppointmentSeries({ date: appointment.startDate.toISOString().split('T')[0] });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  @Action
+  public async updateAppointmentSeries(id: number, appointment: AppointmentSeries ): Promise<void> {
     try {
       const appointmentDTO = convertToAppointmentSeriesDTO(appointment);
       await axios.put(`http://localhost:8080/api/seriesAppointments/${id}`, appointmentDTO);
-      this.loadAppointmentSeriess({ date: appointment.startDate.toISOString().split('T')[0] });
+      this.loadAppointmentSeries({ date: appointment.startDate.toISOString().split('T')[0] });
     } catch (err) {
       console.error(err);
     }
@@ -49,7 +58,7 @@ class AppointmentSeriesStore extends VuexModule {
     try {
       const appointmentToDelete = this.getAppointmentSeriesById(id);
       await axios.delete(`http://localhost:8080/api/seriesAppointments/${id}`);
-      this.loadAppointmentSeriess({ date: appointmentToDelete?.startDate.toISOString().split('T')[0] });
+      this.loadAppointmentSeries({ date: appointmentToDelete?.startDate.toISOString().split('T')[0] });
     } catch (err) {
       console.error(err);
     }
@@ -80,6 +89,14 @@ class AppointmentSeriesStore extends VuexModule {
     return (therapistId: number, date: string) => {
       return this.seriesAppointments.filter(
         appointment => appointment.therapistId === therapistId && appointment.startDate.toISOString().split('T')[0] <= date && appointment.endDate.toISOString().split('T')[0] >= date
+      );
+    };
+  }
+
+  get getAppointmentSeriesByTherapistAndTime(): (therapistId: number, date: Date, time: Date) => AppointmentSeries | undefined {
+    return (therapistId: number, date: Date, time: Date) => {
+      return this.seriesAppointments.find(
+        appointment => appointment.therapistId === therapistId && appointment.startTime === time //&& appointment.date === date
       );
     };
   }

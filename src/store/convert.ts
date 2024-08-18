@@ -1,16 +1,13 @@
 import Therapist from '@/class/Therapist';
 import Absence from '@/class/Absence';
-import Exception from '@/class/AbsenceException';
-import Appointment from '@/class/Appointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Cancellation from '@/class/Cancellation';
-import { JSONAbsenceExceptionDTO, JSONAppointmentSeriesDTO, JSONCancellationDTO, JSONPatientDTO, JSONSingleAppointmentDTO, JSONTherapistDTO } from '@/class/JSONStructures';
+import { JSONAbsenceDTO, JSONAbsenceExceptionDTO, JSONAppointmentSeriesDTO, JSONCancellationDTO, JSONPatientDTO, JSONSingleAppointmentDTO,
+JSONTherapistDTO } from '@/class/JSONStructures';
 import SingleAppointment from '@/class/SingleAppointment';
-import { JSONListSingleDayDTO } from '../class/JSONStructures';
 import AbsenceException from '@/class/AbsenceException';
 import { Weekday } from '../class/Enums';
 import Patient from '@/class/Patient';
-import therapist from '@/store/TherapistStore';
 
 export function convertToTherapist(dto: any): Therapist {
   return new Therapist(
@@ -64,28 +61,29 @@ export function convertToAbsence(dto: any): Absence {
   return new Absence(dto.id, dto.date, dto.weekday, dto.start, dto.end);
 }
 
-export function convertToAbsenceDTO(absence: Absence): any {
+export function convertToAbsenceDTO(absence: Absence): JSONAbsenceDTO {
   return {
     id: absence.id,
     date: absence.date,
-    start: absence.startTime,
-    end: absence.endTime,
+    weekday: absence.weekday,
+    startTime: absence.startTime,
+    endTime: absence.endTime,
   };
 }
 
-export function convertToAbsenceException(dto: any): Exception {
-  return new Exception(dto.id, dto.date, dto.start, dto.end);
+export function convertToAbsenceException(absenceException: JSONAbsenceExceptionDTO): AbsenceException {
+  return new AbsenceException(absenceException.id, absenceException.date, absenceException.weekday, absenceException.startTime, absenceException.endTime);
 }
 
 export function convertToAbsenceExceptionDTO(exception: AbsenceException): JSONAbsenceExceptionDTO {
   return {
     id: exception.id,
     date: exception.date,
+    weekday: exception.weekday,
     startTime: exception.startTime,
     endTime: exception.endTime,
   };
 }
-
 export function convertToAppointment(appointment: JSONSingleAppointmentDTO): SingleAppointment {
   return new SingleAppointment(
     appointment.id,

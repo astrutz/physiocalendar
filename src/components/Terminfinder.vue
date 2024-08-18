@@ -258,7 +258,7 @@
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import { getModule } from 'vuex-module-decorators';
-import TherapistStore from '@/store/therapistStore';
+import TherapistStore from '@/store/TherapistStore';
 
 import AppointmentRequest from '@/class/AppointmentRequest';
 import SingleAppointment from '@/class/SingleAppointment';

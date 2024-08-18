@@ -18,9 +18,6 @@
         <v-list-item-title>{{ item.title }}</v-list-item-title>
       </v-list-item>
     </v-list>
-    <v-dialog v-model="menuItems[0].dialog" max-width="600">
-      <Import @dialogClosed="menuItems[0].dialog = false" />
-    </v-dialog>
     <v-bottom-sheet v-model="menuItems[1].dialog">
       <Terminfinder @dialogClosed="menuItems[1].dialog = false" />
     </v-bottom-sheet>
@@ -36,14 +33,12 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator';
 import Terminfinder from '@/components/Terminfinder.vue';
-import Import from '@/components/Import.vue';
 import Therapists from '@/components/Therapists.vue';
 import Patients from '@/components/Patients.vue';
 
 @Component({
   components: {
     Terminfinder,
-    Import,
     Therapists,
     Patients,
   },

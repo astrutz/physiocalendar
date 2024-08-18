@@ -7,16 +7,16 @@ export default class Absence {
   
   weekday: Weekday;
 
-  startTime : Time;
+  startTime : Date;
 
-  endTime : Time;
+  endTime : Date;
 
   constructor(
     id: number,
     date: Date,
     weekday: Weekday,
-    startTime: Time,
-    endTime: Time,
+    startTime: Date,
+    endTime: Date,
   ) {
     this.id = id;
     this.date = date;

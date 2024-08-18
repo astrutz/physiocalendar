@@ -64,6 +64,7 @@ export interface JSONDaylistDTO {
 export interface JSONAbsenceExceptionDTO {
   id: number
   date: Date;
+  weekday: Weekday;
   startTime: Date;
   endTime: Date;
 }

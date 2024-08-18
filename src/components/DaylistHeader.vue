@@ -1,188 +1,159 @@
 <template>
-  <div class="therapist-header" @click="absenceDialog = true">
-    {{ therapist }}
-    <v-dialog v-model="absenceDialog" width="600">
-      <v-card>
-        <v-card-title class="text-h5 grey lighten-2">
-          {{ absenceType }} von {{ therapist }} am {{ date }}
-        </v-card-title>
+  <div class="daylist-header">
+    <v-card class="mb-2" outlined>
+      <v-card-title>
+        <span>{{ therapist.name }}</span>
+        <v-spacer></v-spacer>
+        <v-btn icon @click="openAbsenceDialog">
+          <v-icon>mdi-calendar-remove</v-icon>
+        </v-btn>
+      </v-card-title>
 
-        <v-card-text class="pt-5">
-          <v-row v-if="masterlistAbsences.length > 0">
-            <v-col>
-              <v-alert type="info">
-                Für diesen Therapeuten sind Abwesenheiten in der Stammliste
-                vorhanden:
-                <p
-                  v-for="(absence) in masterlistAbsences"
-                  :key="absence.start"
-                  style="margin-bottom: 0px"
-                >
-                  <v-btn title="Ausnahme hinzufügen" icon @click="addException(absence)"
-                    ><v-icon>mdi-account-star</v-icon></v-btn
-                  >
-                  {{ absence.day }} - {{ absence.start }} bis {{ absence.end }}
-                </p>
-              </v-alert>
-            </v-col>
-          </v-row>
-          <h3 v-if="newExceptions.length > 0">Neue Ausnahmen</h3>
-          <v-row
-            v-for="(exception, index) in newExceptions"
-            :key="`${exception.start}-${exception.end}-${index}`"
-          >
-            <v-col>
-              <v-select
-                :items="times"
-                :value="exception.start"
-                v-model="newExceptions[index].start"
-                label="Von"
-              ></v-select>
-            </v-col>
-            <v-col>
-              <v-select
-                :items="times"
-                :value="exception.end"
-                v-model="newExceptions[index].end"
-                label="Bis"
-              ></v-select>
-            </v-col>
-            <v-col cols="1">
-              <v-btn
-                icon
-                color="error"
-                @click="
-                  newExceptions = newExceptions.filter((abs, i) => i !== index)
-                "
-                style="margin-top: 12px"
-              >
-                <v-icon>mdi-delete</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-          <h3 v-if="newAbsences.length > 0">Neue Abwesenheiten</h3>
-          <v-row
-            v-for="(absence, index) in newAbsences"
-            :key="`${absence.start}-${absence.end}-${index}`"
-          >
-            <v-col>
-              <v-select
-                :items="times"
-                :value="absence.start"
-                v-model="newAbsences[index].start"
-                label="Von"
-              ></v-select>
-            </v-col>
-            <v-col>
-              <v-select
-                :items="times"
-                :value="absence.end"
-                v-model="newAbsences[index].end"
-                label="Bis"
-              ></v-select>
-            </v-col>
-            <v-col cols="1">
-              <v-btn
-                icon
-                color="error"
-                @click="
-                  newAbsences = newAbsences.filter((abs, i) => i !== index)
-                "
-                style="margin-top: 12px"
-              >
-                <v-icon>mdi-delete</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-card-text>
-        <v-divider></v-divider>
-        <v-card-actions>
-          <v-btn color="normal" text @click="resetInputs()"> Abbrechen </v-btn>
-          <v-spacer></v-spacer>
-              <v-btn
-                color="primary"
-                @click="newAbsences.push({ start: null, end: null })"
-              >
-                Neue Abwesenheit
-              </v-btn>
-              <v-btn
-                color="primary"
-                @click="newExceptions.push({ start: null, end: null })"
-              >
-                Neue Ausnahme
-              </v-btn>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="success"
-            button
-            @click="
-              submitAbsences();
-              createDialog = false;
-            "
-          >
-            Speichern
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+      <v-card-subtitle>Generelle Abwesenheiten (Wochentage)</v-card-subtitle>
+      <v-list dense>
+        <v-list-item v-for="absence in weekdayAbsences" :key="absence.id">
+          <v-list-item-content>
+            <v-list-item-title>{{ formatWeekday(absence.weekday) }}: {{ formatTimeRange(absence.startTime, absence.endTime) }}</v-list-item-title>
+          </v-list-item-content>
+          <v-list-item-action>
+            <v-btn icon @click="editAbsence(absence)">
+              <v-icon>mdi-pencil</v-icon>
+            </v-btn>
+            <v-btn icon @click="deleteAbsence(absence)">
+              <v-icon>mdi-delete</v-icon>
+            </v-btn>
+          </v-list-item-action>
+        </v-list-item>
+      </v-list>
+
+      <v-card-subtitle>Ausnahmen (Spezifische Tage)</v-card-subtitle>
+      <v-list dense>
+        <v-list-item v-for="exception in specificDateAbsences" :key="exception.id">
+          <v-list-item-content>
+            <v-list-item-title>{{ formatDate(exception.date) }}: {{ formatTimeRange(exception.startTime, exception.endTime) }}</v-list-item-title>
+          </v-list-item-content>
+          <v-list-item-action>
+            <v-btn icon @click="editAbsence(exception)">
+              <v-icon>mdi-pencil</v-icon>
+            </v-btn>
+            <v-btn icon @click="deleteAbsence(exception)">
+              <v-icon>mdi-delete</v-icon>
+            </v-btn>
+          </v-list-item-action>
+        </v-list-item>
+      </v-list>
+    </v-card>
+
+    <!-- Dialog für das Hinzufügen/Bearbeiten von Abwesenheiten -->
+    <absence-dialog
+      v-if="absenceDialogOpen"
+      :absence="selectedAbsence"
+      @save="saveAbsence"
+      @close="closeAbsenceDialog"
+    />
   </div>
 </template>
 
 <script lang="ts">
-import Absence from '@/class/Absence';
-import Dateconversions from '@/class/Dateconversions';
-import { Time } from '@/class/Enums';
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import { getModule } from 'vuex-module-decorators';
+import AbsenceDialog from './AbsenceDialog.vue';
+import AbsenceStore from '@/store/AbsenceStore';
+import Absence from '@/class/Absence';
+import Therapist from '@/class/Therapist';
+import { Weekday } from '@/class/Enums';
+import Dateconversions from '@/class/Dateconversions';
+import { TimeUtils } from '@/class/TimeUtils';
 
-@Component
+@Component({
+  components: {
+    AbsenceDialog,
+  },
+})
 export default class DaylistHeader extends Vue {
-  @Prop() readonly therapist!: string;
+  @Prop({ required: true }) therapist!: Therapist;
 
-  @Prop() readonly therapistID!: string;
+  public absenceDialogOpen: boolean = false;
+  public selectedAbsence: Absence | null = null;
+  public absences: Absence[] = [];
 
-  @Prop() readonly date!: string;
+  absenceStore = getModule(AbsenceStore);
 
-  @Prop() readonly absences!: { start: Time, end: Time }[];
-
-  @Prop() readonly exceptions!: { start: Time, end: Time }[];
-
-  @Prop() readonly masterlistAbsences!: { start: Time, end: Time }[];
-
-  private absenceType = Dateconversions.convertReadableStringToDate(this.date).getDay() === 6 ? 'Anwesenheiten' : 'Abwesenheiten';
-
-  times = Dateconversions.getAllTimes();
-
-  newAbsences = JSON.parse(JSON.stringify(this.absences)) as { start: Time, end: Time }[];
-
-  newExceptions = JSON.parse(JSON.stringify(this.exceptions)) as { start: Time, end: Time }[];
-
-  absenceDialog = false;
-
-  mounted() : void {
-    this.resetInputs();
+  async mounted() {
+    await this.loadAbsences();
   }
 
-  resetInputs(): void {
-    this.newAbsences = JSON.parse(JSON.stringify(this.absences)) as { start: Time, end: Time }[];
-    this.newExceptions = this.exceptions.map((exc) => ({
-      start: exc.start,
-      end: exc.end,
-      times: this.times.slice(this.times.indexOf(exc.start.toString()), this.times.indexOf(exc.end.toString()) + 1),
-    }));
-    this.absenceDialog = false;
+  private async loadAbsences() {
+    await this.absenceStore.loadAbsences(this.therapist.id);
+    this.absences = this.absenceStore.getAllAbsences;
   }
 
-  submitAbsences(): void {
-    const absencesToBeSubmitted = this.newAbsences.filter((abs) => abs.start !== null && abs.end !== null);
-    const exceptionsToBeSubmitted = this.newExceptions.filter((abs) => abs.start !== null && abs.end !== null);
-
-    this.$emit('absencesChanged', {
-      exceptions: exceptionsToBeSubmitted,
-      absences: absencesToBeSubmitted,
-      therapistID: this.therapistID.slice(),
-    });
-    this.resetInputs();
+  get weekdayAbsences(): Absence[] {
+    return this.absences.filter(absence => absence.weekday !== null && absence.date === null);
   }
+
+  get specificDateAbsences(): Absence[] {
+    return this.absences.filter(absence => absence.date !== null);
+  }
+
+  public formatWeekday(weekday: Weekday): string {
+    switch (weekday) {
+      case Weekday.MONDAY:
+        return 'Montag';
+      case Weekday.TUESDAY:
+        return 'Dienstag';
+      case Weekday.WEDNESDAY:
+        return 'Mittwoch';
+      case Weekday.THURSDAY:
+        return 'Donnerstag';
+      case Weekday.FRIDAY:
+        return 'Freitag';
+      default:
+        return '';
+    }
+  }
+
+  public formatDate(date: Date): string {
+    return Dateconversions.convertDateToReadableString(date);
+  }
+
+  public formatTimeRange(startTime: Date, endTime: Date): string {
+    return TimeUtils.formatTimeRange(startTime, endTime);
 }
 
+  public openAbsenceDialog(): void {
+    this.selectedAbsence = new Absence(0, new Date(), Weekday.MONDAY, new Date(), new Date());
+    this.absenceDialogOpen = true;
+  }
+
+  public closeAbsenceDialog(): void {
+    this.absenceDialogOpen = false;
+  }
+
+  public async saveAbsence(absence: Absence): Promise<void> {
+    if (absence.id) {
+      await this.absenceStore.updateAbsence(this.therapist.id, absence);
+    } else {
+      await this.absenceStore.addAbsence(this.therapist.id, absence);
+    }
+    this.closeAbsenceDialog();
+    await this.loadAbsences();
+  }
+
+  public async deleteAbsence(absence: Absence): Promise<void> {
+    await this.absenceStore.deleteAbsence(this.therapist.id, absence.id);
+    await this.loadAbsences();
+  }
+
+  public editAbsence(absence: Absence): void {
+    this.selectedAbsence = absence; 
+    this.absenceDialogOpen = true;
+  }
+}
 </script>
+
+<style scoped>
+.daylist-header {
+  padding: 16px;
+}
+</style>
