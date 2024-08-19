@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar app color="#2a2f79" dark>
+  <v-app-bar color="#2a2f79" dark>
     <img src="@/assets/icon-inverted.png" height="50px" class="mr-4" />
     <div class="d-flex align-center">
       <h1 class="text-h4">Physiokalender - Praxis Meyer</h1>
@@ -48,6 +48,7 @@ import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
 import Dateconversions from '@/class/Dateconversions';
 import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
+import EventBus from '@/class/EventBus';
 
 export default defineComponent({
   components: {
@@ -98,7 +99,7 @@ export default defineComponent({
       const dateFormatted = `${day}.${month}.${year}`;
 
       if (year >= 2000) {
-        //EventBus.$emit('currentDayChanged1', dateFormatted);
+        EventBus.set('currentDayChanged', date);
       }
       showSearchResults.value = false;
     };

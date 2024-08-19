@@ -1,33 +1,40 @@
 <template>
-  <v-menu offset-y>
-    <template v-slot:activator="{ on, attrs }">
-      <v-btn v-bind="attrs" v-on="on" text>
+  <v-menu
+    v-model="dropdownOpen"
+    close-on-content-click
+    offset-y
+  >
+    <template v-slot:activator="{ props }">
+      <v-btn icon v-bind="props">
         <v-icon>mdi-menu-down</v-icon>
       </v-btn>
     </template>
     <v-list>
-      <v-list-item @click="downloadItem" class="menu-item">
-        Backup runterladen
+      <v-list-item @click="downloadItem">
+        <v-list-item-title>Backup runterladen</v-list-item-title>
       </v-list-item>
-      <v-list-item
-        v-for="(item, index) in menuItems"
-        :key="index"
-        @click.stop="openDialog(index)"
-        class="menu-item"
-      >
-        <v-list-item-title>{{ item.title }}</v-list-item-title>
+      <v-list-item @click="openDialog(1)">
+        <v-list-item-title>Terminfinder</v-list-item-title>
+      </v-list-item>
+      <v-list-item @click="openDialog(2)">
+        <v-list-item-title>Therapeuten verwalten</v-list-item-title>
+      </v-list-item>
+      <v-list-item @click="openDialog(3)">
+        <v-list-item-title>Patienten verwalten</v-list-item-title>
       </v-list-item>
     </v-list>
-    <v-bottom-sheet v-model="menuItems[1].dialog">
-      <Terminfinder @dialogClosed="closeDialog(1)" />
-    </v-bottom-sheet>
-    <v-dialog v-model="menuItems[2].dialog" max-width="800">
-      <Therapists @dialogClosed="closeDialog(2)" />
-    </v-dialog>
-    <v-dialog v-model="menuItems[3].dialog" max-width="800">
-      <Patients @dialogClosed="closeDialog(3)" />
-    </v-dialog>
   </v-menu>
+
+  <!-- Dialoge -->
+  <v-dialog v-model="menuItems[1].dialog" max-width="800">
+    <Terminfinder @dialogClosed="closeDialog(1)" />
+  </v-dialog>
+  <v-dialog v-model="menuItems[2].dialog" max-width="800">
+    <Therapists @dialogClosed="closeDialog(2)" />
+  </v-dialog>
+  <v-dialog v-model="menuItems[3].dialog" max-width="800">
+    <Patients @dialogClosed="closeDialog(3)" />
+  </v-dialog>
 </template>
 
 <script lang="ts">
@@ -43,6 +50,7 @@ export default defineComponent({
     Patients,
   },
   setup() {
+    const dropdownOpen = ref(false);
     const menuItems = ref([
       { title: 'Backup einspielen', dialog: false },
       { title: 'Terminfinder', dialog: false },
@@ -51,10 +59,11 @@ export default defineComponent({
     ]);
 
     const downloadItem = () => {
-      console.log('TODO implement download structured Data in JSON Format');
+      console.log('TODO: Implementiere das Herunterladen von strukturierten Daten im JSON-Format');
     };
 
     const openDialog = (index: number) => {
+      dropdownOpen.value = false; // Menü schließen, wenn ein Dialog geöffnet wird
       menuItems.value[index].dialog = true;
     };
 
@@ -63,6 +72,7 @@ export default defineComponent({
     };
 
     return {
+      dropdownOpen,
       menuItems,
       downloadItem,
       openDialog,
@@ -71,12 +81,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped>
-.menu-item {
-  cursor: pointer;
-}
-.menu-item:hover {
-  background-color: #eeeeee;
-}
-</style>

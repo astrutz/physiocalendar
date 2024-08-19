@@ -11,7 +11,7 @@ export default class PatientService {
     return response.data;
   }
 
-  static async getPatientById(id: string): Promise<Patient> {
+  static async getPatientById(id: number): Promise<Patient> {
     const response = await axios.get(`${BASE_URL}/${id}`);
     return response.data;
   }
@@ -21,16 +21,16 @@ export default class PatientService {
     return response.data;
   }
 
-  static async updatePatient(id: string, patient: Patient): Promise<Patient> {
+  static async updatePatient(id: number, patient: Patient): Promise<Patient> {
     const response = await axios.put(`${BASE_URL}/${id}`, patient);
     return response.data;
   }
 
-  static async deletePatient(id: string): Promise<void> {
+  static async deletePatient(id: number): Promise<void> {
     await axios.delete(`${BASE_URL}/${id}`);
   }
 
-  static async getPatientAppointments(id: string): Promise<SingleAppointment[]> {
+  static async getPatientAppointments(id: number): Promise<SingleAppointment[]> {
     // Implementieren Sie diese Methode, wenn das Backend dies unterstützt
     const response = await axios.get(`${BASE_URL}/${id}/appointments`);
     return response.data;

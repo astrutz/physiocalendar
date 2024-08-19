@@ -9,6 +9,7 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
     "axios": "^1.7.4",
     "path": "^0.12.7",
     "physiocalendar": "file:",

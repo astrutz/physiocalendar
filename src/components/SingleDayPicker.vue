@@ -2,120 +2,135 @@
   <v-row align="center" justify="center">
     <v-col cols="auto">
       <v-btn @click="setPreviousDate">
-        <v-icon>mdi-arrow-left</v-icon>
+        <v-icon>mdi-minus</v-icon>
       </v-btn>
     </v-col>
     <v-col cols="auto">
-      <v-menu
-        v-model="menu"
-        :close-on-content-click="false"
-        :nudge-right="40"
-        transition="scale-transition"
-        offset-y
-        min-width="auto"
-      >
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn color="primary" v-bind="attrs" v-on="on">
-            {{ weekday }} {{ dateFormatted }}
-          </v-btn>
-        </template>
-        <v-date-picker
-          v-model="date"
-          :allowed-dates="dateIsAllowed"
-          locale="de-de"
-          :first-day-of-week="1"
-        ></v-date-picker>
-      </v-menu>
+      <v-btn color="primary" @click="openDatePicker">
+        {{ weekday }} {{ dateFormatted }}
+      </v-btn>
     </v-col>
     <v-col cols="auto">
       <v-btn @click="setNextDate">
-        <v-icon>mdi-arrow-right</v-icon>
+        <v-icon>mdi-plus</v-icon>
       </v-btn>
     </v-col>
+    <v-dialog v-model="datePickerOpen" max-width="290">
+      <v-date-picker
+        v-model="dateObject"
+        :header="formatHeader(dateObject)"
+        :allowed-dates="dateIsAllowed"
+        locale="de-de"
+        :first-day-of-week="1"
+        @input="updateDate"
+      ></v-date-picker>
+    </v-dialog>
   </v-row>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch } from 'vue';
+import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import Dateconversions from '@/class/Dateconversions';
-import holidays from '@/data/holidays.json'; // Correctly import JSON file
+import holidays from '@/data/holidays.json';
 
 export default defineComponent({
   props: {
     currentSingleDay: {
       type: Date,
       required: true,
+      default: () => new Date(),
     },
   },
   emits: ['currentDayChanged'],
   setup(props, { emit }) {
-    const date = ref<string>(new Date().toISOString().substr(0, 10));
+    const dateObject = ref<Date>(props.currentSingleDay); // Ref to hold Date object
     const holidaysSet = new Set(holidays.days);
+    const datePickerOpen = ref(false);
+    const weekday = ref<string>('');
+
+    onMounted(() => {
+      updateWeekday();
+    });
 
     const dateFormatted = computed(() =>
-      Dateconversions.convertEnglishToGermanReadableString(date.value)
+      Dateconversions.convertEnglishToGermanReadableString(dateObject.value.toISOString().substr(0, 10))
     );
 
-    const weekday = computed(() => getWeekdaybyDate(new Date(date.value)));
+    const updateWeekday = () => {
+      weekday.value = getWeekdaybyDate(dateObject.value);
+    };
 
-    const menu = ref(false);
+    const openDatePicker = () => {
+      datePickerOpen.value = true;
+    };
 
-    const closeMenu = (): void => {
-      menu.value = false;
+    const updateDate = () => {
+      datePickerOpen.value = false;
+      emit('currentDayChanged', dateObject.value);
+    };
+
+    const formatHeader = (date: Date): string => {
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      };
+      return date.toLocaleDateString('de-DE', options);
     };
 
     const dateIsAllowed = (dateVal: any): boolean => {
-  const dateToCheck = typeof dateVal === 'string' ? dateVal : dateVal.toISOString().substr(0, 10);
-  if (holidaysSet.has(dateToCheck)) {
-    return false;
-  }
-  const day = new Date(dateToCheck).getDay();
-  return day > 0 && day < 6;
-};
-
-
-    const getCombinedDate = (dateString?: string): Date => {
-      const dateStr = dateString || date.value;
-      const timezoneOffsetInHours = new Date(`${dateStr}T00:00:00.000Z`).getTimezoneOffset() * -1;
-      const offsetSuffix = `${timezoneOffsetInHours < 0 ? '-' : '+'}0${Math.abs(timezoneOffsetInHours / 60)}:00`;
-      return new Date(`${dateStr}T00:00:00.000${offsetSuffix}`);
+      const dateToCheck = typeof dateVal === 'string' ? dateVal : dateVal.toISOString().substr(0, 10);
+      if (holidaysSet.has(dateToCheck)) {
+        return false;
+      }
+      const day = new Date(dateToCheck).getDay();
+      return day > 0 && day < 6;
     };
 
     const getWeekdaybyDate = (date?: Date): string => {
-      const dateToCheck = date || getCombinedDate();
+      const dateToCheck = date || dateObject.value;
       return Dateconversions.getWeekdayStringForDate(dateToCheck);
     };
 
     const setPreviousDate = (): void => {
-      const newDate = getCombinedDate();
+      const newDate = new Date(dateObject.value);
       newDate.setDate(newDate.getDate() - 1);
       while (!dateIsAllowed(newDate)) {
         newDate.setDate(newDate.getDate() - 1);
       }
-      date.value = newDate.toISOString().substr(0, 10);
+      dateObject.value = newDate;
+      updateWeekday();
+      emit('currentDayChanged', newDate);
     };
 
     const setNextDate = (): void => {
-      const newDate = getCombinedDate();
+      const newDate = new Date(dateObject.value);
       newDate.setDate(newDate.getDate() + 1);
       while (!dateIsAllowed(newDate)) {
         newDate.setDate(newDate.getDate() + 1);
       }
-      date.value = newDate.toISOString().substr(0, 10);
+      dateObject.value = newDate;
+      updateWeekday();
+      emit('currentDayChanged', newDate);
     };
 
-    watch(date, () => {
-      emit('currentDayChanged', dateFormatted.value);
+    watch(dateObject, () => {
+      updateWeekday();
+      emit('currentDayChanged', dateObject.value);
     });
 
     return {
-      date,
+      dateObject,
       dateFormatted,
-      weekday,
-      menu,
       dateIsAllowed,
+      formatHeader,
+      weekday,
+      datePickerOpen,
       setPreviousDate,
       setNextDate,
+      updateDate,
+      openDatePicker,
     };
   },
 });

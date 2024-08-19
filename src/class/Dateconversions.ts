@@ -13,11 +13,6 @@ export default class Dateconversions {
     return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
   }
 
-  static timeFromString(timeString: string): Time {
-    const [hour, minute] = timeString.split(':').map(Number);
-    return Time[`${hour}:${minute}`];
-  }
-
   static stringFromTime(time: Time): string {
     return time.toString();
   }

@@ -9,18 +9,16 @@
       :currentSingleDay="currentSingleDay"
       v-if="listType === 'daylist'"
     />
-    <AppBar
-      @currentDayChanged="updateCurrentSingleDayFromAppBar"
-    />
   </v-container>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, watch } from 'vue';
 import Dateconversions from '@/class/Dateconversions';
 import SingleDayPicker from './SingleDayPicker.vue';
 import Daylist from './Daylist.vue';
 import AppBar from './AppBar.vue';
+import EventBus from '@/class/EventBus';
 
 export default defineComponent({
   components: {
@@ -46,6 +44,12 @@ export default defineComponent({
     const updateCurrentSingleDayFromAppBar = (dateFormatted: string) => {
       currentSingleDay.value = Dateconversions.convertReadableStringToDate(dateFormatted);
     };
+
+    watch(() => EventBus.get('currentDayChanged'), (newDate) => {
+      if (newDate) {
+        updateCurrentSingleDay(newDate);
+      }
+    });
 
     return {
       currentSingleDay,

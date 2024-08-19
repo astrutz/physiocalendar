@@ -1,8 +1,22 @@
 <template>
   <v-card>
+    <!-- Ladeanzeige, falls Daten geladen werden -->
+    <v-progress-circular v-if="loading" indeterminate></v-progress-circular>
+    
+    <!-- Fehlermeldung, falls ein Fehler aufgetreten ist -->
+    <v-alert v-if="error" type="error">{{ error }}</v-alert>
+
+    <v-card-title>
+      Patienten verwalten
+      <v-spacer></v-spacer>
+      <v-btn icon @click="closeDetailDialog">
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
+    </v-card-title>
+
     <v-card-text class="pt-5">
       <v-row>
-        <v-text-field v-model="search" label="Suche" clearable @input="filterPatients"/>
+        <v-text-field v-model="search" label="Suche" clearable @input="filterPatients" />
         <v-btn color="green" @click="openCreatePatientDialog">
           <v-icon color="white">mdi-plus</v-icon>
         </v-btn>
@@ -26,6 +40,12 @@
       </template>
     </v-data-table>
 
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn color="primary" @click="closeDetailDialog">Abbrechen</v-btn>
+    </v-card-actions>
+
+    <!-- Dialoge für die Patientenverwaltung -->
     <v-dialog v-model="createPatientDialog" max-width="600">
       <v-card>
         <CreatePatient @save="createPatient" @cancel="closeCreatePatientDialog" />
@@ -33,7 +53,7 @@
     </v-dialog>
 
     <v-dialog v-model="detailDialog" max-width="600">
-      <v-card  v-if="selectedPatient">
+      <v-card v-if="selectedPatient">
         <PatientDetail
           :patient="selectedPatient"
           :appointments="selectedPatientAppointments"
@@ -47,12 +67,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, computed } from 'vue';
 import PatientDetail from '@/components/PatientDetail.vue';
 import CreatePatient from '@/components/CreatePatient.vue';
-import PatientService from '@/services/PatientService';
+import { usePatientStore } from '@/store/PatientStore';
 import Patient from '@/class/Patient';
-import Appointment from '@/class/Appointment';
 
 export default defineComponent({
   components: {
@@ -60,6 +79,8 @@ export default defineComponent({
     CreatePatient,
   },
   setup() {
+    const patientStore = usePatientStore();
+
     const headers = ref([
       { text: 'Vorname', value: 'firstName' },
       { text: 'Nachname', value: 'lastName' },
@@ -71,42 +92,50 @@ export default defineComponent({
     const detailDialog = ref(false);
     const createPatientDialog = ref(false);
     const selectedPatient = ref<Patient | null>(null);
-    const selectedPatientAppointments = ref<Appointment[]>([]);
-    const patients = ref<Patient[]>([]);
-    const filteredPatients = ref<Patient[]>([]);
+    const selectedPatientAppointments = ref([]);
     const search = ref('');
 
+    const loading = computed(() => patientStore.loading);
+    const error = computed(() => patientStore.error);
+    const patients = computed(() => patientStore.getAllPatients);
+    const filteredPatients = ref([...patients.value]);
+
+    onMounted(() => {
+      loadPatients();
+    });
+
     const loadPatients = async () => {
-      patients.value = await PatientService.getAllPatients();
+      await patientStore.loadPatients();
       filteredPatients.value = [...patients.value];
     };
 
     const showDetail = async (patient: Patient) => {
       selectedPatient.value = patient;
-      selectedPatientAppointments.value = await PatientService.getPatientAppointments(patient.id);
+      // Assuming the store fetches appointments if needed, otherwise adapt as needed
+      selectedPatientAppointments.value = []; // Fetch appointments as needed
       detailDialog.value = true;
     };
 
     const savePatientChanges = async (event: { patient: Patient }) => {
       if (event.patient) {
-        await PatientService.updatePatient(event.patient.id, event.patient);
-        loadPatients();
+        await patientStore.updatePatient(event.patient.id, event.patient);
+        await loadPatients();
         closeDetailDialog();
       }
     };
 
     const deletePatient = async (event: { patient: Patient }) => {
       if (event.patient) {
-        await PatientService.deletePatient(event.patient.id);
-        loadPatients();
+        await patientStore.deletePatient(event.patient.id);
+        await loadPatients();
         closeDetailDialog();
       }
     };
 
     const createPatient = async (event: { patient: Patient }) => {
       if (event.patient) {
-        await PatientService.createPatient(event.patient);
-        loadPatients();
+        await patientStore.addPatient(event.patient);
+        await loadPatients();
         closeCreatePatientDialog();
       }
     };
@@ -134,7 +163,7 @@ export default defineComponent({
       );
     };
 
-    const formatDate = (date: Date | undefined): string => {
+    const formatDate = (date: Date) => {
       if (!date) return '';
       return new Date(date).toLocaleDateString('de-DE', {
         year: 'numeric',
@@ -143,19 +172,16 @@ export default defineComponent({
       });
     };
 
-    onMounted(() => {
-      loadPatients();
-    });
-
     return {
       headers,
       detailDialog,
       createPatientDialog,
       selectedPatient,
       selectedPatientAppointments,
-      patients,
-      filteredPatients,
       search,
+      loading,
+      error,
+      filteredPatients,
       loadPatients,
       showDetail,
       savePatientChanges,

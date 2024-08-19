@@ -1,45 +1,49 @@
 <template>
-  <div>
-    <v-simple-table style="margin-top: 16px" dense>
-      <template v-slot:default>
-        <thead>
-          <tr>
-            <th v-for="header in headers" :key="header.value" class="text-center text-subtitle-2">
-              <DaylistHeader
-                :therapist="header.therapist"
-                :therapistID="header.id"
-                :date="currentSingleDay"
-                @absencesChanged="console.log('absence changed')"
-              />
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, rowIndex) in rows" :key="rowIndex" v-if="rows.length>0">
-            <td 
-              v-for="header in headers"
-              :key="header.value"
-              @click="openCreateDialog(header.id)"
-              :class="getClassForCell(row[header.value])"
-            >
-              <div v-if="!row[header.value]">
-                <v-btn @click="openCreateDialog(header.id)">+</v-btn>
-              </div>
-              <div v-else-if="row[header.value] && row[rowIndex]">
-                <v-btn @click="openSingleAppointmentDialog(row[rowIndex])">
-                  {{ row[rowIndex].patient }}
-                </v-btn>
-              </div>
-              <div v-else-if="row[header.value] && row[rowIndex]">
-                <v-btn @click="openSeriesAppointmentDialog(row[rowIndex] as AppointmentSeries)">
-                  {{ row[rowIndex].patient }} (Serie)
-                </v-btn>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </template>
-    </v-simple-table>
+   <v-container class="d-flex justify-center align-center">
+    <v-progress-circular
+      v-if="loading"
+      indeterminate
+      color="primary"
+      class="d-flex justify-center my-4"
+    ></v-progress-circular>
+    <v-table v-else dense>
+    <thead>
+      <tr>
+        <th v-for="header in headers" :key="header.value" class="text-center text-subtitle-2">
+          <DaylistHeader
+            :therapist="header.therapist"
+            :therapistID="header.id"
+            :date="currentSingleDay"
+            @absencesChanged="console.log('absence changed')"
+          />
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(row, rowIndex) in rows" :key="rowIndex" v-if="rows.length > 0">
+        <td 
+          v-for="header in headers"
+          :key="header.value"
+          @click="openCreateDialog(header.id)"
+          :class="getClassForCell(row[header.value])"
+        >
+          <div v-if="!row[header.value]">
+            <v-btn @click="openCreateDialog(header.id)">+</v-btn>
+          </div>
+          <div v-else-if="row[header.value] && row[rowIndex]">
+            <v-btn @click="openSingleAppointmentDialog(row[rowIndex])">
+              {{ row[rowIndex].patient }}
+            </v-btn>
+          </div>
+          <div v-else-if="row[header.value] && row[rowIndex]">
+            <v-btn @click="openSeriesAppointmentDialog(row[rowIndex] as AppointmentSeries)">
+              {{ row[rowIndex].patient }} (Serie)
+            </v-btn>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </v-table>
 
     <!-- Dialog für das Erstellen eines Termins -->
     <CreateAppointmentDialog
@@ -70,7 +74,7 @@
       @delete="deleteSeriesAppointment"
       v-model="seriesAppointmentDialog"
     />
-  </div>
+  </v-container>
 </template>
 
 <script lang="ts">
@@ -103,6 +107,7 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
+    const loading = ref(true);
     const createDialog = ref(false);
     const singleAppointmentDialog = ref(false);
     const seriesAppointmentDialog = ref(false);
@@ -139,8 +144,10 @@ export default defineComponent({
 
     const loadAppointments = async () => {
       const date: string = props.currentSingleDay.toISOString();
+      loading.value = true;
       await appointmentStore.loadAppointmentsForDate(date);
       await appointmentSeriesStore.loadSeriesAppointmentsForDate(date);
+      loading.value = false;
       createRows();
     };
 
@@ -241,6 +248,7 @@ export default defineComponent({
       selectedSeriesAppointment,
       headers,
       rows,
+      loading,
       openCreateDialog,
       openSingleAppointmentDialog,
       openSeriesAppointmentDialog,
