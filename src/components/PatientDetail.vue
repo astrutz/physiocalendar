@@ -19,17 +19,29 @@
       </v-row>
       <v-row>
         <v-col>
-          <v-text-field label="Aktiv seit" v-model="patientInput.activeSince" :value="formatDate(patientInput.activeSince)" clearable></v-text-field>
+          <VueDatePicker
+            v-model="patientInput.activeSince"
+            @change="handleDateSinceChange"
+            text-input
+            :format="formatDate"
+            :format-locale="de"
+          />
         </v-col>
         <v-col>
-          <v-text-field label="Aktiv bis" v-model="patientInput.activeUntil" :value="formatDate(patientInput.activeUntil)" clearable></v-text-field>
+          <VueDatePicker
+            v-model="patientInput.activeUntil"
+            @change="handleDateUntilChange"
+            :format="formatDate"
+            :format-locale="de"
+          />
         </v-col>
         <v-col cols="auto">
           <v-checkbox label="BWO" v-model="patientInput.isBWO"></v-checkbox>
         </v-col>
       </v-row>
-       <!-- Tab Selector für Termine -->
-       <v-tabs v-model="activeTab">
+      <v-spacer></v-spacer>
+      <!-- Tab Selector für Termine -->
+      <v-tabs v-model="activeTab">
         <v-tab>Einzeltermine</v-tab>
         <v-tab>Serientermine</v-tab>
       </v-tabs>
@@ -37,7 +49,6 @@
       <v-tabs-items v-model="activeTab">
         <!-- Einzeltermine -->
         <v-tab-item v-if="activeTab === 0">
-
           <v-row>
             <v-data-table
               :headers="appointmentHeaders"
@@ -46,13 +57,16 @@
               :loading="loadingAppointments"
               :loading-text="'Laden...'"
             >
-              <template v-slot:item.startTime="{ item }">
-                {{ formatDate(item.startTime) }}
+              <template #item.date="{ item }">
+                {{ new Date(item.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) }}
               </template>
-              <template v-slot:item.endTime="{ item }">
-                {{ formatDate(item.endTime) }}
+              <template #item.startTime="{ item }">
+                {{ formatTime(item.startTime) }}
               </template>
-              <template v-slot:item.therapist="{ item }">
+              <template #item.endTime="{ item }">
+                {{ formatTime(item.endTime) }}
+              </template>
+              <template #item.therapist="{ item }">
                 {{ item.therapist.name }}
               </template>
             </v-data-table>
@@ -69,13 +83,19 @@
               :loading="loadingSeries"
               :loading-text="'Laden...'"
             >
-              <template v-slot:item.startTime="{ item }">
-                {{ formatDate(item.startTime) }}
+              <template #item.startTime="{ item }">
+                {{ formatTime(item.startTime) }}
               </template>
-              <template v-slot:item.endTime="{ item }">
-                {{ formatDate(item.endTime) }}
+              <template #item.endTime="{ item }">
+                {{ formatTime(item.endTime) }}
               </template>
-              <template v-slot:item.therapist="{ item }">
+              <template #item.startDate="{ item }">
+                {{ formatDate(item.startDate) }}
+              </template>
+              <template #item.endDate="{ item }">
+                {{ formatDate(item.endDate) }}
+              </template>
+              <template #item.therapist="{ item }">
                 {{ item.therapist.name }}
               </template>
             </v-data-table>
@@ -94,13 +114,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch, onMounted } from 'vue';
-import Patient from '@/class/Patient';
-import Appointment from '@/class/Appointment';
+import { defineComponent, ref, onMounted } from 'vue';
 import { useAppointmentStore } from '@/store/AppointmentStore';
 import { usePatientStore } from '@/store/PatientStore';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
+import SingleAppointment from '@/class/SingleAppointment';
+import Patient from '@/class/Patient';
+import { de } from 'date-fns/locale';
 
 export default defineComponent({
   props: {
@@ -113,16 +134,32 @@ export default defineComponent({
     const patientInput = ref<Patient | undefined>(undefined);
     const loadingAppointments = ref(true);
     const loadingSeries = ref(true);
-    const appointments = ref<Appointment[]>([]);
+    const appointments = ref<SingleAppointment[]>([]);
     const appointmentSeries = ref<AppointmentSeries[]>([]);
     const activeTab = ref(0);
+
+    const formatDate = (date: Date | undefined): string => {
+      if (!date) return '';
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Monate sind nullbasiert
+      const year = date.getFullYear();
+
+      return `${day}.${month}.${year}`;
+    };
+
+    const formatTime = (date: Date | undefined): string => {
+      if (!date) return '';
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+
+      return `${hours}:${minutes}`;
+    };
 
     const appointmentHeaders = ref([
       { title: 'Datum', value: 'date', sortable: true },
       { title: 'Von', value: 'startTime', sortable: true },
       { title: 'Bis', value: 'endTime', sortable: true },
-      { title: 'Start Datum', value: 'startDate', sortable: true },
-      { title: 'End Datum', value: 'endDate', sortable: true },
+      { title: 'Therapeut', value: 'therapist', sortable: true },
       { title: 'Kommentar', value: 'comment', sortable: true },
     ]);
 
@@ -134,7 +171,6 @@ export default defineComponent({
       { title: 'End Datum', value: 'endDate', sortable: true },
       { title: 'Kommentar', value: 'comment', sortable: true },
       { title: 'Interval', value: 'weeklyFrequency', sortable: true },
-
     ]);
 
     const appointmentStore = useAppointmentStore();
@@ -143,7 +179,7 @@ export default defineComponent({
 
     const loadAppointments = async () => {
       loadingAppointments.value = true;
-      appointments.value = await appointmentStore.getAppointmentsForPatient(props.patientId);
+      appointments.value = await appointmentStore.getAppointmentsByPatientId(props.patientId);
       loadingAppointments.value = false;
     };
 
@@ -158,6 +194,18 @@ export default defineComponent({
       await loadAppointments();
       await loadAppointmentSeries();
     });
+
+    const handleDateSinceChange = (date: Date) => {
+      if (patientInput.value) {
+        patientInput.value.activeSince = date;
+      }
+    };
+
+    const handleDateUntilChange = (date: Date) => {
+      if (patientInput.value) {
+        patientInput.value.activeUntil = date;
+      }
+    };
 
     const cancelChanges = () => {
       emit('cancel');
@@ -175,21 +223,9 @@ export default defineComponent({
       }
     };
 
-    const formatDate = (date: Date | undefined): string => {
-      if (!date) return '';
-      return new Date(date).toLocaleDateString('de-DE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
-    };
-
-    const getAppointmentClass = (appointment: AppointmentSeries) => {
-      return appointment.endDate ? 'series-appointment' : 'single-appointment';
-    };
-
     return {
       patientInput,
+      de,
       loadingAppointments,
       appointmentHeaders,
       appointmentSeriesHeaders,
@@ -201,7 +237,9 @@ export default defineComponent({
       saveChanges,
       deletePatient,
       formatDate,
-      getAppointmentClass,
+      formatTime,
+      handleDateSinceChange,
+      handleDateUntilChange,
     };
   },
 });

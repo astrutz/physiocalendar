@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
+    "@vuepic/vue-datepicker": "^9.0.2",
     "axios": "^1.7.4",
     "path": "^0.12.7",
     "physiocalendar": "file:",

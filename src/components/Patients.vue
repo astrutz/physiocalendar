@@ -28,32 +28,26 @@
       </v-row>
     </v-card-text>
 
-    <!-- Tabelle mit Patienten -->
     <v-data-table
-      :headers="headers"
-      :items="filteredPatients"
-      item-key="id"
-      :loading="loading"
-      :loading-text="'Laden...'"
-    >
-      <template v-slot:item.firstName="{ item }">
-        <td @click="showDetail(item)">{{ item.firstName }}</td>
-      </template>
-      <template v-slot:item.lastName="{ item }">
-        <td @click="showDetail(item)">{{ item.lastName }}</td>
-      </template>
-      <template v-slot:item.activeSince="{ item }">
-        <td @click="showDetail(item)">{{ formatDate(item.activeSince) }}</td>
-      </template>
-      <template v-slot:item.activeUntil="{ item }">
-        <td @click="showDetail(item)">{{ formatDate(item.activeUntil) }}</td>
-      </template>
-      <template v-slot:item.isBWO="{ item }">
-        <td @click="showDetail(item)">
-          <v-icon v-if="item.isBWO" color="green">mdi-check</v-icon>
-        </td>
-      </template>
-    </v-data-table>
+  :headers="headers"
+  :items="filteredPatients"
+  item-key="id"
+  :loading="loading"
+  :loading-text="'Laden...'">
+
+  <template v-slot:item="{ item }">
+    <tr @click="showDetail(item)" style="cursor: pointer;">
+      <td>{{ item.firstName }}</td>
+      <td>{{ item.lastName }}</td>
+      <td>{{ formatDate(item.activeSince) }}</td>
+      <td>{{ formatDate(item.activeUntil) }}</td>
+      <td>
+        <v-icon v-if="item.isBWO" color="green">mdi-check</v-icon>
+      </td>
+    </tr>
+  </template>
+</v-data-table>
+
    
     <!-- Fehlermeldung, falls ein Fehler aufgetreten ist -->
     <v-alert v-if="error" type="error">{{ error }}</v-alert>
@@ -70,7 +64,7 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="detailDialog" max-width="900">
+    <v-dialog v-model="detailDialog" persistent class="resizable-dialog">
       <v-card v-if="selectedPatient">
         <PatientDetail
           :patientId="selectedPatient.id"
@@ -217,3 +211,10 @@ export default defineComponent({
   },
 });
 </script>
+
+<style>
+.resizable-dialog .v-card {
+  resize: both;
+  overflow: auto;
+}
+</style>

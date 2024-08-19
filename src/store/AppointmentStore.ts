@@ -80,9 +80,11 @@ export const useAppointmentStore = defineStore('appointment', {
       return state.appointments.find(appointment => appointment.id === id);
     },
 
-    getAppointmentsForPatient: (state) => (patientId: number) => {
-      return state.appointments.filter(appointment => appointment.patientId === patientId);
+    getAppointmentsByPatientId: (state) => (patientId: number) => {
+      console.log(state.appointments);
+      return state.appointments.filter(appointment => appointment.patient.id === patientId) || [];
     },
+    
 
     getAppointmentsForTherapist: (state) => (therapistId: number, date: Date) => {
       return state.appointments.filter(
