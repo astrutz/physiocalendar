@@ -13,8 +13,9 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
     async loadAppointmentSeries(params?: { date?: string; therapistId?: number; patientId?: number }): Promise<void> {
       try {
         const queryString = params ? this.buildQueryString(params) : '';
-        const responseData: JSONAppointmentSeriesDTO[] = (await axios.get(`http://localhost:8080/api/seriesAppointments${queryString}`)).data;
+        const responseData: JSONAppointmentSeriesDTO[] = (await axios.get(`http://localhost:8080/api/appointmentseries${queryString}`)).data;
         this.seriesAppointments = responseData.map(dto => convertToAppointmentSeries(dto));
+        console.log(this.seriesAppointments);
       } catch (err) {
         console.error(err);
       }
@@ -27,7 +28,7 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
     async addAppointmentSeries(appointment: AppointmentSeries): Promise<void> {
       try {
         const appointmentDTO = convertToAppointmentSeriesDTO(appointment);
-        await axios.post('http://localhost:8080/api/seriesAppointments', appointmentDTO);
+        await axios.post('http://localhost:8080/api/appointmentseries', appointmentDTO);
         this.loadAppointmentSeries({ date: appointment.startDate.toISOString().split('T')[0] });
       } catch (err) {
         console.error(err);
@@ -37,7 +38,7 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
     async updateAppointmentSeries(id: number, appointment: AppointmentSeries): Promise<void> {
       try {
         const appointmentDTO = convertToAppointmentSeriesDTO(appointment);
-        await axios.put(`http://localhost:8080/api/seriesAppointments/${id}`, appointmentDTO);
+        await axios.put(`http://localhost:8080/api/appointmentseries/${id}`, appointmentDTO);
         this.loadAppointmentSeries({ date: appointment.startDate.toISOString().split('T')[0] });
       } catch (err) {
         console.error(err);
@@ -47,7 +48,7 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
     async deleteAppointmentSeries(id: number): Promise<void> {
       try {
         const appointmentToDelete = this.getAppointmentSeriesById(id);
-        await axios.delete(`http://localhost:8080/api/seriesAppointments/${id}`);
+        await axios.delete(`http://localhost:8080/api/appointmentseries/${id}`);
         this.loadAppointmentSeries({ date: appointmentToDelete?.startDate.toISOString().split('T')[0] });
       } catch (err) {
         console.error(err);
@@ -80,8 +81,9 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
       return state.seriesAppointments.find(appointment => appointment.id === id);
     },
 
-    getAppointmentSeriesForPatient: (state) => (patientId: number) => {
-      return state.seriesAppointments.filter(appointment => appointment.patientId === patientId);
+    getAppointmentSeriesByPatientId: (state) => (patientId: number) => {
+      console.log(state.seriesAppointments);
+      return state.seriesAppointments.filter(appointment => appointment.patient.id === patientId) || [];
     },
 
     getAppointmentSeriesForTherapist: (state) => (therapistId: number, date: string) => {

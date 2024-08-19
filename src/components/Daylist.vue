@@ -146,7 +146,7 @@ export default defineComponent({
       const date: string = props.currentSingleDay.toISOString();
       loading.value = true;
       await appointmentStore.loadAppointmentsForDate(date);
-      await appointmentSeriesStore.loadSeriesAppointmentsForDate(date);
+      await appointmentSeriesStore.loadAppointmentSeries();
       loading.value = false;
       createRows();
     };

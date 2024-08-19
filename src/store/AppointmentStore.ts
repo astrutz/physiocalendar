@@ -46,9 +46,8 @@ export const useAppointmentStore = defineStore('appointment', {
 
     async deleteAppointment(id: number): Promise<void> {
       try {
-        const appointmentToDelete = this.getAppointmentById(id);
         await axios.delete(`http://localhost:8080/api/appointments/${id}`);
-        this.loadAppointments({ date: appointmentToDelete?.date.toISOString() });
+        this.loadAppointments();
       } catch (err) {
         console.error(err);
       }
@@ -81,7 +80,6 @@ export const useAppointmentStore = defineStore('appointment', {
     },
 
     getAppointmentsByPatientId: (state) => (patientId: number) => {
-      console.log(state.appointments);
       return state.appointments.filter(appointment => appointment.patient.id === patientId) || [];
     },
     

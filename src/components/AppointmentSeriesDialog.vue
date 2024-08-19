@@ -7,7 +7,7 @@
   
         <v-card-text class="pt-4">
           <v-combobox
-            v-model="appointment.patient"
+            v-model="appointment.patient.firstName"
             :items="foundPatients"
             :search-input.sync="searchValue"
             @input="searchPatients($event)"
@@ -18,13 +18,13 @@
           <v-select
             :items="times"
             label="Start um"
-            v-model="appointment.startTime"
+            v-model="appointment.startTime.toISOString"
           ></v-select>
   
           <v-select
             :items="times"
             label="Ende um"
-            v-model="appointment.endTime"
+            v-model="appointment.endTime.toISOString"
           ></v-select>
   
           <v-text-field

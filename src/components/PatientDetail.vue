@@ -45,7 +45,7 @@
         <v-tab>Einzeltermine</v-tab>
         <v-tab>Serientermine</v-tab>
       </v-tabs>
-
+      <v-spacer></v-spacer>
       <v-tabs-items v-model="activeTab">
         <!-- Einzeltermine -->
         <v-tab-item v-if="activeTab === 0">
@@ -83,6 +83,9 @@
               :loading="loadingSeries"
               :loading-text="'Laden...'"
             >
+              <template #item.weekday="{ item }">
+                {{ item.weekday }}
+              </template>
               <template #item.startTime="{ item }">
                 {{ formatTime(item.startTime) }}
               </template>
@@ -97,6 +100,9 @@
               </template>
               <template #item.therapist="{ item }">
                 {{ item.therapist.name }}
+              </template>
+              <template #item.weeklyFrequency="{ item }">
+                {{ item.weeklyFrequency }}
               </template>
             </v-data-table>
           </v-row>
@@ -122,6 +128,7 @@ import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
 import SingleAppointment from '@/class/SingleAppointment';
 import Patient from '@/class/Patient';
 import { de } from 'date-fns/locale';
+import { Weekday } from '../class/Enums';
 
 export default defineComponent({
   props: {
@@ -185,7 +192,9 @@ export default defineComponent({
 
     const loadAppointmentSeries = async () => {
       loadingSeries.value = true;
-      appointmentSeries.value = await appointmentSeriesStore.getAppointmentSeriesForPatient(props.patientId);
+      await appointmentSeriesStore.loadAppointmentSeries();
+      appointmentSeries.value = await appointmentSeriesStore.getAppointmentSeriesByPatientId(props.patientId);
+      console.log(appointmentSeries.value);
       loadingSeries.value = false;
     };
 
