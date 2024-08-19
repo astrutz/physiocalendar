@@ -24,6 +24,7 @@ export const usePatientStore = defineStore('patientStore', {
         this.loading = false;
       }
     },
+
     findPatientsByName(searchQuery: string): Patient[] {
       const queryLower = searchQuery.toLowerCase();
       return this.patients.filter(
@@ -32,6 +33,7 @@ export const usePatientStore = defineStore('patientStore', {
           patient.lastName.toLowerCase().includes(queryLower)
       );
     },
+
     async addPatient(patient: Patient): Promise<void> {
       this.loading = true;
       this.error = null;
@@ -46,6 +48,7 @@ export const usePatientStore = defineStore('patientStore', {
         this.loading = false;
       }
     },
+
     async updatePatient(id: number, patient: Patient): Promise<void> {
       this.loading = true;
       this.error = null;
@@ -60,6 +63,7 @@ export const usePatientStore = defineStore('patientStore', {
         this.loading = false;
       }
     },
+
     async deletePatient(id: number): Promise<void> {
       this.loading = true;
       this.error = null;
@@ -76,5 +80,8 @@ export const usePatientStore = defineStore('patientStore', {
   },
   getters: {
     getAllPatients: (state) => state.patients,
+    getPatientById: (state) => {
+      return (id: number) => state.patients.find(patient => patient.id === id);
+    },
   },
 });

@@ -1,62 +1,79 @@
 <template>
   <v-card>
-    <!-- Ladeanzeige, falls Daten geladen werden -->
-    <v-progress-circular v-if="loading" indeterminate></v-progress-circular>
-    
-    <!-- Fehlermeldung, falls ein Fehler aufgetreten ist -->
-    <v-alert v-if="error" type="error">{{ error }}</v-alert>
-
     <v-card-title>
-      Patienten verwalten
-      <v-spacer></v-spacer>
-      <v-btn icon @click="closeDetailDialog">
-        <v-icon>mdi-close</v-icon>
-      </v-btn>
+      <v-row align="center">
+        <v-col>
+          Patienten verwalten
+        </v-col>
+        <v-col class="d-flex justify-end">
+          <v-btn icon @click="closeDialog">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-col>
+      </v-row>
     </v-card-title>
 
     <v-card-text class="pt-5">
-      <v-row>
-        <v-text-field v-model="search" label="Suche" clearable @input="filterPatients" />
-        <v-btn color="green" @click="openCreatePatientDialog">
-          <v-icon color="white">mdi-plus</v-icon>
-        </v-btn>
+      <v-row align="center">
+        <!-- Suchfeld -->
+        <v-col>
+          <v-text-field v-model="search" label="Suche" clearable @input="filterPatients" />
+        </v-col>
+        <!-- Plus Button -->
+        <v-col cols="auto">
+          <v-btn color="green" @click="openCreatePatientDialog">
+            <v-icon color="white">mdi-plus</v-icon>
+          </v-btn>
+        </v-col>
       </v-row>
     </v-card-text>
 
+    <!-- Tabelle mit Patienten -->
     <v-data-table
       :headers="headers"
       :items="filteredPatients"
       item-key="id"
-      @click:row="showDetail"
+      :loading="loading"
+      :loading-text="'Laden...'"
     >
+      <template v-slot:item.firstName="{ item }">
+        <td @click="showDetail(item)">{{ item.firstName }}</td>
+      </template>
+      <template v-slot:item.lastName="{ item }">
+        <td @click="showDetail(item)">{{ item.lastName }}</td>
+      </template>
       <template v-slot:item.activeSince="{ item }">
-        {{ formatDate(item.activeSince) }}
+        <td @click="showDetail(item)">{{ formatDate(item.activeSince) }}</td>
       </template>
       <template v-slot:item.activeUntil="{ item }">
-        {{ formatDate(item.activeUntil) }}
+        <td @click="showDetail(item)">{{ formatDate(item.activeUntil) }}</td>
       </template>
       <template v-slot:item.isBWO="{ item }">
-        <v-icon v-if="item.isBWO" color="green">mdi-check</v-icon>
+        <td @click="showDetail(item)">
+          <v-icon v-if="item.isBWO" color="green">mdi-check</v-icon>
+        </td>
       </template>
     </v-data-table>
+   
+    <!-- Fehlermeldung, falls ein Fehler aufgetreten ist -->
+    <v-alert v-if="error" type="error">{{ error }}</v-alert>
 
     <v-card-actions>
+      <v-btn color="grey" @click="closeDialog">Abbrechen</v-btn>
       <v-spacer></v-spacer>
-      <v-btn color="primary" @click="closeDetailDialog">Abbrechen</v-btn>
     </v-card-actions>
 
     <!-- Dialoge für die Patientenverwaltung -->
-    <v-dialog v-model="createPatientDialog" max-width="600">
+    <v-dialog v-model="createPatientDialog" max-width="900">
       <v-card>
         <CreatePatient @save="createPatient" @cancel="closeCreatePatientDialog" />
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="detailDialog" max-width="600">
+    <v-dialog v-model="detailDialog" max-width="900">
       <v-card v-if="selectedPatient">
         <PatientDetail
-          :patient="selectedPatient"
-          :appointments="selectedPatientAppointments"
+          :patientId="selectedPatient.id"
           @save="savePatientChanges"
           @deletePatient="deletePatient"
           @cancel="closeDetailDialog"
@@ -78,15 +95,15 @@ export default defineComponent({
     PatientDetail,
     CreatePatient,
   },
-  setup() {
+  setup(props, { emit }) {
     const patientStore = usePatientStore();
 
     const headers = ref([
-      { text: 'Vorname', value: 'firstName' },
-      { text: 'Nachname', value: 'lastName' },
-      { text: 'Aktiv seit', value: 'activeSince' },
-      { text: 'Aktiv bis', value: 'activeUntil' },
-      { text: 'BWO', value: 'isBWO' },
+      { title: 'Vorname', value: 'firstName', sortable: true, filterable: true },
+      { title: 'Nachname', value: 'lastName', sortable: true, filterable: true },
+      { title: 'Aktiv seit', value: 'activeSince', sortable: true, filterable: true },
+      { title: 'Aktiv bis', value: 'activeUntil', sortable: true, filterable: true },
+      { title: 'BWO', value: 'isBWO', sortable: true, filterable: true },
     ]);
 
     const detailDialog = ref(false);
@@ -109,10 +126,9 @@ export default defineComponent({
       filteredPatients.value = [...patients.value];
     };
 
-    const showDetail = async (patient: Patient) => {
-      selectedPatient.value = patient;
-      // Assuming the store fetches appointments if needed, otherwise adapt as needed
-      selectedPatientAppointments.value = []; // Fetch appointments as needed
+    const showDetail = (item: Patient) => {
+      selectedPatient.value = item;
+      console.log(item);
       detailDialog.value = true;
     };
 
@@ -154,10 +170,14 @@ export default defineComponent({
       createPatientDialog.value = true;
     };
 
+    const closeDialog = () => {
+      emit('dialogClosed');
+    };
+
     const filterPatients = () => {
       const searchTerm = search.value.toLowerCase();
       filteredPatients.value = patients.value.filter(
-        patient =>
+        (patient) =>
           patient.firstName.toLowerCase().includes(searchTerm) ||
           patient.lastName.toLowerCase().includes(searchTerm)
       );
@@ -181,6 +201,7 @@ export default defineComponent({
       search,
       loading,
       error,
+      closeDialog,
       filteredPatients,
       loadPatients,
       showDetail,
