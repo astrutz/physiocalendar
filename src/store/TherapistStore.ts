@@ -8,15 +8,23 @@ export const useTherapistStore = defineStore('therapist', {
   state: () => ({
     therapists: [] as Therapist[],
     therapist: {} as Therapist | null,
+    loading: false,  // loading state to manage the UI
+    error: null as string | null,
   }),
 
   actions: {
     async loadTherapists(): Promise<void> {
+      this.loading = true;
+      this.error = null;
       try {
         const responseData: JSONTherapistDTO[] = (await axios.get('http://localhost:8080/api/therapists')).data;
         this.therapists = responseData.map((dto) => convertToTherapist(dto));
       } catch (err) {
+        this.error = 'Failed to load therapists';
         console.error(err);
+      }
+      finally {
+        this.loading = false;
       }
     },
 

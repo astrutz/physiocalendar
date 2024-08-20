@@ -86,7 +86,11 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
       return state.seriesAppointments.filter(appointment => appointment.patient.id === patientId) || [];
     },
 
-    getAppointmentSeriesForTherapist: (state) => (therapistId: number, date: string) => {
+    getAppointmentSeriesByTherapistId: (state) => (therapistId: number) => {
+      return state.seriesAppointments.filter(appointment => appointment.therapist.id === therapistId) || [];
+    },
+
+    getAppointmentSeriesForTherapistAndDate: (state) => (therapistId: number, date: string) => {
       return state.seriesAppointments.filter(
         appointment => appointment.therapistId === therapistId && appointment.startDate.toISOString().split('T')[0] <= date && appointment.endDate.toISOString().split('T')[0] >= date
       );

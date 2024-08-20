@@ -1,103 +1,63 @@
 <template>
-  <v-dialog v-model="dialogOpen" max-width="500px">
+  <v-dialog v-model="dialogVisible" max-width="1500px">
     <v-card>
       <v-card-title>
-        <span v-if="formData.id">Abwesenheit bearbeiten</span>
-        <span v-else>Neue Abwesenheit hinzufügen</span>
+        {{ editingAbsence ? 'Abwesenheit bearbeiten' : 'Abwesenheit hinzufügen' }}
       </v-card-title>
-
       <v-card-text>
-        <v-form ref="form" v-model="valid">
-          <v-select
-            v-model="formData.weekday"
-            :items="weekdays"
-            label="Wochentag"
-            :rules="[v => !!v || 'Wochentag erforderlich']"
-          ></v-select>
-
-          <v-menu
-            ref="startTimeMenu"
-            v-model="startTimeMenu"
-            :close-on-content-click="false"
-            :nudge-right="40"
-            transition="scale-transition"
-            offset-y
-            min-width="auto"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                v-model="formData.startTime"
-                label="Startzeit"
-                readonly
-                v-bind="attrs"
-                v-on="on"
-                :rules="[v => !!v || 'Startzeit erforderlich']"
-              ></v-text-field>
-            </template>
-            <v-time-picker
-              v-if="startTimeMenu"
-              v-model="formData.startTime"
-              @change="startTimeMenu = false"
-            ></v-time-picker>
-          </v-menu>
-
-          <v-menu
-            ref="endTimeMenu"
-            v-model="endTimeMenu"
-            :close-on-content-click="false"
-            :nudge-right="40"
-            transition="scale-transition"
-            offset-y
-            min-width="auto"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                v-model="formData.endTime"
-                label="Endzeit"
-                readonly
-                v-bind="attrs"
-                v-on="on"
-                :rules="[v => !!v || 'Endzeit erforderlich']"
-              ></v-text-field>
-            </template>
-            <v-time-picker
-              v-if="endTimeMenu"
-              v-model="formData.endTime"
-              @change="endTimeMenu = false"
-            ></v-time-picker>
-          </v-menu>
-
-          <v-menu
-            ref="dateMenu"
-            v-model="dateMenu"
-            :close-on-content-click="false"
-            :nudge-right="40"
-            transition="scale-transition"
-            offset-y
-            min-width="auto"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                v-model="formData.date"
-                label="Datum (für spezifische Abwesenheiten)"
-                readonly
-                v-bind="attrs"
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker
-              v-if="dateMenu"
-              v-model="formData.date"
-              @change="dateMenu = false"
-            ></v-date-picker>
-          </v-menu>
+        <v-form ref="absenceForm" v-model="formValid">
+          <v-row>
+            <v-col>
+              <VueDatePicker
+                v-model="absence.date"
+                @change="handleDateChange"
+                text-input
+                :format="formatDate"
+                :format-locale="de"
+                :value="absence.date"
+              />
+            </v-col>
+            <v-col>
+              <VueDatePicker
+                time-picker
+                v-model="absence.startTime"
+                @change="handleStartTimeChange"
+                text-input
+                :format="formatTime"
+                :format-locale="de"
+                :value="absence.startTime"
+              />
+            </v-col>
+            <v-col>
+              <VueDatePicker
+                time-picker
+                v-model="absence.endTime"
+                @change="handleEndTimeChange"
+                text-input
+                :format="formatTime"
+                :format-locale="de"
+                :value="absence.endTime"
+              />
+            </v-col>
+            <v-col>
+              <v-select
+                v-model="absence.weekday"
+                :items="weekdays"
+                label="Wochentag"
+                :rules="[rules.required]"
+              />
+            </v-col>
+          </v-row>
         </v-form>
       </v-card-text>
-
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn @click="closeDialog">Abbrechen</v-btn>
-        <v-btn color="primary" @click="saveAbsence" :disabled="!valid">
+        <v-btn
+          color="primary"
+          @click="saveAbsence"
+          :disabled="!formValid"
+        >
           Speichern
         </v-btn>
       </v-card-actions>
@@ -106,63 +66,112 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch, onMounted } from 'vue';
+import { defineComponent, ref, computed } from 'vue';
 import Absence from '@/class/Absence';
+import { de } from 'date-fns/locale';
+import { useAbsenceStore } from '@/store/AbsenceStore';
 import { Weekday } from '@/class/Enums';
 
 export default defineComponent({
+  name: 'AbsenceDialog',
   props: {
-    absence: {
-      type: Object as () => Absence,
+    therapistId: {
+      type: Number,
       required: true,
     },
-    dialogOpen: {
+    absence: {
+      type: Object as () => Absence | null,
+      default: null,
+    },
+    dialogVisible: {
       type: Boolean,
-      required: true,
+      default: false,
     },
   },
   setup(props, { emit }) {
-    const formData = ref<Absence>(new Absence(0, new Date(), Weekday.MONDAY, new Date(), new Date()));
-    const valid = ref(false);
-    const weekdays = Object.values(Weekday);
-    const startTimeMenu = ref(false);
-    const endTimeMenu = ref(false);
-    const dateMenu = ref(false);
+    const store = useAbsenceStore();
+    const formValid = ref(false);
+    const weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 
-    const initFormData = () => {
-      formData.value = { ...props.absence };
+    const rules = {
+      required: (value: any) => !!value || 'Dieses Feld ist erforderlich',
+    };
+
+    const editingAbsence = computed(() => !!props.absence);
+
+    const absence = computed(() => {
+      return props.absence ? { ...props.absence } : new Absence(0, new Date(), Weekday.MONDAY, new Date(), new Date());
+    });
+
+    const formatDate = (date: Date | undefined): string => {
+      if (!date) return '';
+      return new Date(date).toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+    };
+
+    const formatTime = (date: Date | undefined): string => {
+      if (!date) return '';
+      return new Date(date).toLocaleTimeString('de-DE', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    };
+
+    const handleDateChange = (date: Date) => {
+      if (absence.value) {
+        absence.value.date = date;
+      }
+    };
+
+    const handleStartTimeChange = (time: Date) => {
+      if (absence.value) {
+        absence.value.startTime = time;
+      }
+    };
+
+    const handleEndTimeChange = (time: Date) => {
+      if (absence.value) {
+        absence.value.endTime = time;
+      }
+    };
+
+    const saveAbsence = async () => {
+      if (!absence.value) return;
+
+      if (editingAbsence.value) {
+        await store.updateAbsence(props.therapistId, absence.value);
+      } else {
+        await store.addAbsence(props.therapistId, absence.value);
+      }
+      emit('update:dialogVisible', false);
     };
 
     const closeDialog = () => {
-      emit('close');
+      emit('update:dialogVisible', false);
     };
-
-    const saveAbsence = () => {
-      emit('save', formData.value);
-    };
-
-    watch(() => props.absence, initFormData, { immediate: true, deep: true });
-
-    onMounted(initFormData);
 
     return {
-      formData,
-      valid,
+      formValid,
       weekdays,
-      startTimeMenu,
-      endTimeMenu,
-      dateMenu,
-      closeDialog,
+      absence,
+      rules,
+      editingAbsence,
+      formatDate,
+      formatTime,
+      handleDateChange,
+      handleStartTimeChange,
+      handleEndTimeChange,
       saveAbsence,
+      closeDialog,
+      de,
     };
   },
 });
 </script>
 
 <style scoped>
-.v-card-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+/* Add your styles here */
 </style>

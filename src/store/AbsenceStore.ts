@@ -51,5 +51,14 @@ export const useAbsenceStore = defineStore('absence', {
 
   getters: {
     getAllAbsences: (state) => state.absences,
+
+    getAbsencetById: (state) => (absenceId: number) => {
+      return state.absences.find(absence => absence.id === absenceId);
+    },
+
+    getAbsencesForTherapist: (state) => () => {
+      return state.absences || [];
+    },
+
   },
 });

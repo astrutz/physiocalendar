@@ -58,7 +58,7 @@
     </v-card-actions>
 
     <!-- Dialoge für die Patientenverwaltung -->
-    <v-dialog v-model="createPatientDialog" max-width="900">
+    <v-dialog v-model="createPatientDialog" max-width="1500">
       <v-card>
         <CreatePatient @save="createPatient" @cancel="closeCreatePatientDialog" />
       </v-card>
