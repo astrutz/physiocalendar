@@ -7,25 +7,13 @@
 
       <v-card-text class="pt-4">
         <v-combobox
-          v-model="appointment.patient"
+          v-model="appointment.patient.lastName"
           :items="foundPatients"
           :search-input.sync="searchValue"
           @input="searchPatients"
           label="Name des Patienten"
           clearable
         ></v-combobox>
-
-        <v-select
-          :items="times"
-          label="Start um"
-          v-model="appointment.startTime"
-        ></v-select>
-
-        <v-select
-          :items="times"
-          label="Ende um"
-          v-model="appointment.endTime"
-        ></v-select>
 
         <v-text-field
           label="Sonstige Bemerkungen"

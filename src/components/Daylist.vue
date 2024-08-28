@@ -1,81 +1,82 @@
 <template>
-   <v-container class="d-flex justify-center align-center">
-    <v-progress-circular
-      v-if="loading"
-      indeterminate
-      color="primary"
-      class="d-flex justify-center my-4"
-    ></v-progress-circular>
-    <v-table v-else dense>
-    <thead>
-      <tr>
-        <th class="text-center text-subtitle-2"> <!-- Leere Spalte -->
-        </th>
-        <th v-for="header in headers" :key="header.value" class="text-center text-subtitle-2">
-          <span>{{ header.therapist.name }}</span>
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(row, rowIndex) in rows" :key="rowIndex" v-if="rows.length > 0">
-        <td class="text-center">
-          {{ row.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
-        </td> 
-        <td 
-          v-for="header in headers"
-          :key="header.value"
-          @click="openCreateDialog(header.id, row.startTime)"
-          :class="getClassForCell(row[header.value])"
-        >
-          <div v-if="!row[header.value]">
-            <span @click="openCreateDialog(header.id, row.startTime)"></span>
-          </div>
-          <div v-else-if="row[header.value] && row[rowIndex]">
-            <v-btn @click="openSingleAppointmentDialog(row[rowIndex] as SingleAppointment)">
-              {{ row[rowIndex].patient }}
-            </v-btn>
-          </div>
-          <div v-else-if="row[header.value] && row[rowIndex]">
-            <v-btn @click="openSeriesAppointmentDialog(row[rowIndex] as AppointmentSeries)">
-              {{ row[rowIndex].patient }} (Serie)
-            </v-btn>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  </v-table>
+  <v-container class="d-flex justify-center align-center">
+   <v-progress-circular
+     v-if="loading"
+     indeterminate
+     color="primary"
+     class="d-flex justify-center my-4"
+   ></v-progress-circular>
+   <v-table v-else dense>
+   <thead>
+     <tr>
+       <th class="text-center text-subtitle-2"> <!-- Leere Spalte -->
+       </th>
+       <th v-for="header in headers" :key="header.value" class="text-center text-subtitle-2">
+         <span>{{ header.therapist.name }}</span>
+       </th>
+     </tr>
+   </thead>
+   <tbody>
+     <tr v-for="(row, rowIndex) in rows" :key="rowIndex" v-if="rows.length > 0">
+       <td class="text-center">
+         {{ row.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
+       </td> 
+       <td 
+         v-for="header in headers"
+         :key="header.value"
+         @click="handleCellClick(header.id, row.startTime, row[header.value])"
+         :class="getClassForCell(row[header.value])"
+       >
+         <div v-if="!row[header.value]">
+           <span @click.stop="handleCellClick(header.id, row.startTime, null)"></span>
+         </div>
+         <div v-else-if="row[header.value] && row[header.value] as SingleAppointment">
+           <v-btn @click.stop="openSingleAppointmentDialog(row[header.value] as SingleAppointment)">
+             {{ (row[header.value] as SingleAppointment).patient }}
+           </v-btn>
+         </div>
+         <div v-else-if="row[header.value] && row[header.value] as AppointmentSeries">
+           <v-btn @click.stop="openSeriesAppointmentDialog(row[header.value] as AppointmentSeries)">
+             {{ (row[header.value] as AppointmentSeries).patient }} (Serie)
+           </v-btn>
+         </div>
+       </td>
+     </tr>
+   </tbody>
+ </v-table>
 
-    <!-- Dialog für das Erstellen eines Termins -->
-    <CreateAppointmentDialog
-      v-if="createDialog"
-      :currentDay="currentSingleDay"
-      :appointment="initAppointment"
-      v-model="createDialog"
-      @saveSingle="addAppointment"
-      @saveSeries="addSeriesAppointment"
-    />
+   <!-- Dialog für das Erstellen eines Termins -->
+   <CreateAppointmentDialog
+     v-if="createDialog"
+     :currentDay="currentSingleDay"
+     :appointment="initAppointment"
+     v-model="createDialog"
+     @saveSingle="addAppointment"
+     @saveSeries="addSeriesAppointment"
+   />
 
-    <!-- Dialog für das Anzeigen und Bearbeiten eines Einzeltermins -->
-    <SingleAppointmentDialog
-      v-if="singleAppointmentDialog && selectedAppointment"
-      :appointment="selectedAppointment"
-      :currentDay="currentSingleDay"
-      @save="changeSingleAppointment"
-      @delete="deleteSingleAppointment"
-      v-model="singleAppointmentDialog"
-    />
+   <!-- Dialog für das Anzeigen und Bearbeiten eines Einzeltermins -->
+   <SingleAppointmentDialog
+     v-if="singleAppointmentDialog && selectedAppointment"
+     :appointment="selectedAppointment"
+     :currentDay="currentSingleDay"
+     @save="changeSingleAppointment"
+     @delete="deleteSingleAppointment"
+     v-model="singleAppointmentDialog"
+   />
 
-    <!-- Dialog für das Anzeigen und Bearbeiten eines Serientermins -->
-    <AppointmentSeriesDialog 
-      v-if="seriesAppointmentDialog && selectedSeriesAppointment"
-      :appointment="selectedSeriesAppointment"
-      :currentDay="currentSingleDay"
-      @save="changeSeriesAppointment"
-      @delete="deleteSeriesAppointment"
-      v-model="seriesAppointmentDialog"
-    />
-  </v-container>
+   <!-- Dialog für das Anzeigen und Bearbeiten eines Serientermins -->
+   <AppointmentSeriesDialog 
+     v-if="seriesAppointmentDialog && selectedSeriesAppointment"
+     :appointment="selectedSeriesAppointment"
+     :currentDay="currentSingleDay"
+     @save="changeSeriesAppointment"
+     @delete="deleteSeriesAppointment"
+     v-model="seriesAppointmentDialog"
+   />
+ </v-container>
 </template>
+
 
 <script lang="ts">
 import { defineComponent, ref, watch, onMounted } from 'vue';
@@ -93,6 +94,7 @@ import AppointmentSeries from '@/class/AppointmentSeries';
 import Absence from '@/class/Absence';
 import Appointment from '@/class/Appointment';
 import { useTherapistStore } from '@/store/TherapistStore';
+import Patient from '@/class/Patient';
 
 export default defineComponent({
   components: {
@@ -136,7 +138,6 @@ export default defineComponent({
 
     const createHeaders = () => {
       const therapists: Therapist[] = therapistStore.getTherapists();
-      console.log(therapists);
       headers.value = therapists.map(therapist => ({
           id: therapist.id,
           text: therapist.name,
@@ -153,7 +154,7 @@ export default defineComponent({
       await appointmentStore.loadAppointmentsForDate(date);
       await appointmentSeriesStore.loadAppointmentSeries();
       loading.value = false;
-      createRows();
+      //createRows();
     };
 
     const loadTherapists = async () => {
@@ -192,16 +193,38 @@ export default defineComponent({
       });
     };
 
-
-
-    const openCreateDialog = (id: number, startTime: Date) => {
-      const therapist = therapistStore.getTherapists().find(t => t.id === id);
-      if (therapist) {
-        selectedTherapist.value = therapist;
-        initAppointment.value.startTime = startTime; // Startzeit setzen
-        createDialog.value = true;
+    const handleCellClick = (therapistId: number, startTime: Date, entry: SingleAppointment | AppointmentSeries | null) => {
+      console.log(entry);
+      console.log(therapistId);
+      console.log(startTime);
+      if (!entry) {
+        openCreateDialog(therapistId, startTime);
+      } else if (entry instanceof SingleAppointment) {
+        openSingleAppointmentDialog(entry);
       }
     };
+
+    const openCreateDialog = (id: number, startTime: Date) => {
+  const therapist = therapistStore.getTherapists().find(t => t.id === id);
+  if (therapist) {
+    initAppointment.value = new SingleAppointment(
+      0, // oder die korrekte ID
+      therapist,
+      therapist.id,
+      Patient.createEmpty(), // leerer Patient oder der zugewiesene Patient
+      0, // leerer Patient ID oder die korrekte ID
+      startTime,
+      new Date(startTime.getTime() + 60 * 60 * 1000), // Beispiel Endzeit, z.B. 1 Stunde später
+      '',
+      new Date(), // Beispiel für heutiges Datum
+      false,
+      false,
+      false
+    );
+    createDialog.value = true;
+  }
+};
+
 
     const openSingleAppointmentDialog = (appointment: SingleAppointment | AppointmentSeries | null) => {
       if (appointment instanceof SingleAppointment) {
@@ -265,6 +288,7 @@ export default defineComponent({
       initAppointment,
       selectedAppointment,
       selectedSeriesAppointment,
+      handleCellClick,
       headers,
       rows,
       loading,
