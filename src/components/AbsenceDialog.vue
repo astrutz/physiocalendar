@@ -18,6 +18,17 @@
               />
             </v-col>
             <v-col>
+              <v-select
+                v-model="absence.weekday"
+                :items="weekdays"
+                label="Wochentag"
+                :rules="[rules.required]"
+              />
+            </v-col>
+            
+          </v-row>
+            <v-row>
+              <v-col>
               <VueDatePicker
                 time-picker
                 v-model="absence.startTime"
@@ -37,14 +48,6 @@
                 :format="formatTime"
                 :format-locale="de"
                 :value="absence.endTime"
-              />
-            </v-col>
-            <v-col>
-              <v-select
-                v-model="absence.weekday"
-                :items="weekdays"
-                label="Wochentag"
-                :rules="[rules.required]"
               />
             </v-col>
           </v-row>
@@ -100,7 +103,7 @@ export default defineComponent({
     const editingAbsence = computed(() => !!props.absence);
 
     const absence = computed(() => {
-      return props.absence ? { ...props.absence } : new Absence(0, new Date(), Weekday.MONDAY, new Date(), new Date());
+      return props.absence ? { ...props.absence } : new Absence(1, new Date(), Weekday.MONDAY, new Date(), new Date());
     });
 
     const formatDate = (date: Date | undefined): string => {
@@ -140,6 +143,11 @@ export default defineComponent({
 
     const saveAbsence = async () => {
       if (!absence.value) return;
+
+      if (!(absence.value.date || absence.value.weekday)) {
+        alert('Entweder ein Datum oder ein Wochentag muss gesetzt sein.');
+        return;
+      }
 
       if (editingAbsence.value) {
         await store.updateAbsence(props.therapistId, absence.value);

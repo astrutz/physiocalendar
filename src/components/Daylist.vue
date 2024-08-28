@@ -9,29 +9,29 @@
     <v-table v-else dense>
     <thead>
       <tr>
+        <th class="text-center text-subtitle-2"> <!-- Leere Spalte -->
+        </th>
         <th v-for="header in headers" :key="header.value" class="text-center text-subtitle-2">
-          <DaylistHeader
-            :therapist="header.therapist"
-            :therapistID="header.id"
-            :date="currentSingleDay"
-            @absencesChanged="console.log('absence changed')"
-          />
+          <span>{{ header.therapist.name }}</span>
         </th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="(row, rowIndex) in rows" :key="rowIndex" v-if="rows.length > 0">
+        <td class="text-center">
+          {{ row.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
+        </td> 
         <td 
           v-for="header in headers"
           :key="header.value"
-          @click="openCreateDialog(header.id)"
+          @click="openCreateDialog(header.id, row.startTime)"
           :class="getClassForCell(row[header.value])"
         >
           <div v-if="!row[header.value]">
-            <v-btn @click="openCreateDialog(header.id)">+</v-btn>
+            <span @click="openCreateDialog(header.id, row.startTime)"></span>
           </div>
           <div v-else-if="row[header.value] && row[rowIndex]">
-            <v-btn @click="openSingleAppointmentDialog(row[rowIndex])">
+            <v-btn @click="openSingleAppointmentDialog(row[rowIndex] as SingleAppointment)">
               {{ row[rowIndex].patient }}
             </v-btn>
           </div>
@@ -92,10 +92,10 @@ import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import Absence from '@/class/Absence';
 import Appointment from '@/class/Appointment';
+import { useTherapistStore } from '@/store/TherapistStore';
 
 export default defineComponent({
   components: {
-    DaylistHeader,
     CreateAppointmentDialog,
     SingleAppointmentDialog,
     AppointmentSeriesDialog,
@@ -119,28 +119,33 @@ export default defineComponent({
     const appointmentStore = useAppointmentStore();
     const appointmentSeriesStore = useAppointmentSeriesStore();
     const absenceStore = useAbsenceStore();
+    const therapistStore = useTherapistStore();
+    type AppointmentRow = Record<number, SingleAppointment | AppointmentSeries | null> & { startTime: Date };
 
     const headers = ref<{ id: number; text: string; value: number; therapist: Therapist }[]>([]);
-    const rows = ref<Record<string, SingleAppointment | AppointmentSeries | null>[]>([]);
+    const rows = ref<AppointmentRow[]>([]);
 
     watch(() => props.currentSingleDay, async () => {
       await loadAppointments();
     });
 
     onMounted(() => {
-      createHeaders();
       loadAppointments();
+      loadTherapists();
     });
 
     const createHeaders = () => {
-      // Example headers; should be created based on your data source
-      headers.value = getTherapists().map(therapist => ({
-        id: therapist.id,
-        text: therapist.name,
-        value: therapist.id,
-        therapist: therapist
-      }));
+      const therapists: Therapist[] = therapistStore.getTherapists();
+      console.log(therapists);
+      headers.value = therapists.map(therapist => ({
+          id: therapist.id,
+          text: therapist.name,
+          value: therapist.id,
+          therapist: therapist
+        }))
+      ;
     };
+
 
     const loadAppointments = async () => {
       const date: string = props.currentSingleDay.toISOString();
@@ -151,29 +156,49 @@ export default defineComponent({
       createRows();
     };
 
+    const loadTherapists = async () => {
+      loading.value = true;
+      await therapistStore.loadTherapists();
+      loading.value = false;
+      createHeaders();
+      createRows();
+    };
+
     const createRows = () => {
-      TimeUtils.initializeTimes();
-      const startTimes = TimeUtils.getTimes();
+      const startTimes: Date[] = [];
+      let time = new Date();
+      time.setHours(7, 0, 0, 0); // Startzeit 07:00
+
+      while (time.getHours() < 22) { // Endzeit 22:00
+        startTimes.push(new Date(time));
+        time.setMinutes(time.getMinutes() + 10);
+      }
+
       rows.value = startTimes.map((time) => {
-        const row: Record<string, any> = { startTimeString: TimeUtils.formatTime(time), startTime: time };
+        const row: Record<number, SingleAppointment | AppointmentSeries | null> = {};
+
         headers.value.forEach((header) => {
           const singleAppointment = appointmentStore.getAppointmentByTherapistAndTime(header.id, props.currentSingleDay, time);
           const seriesAppointment = appointmentSeriesStore.getAppointmentSeriesByTherapistAndTime(header.id, props.currentSingleDay, time);
 
+          // Zuweisung für header.value als Key
           row[header.value] = singleAppointment || seriesAppointment || null;
         });
-        return row;
+
+        return {
+          ...row,
+          startTime: time // Zeitstempel als zusätzliche Eigenschaft
+        };
       });
     };
 
-    const getTherapists = (): Therapist[] => {
-      return []; // Replace with the method to load therapists from the store or API
-    };
 
-    const openCreateDialog = (id: number) => {
-      const therapist = getTherapists().find(t => t.id === id);
+
+    const openCreateDialog = (id: number, startTime: Date) => {
+      const therapist = therapistStore.getTherapists().find(t => t.id === id);
       if (therapist) {
         selectedTherapist.value = therapist;
+        initAppointment.value.startTime = startTime; // Startzeit setzen
         createDialog.value = true;
       }
     };
@@ -210,12 +235,6 @@ export default defineComponent({
       appointmentSeriesStore.updateAppointmentSeries(appointment.id, appointment);
       loadAppointments();
     };
-
-    const changeAbsence = (updatedAbsences: Absence[]) => {
-      // Implementiere die Logik zum Speichern der Abwesenheiten hier
-      console.log('Absences saved:', updatedAbsences);
-    };
-
 
     const deleteSingleAppointment = (id: number) => {
       appointmentStore.deleteAppointment(id);

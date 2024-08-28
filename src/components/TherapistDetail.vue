@@ -271,6 +271,7 @@ export default defineComponent({
       { title: 'Wochentag', value: 'weekday', sortable: true },
       { title: 'Von', value: 'startTime', sortable: true },
       { title: 'Bis', value: 'endTime', sortable: true },
+      { title: '', value: 'actions', sortable: true },
     ]);
 
     const therapistStore = useTherapistStore();
@@ -295,6 +296,7 @@ export default defineComponent({
       loadingAbsences.value = true;
       await absenceStore.loadAbsences(props.therapistId);
       absences.value = await absenceStore.getAbsencesForTherapist();
+      console.log('Loaded absences:', absences.value);
       loadingAbsences.value = false;
     };
 

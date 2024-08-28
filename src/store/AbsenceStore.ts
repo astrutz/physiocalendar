@@ -32,7 +32,7 @@ export const useAbsenceStore = defineStore('absence', {
     async updateAbsence(therapistId: number, absence: Absence): Promise<void> {
       try {
         const absenceDTO = convertToAbsenceDTO(absence);
-        await axios.put(`http://localhost:8080/api/therapists/${therapistId}/absences/${absence.id}`, absenceDTO);
+        await axios.put(`http://localhost:8080/api/absences/${absence.id}`, absenceDTO);
         this.loadAbsences(therapistId);
       } catch (err) {
         console.error(err);
@@ -41,7 +41,7 @@ export const useAbsenceStore = defineStore('absence', {
 
     async deleteAbsence(therapistId: number, absenceId: number): Promise<void> {
       try {
-        await axios.delete(`http://localhost:8080/api/therapists/${therapistId}/absences/${absenceId}`);
+        await axios.delete(`http://localhost:8080/api/absences/${absenceId}`);
         this.loadAbsences(therapistId);
       } catch (err) {
         console.error(err);

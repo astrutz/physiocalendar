@@ -69,8 +69,13 @@ export const useTherapistStore = defineStore('therapist', {
 
   getters: {
     getAllTherapists: (state) => state.therapists,
+
     getTherapistById: (state) => {
       return (id: number) => state.therapists.find(therapist => therapist.id === id);
+    },
+
+    getTherapists: (state) => () => {
+      return state.therapists || [];
     },
   },
 });
