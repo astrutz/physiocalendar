@@ -47,9 +47,10 @@ export interface JSONSingleAppointmentDTO {
   endTime: Date,
   date: Date,
   comment: string,
+  createdBySeriesAppointment: boolean,
   isHotair: boolean,
   isUltrasonic: boolean,
-  isElectric: boolean
+  isElectric: boolean,
 }
 
 export interface JSONListSingleDayDTO {
@@ -78,10 +79,13 @@ export interface JSONAbsenceDTO {
 }
 
 export interface JSONTherapistDTO {
-  name: string;
   id: number;
+  fullName: string;
+  firstName: string;
+  lastName: string;
   activeSince: Date;
   activeUntil: Date;
+  isActive: boolean;
   absences: JSONAbsenceDTO[];
   absenceIds: number[];
   absenceExceptions: JSONAbsenceExceptionDTO[];
@@ -90,6 +94,7 @@ export interface JSONTherapistDTO {
 
 export interface JSONPatientDTO {
   id: number;
+  fullName: string;
   firstName: string;
   lastName: string;
   activeSince: Date;

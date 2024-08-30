@@ -18,7 +18,6 @@ export default class Appointment {
 
   comment: string;
 
-
   constructor(
     id : number,
     therapist : Therapist,

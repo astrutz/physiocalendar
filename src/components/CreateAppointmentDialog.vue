@@ -4,7 +4,7 @@
       <v-card-title class="text-h5 grey lighten-2">
         <v-row>
           <v-col>
-            Neuen Termin erstellen - {{ appointment.therapist.name }}
+            Neuen Termin erstellen - {{ appointment.therapist.fullName }}
           </v-col>
           <v-col cols="auto">
             <v-switch v-model="isSeries" label="Serientermin"></v-switch>
@@ -166,7 +166,6 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, watch, nextTick } from 'vue';
-import SingleAppointment from '@/class/SingleAppointment';
 import Appointment from '@/class/Appointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import { usePatientStore } from '@/store/PatientStore';
@@ -174,6 +173,7 @@ import { Weekday } from '@/class/Enums';
 import CreatePatient from './CreatePatient.vue';
 import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
 import { de } from 'date-fns/locale';
+import SingleAppointment from '@/class/SingleAppointment';
 
 export default defineComponent({
   components: {
@@ -186,7 +186,7 @@ export default defineComponent({
       required: true,
     },
     appointment: {
-      type: Object as () => Appointment,
+      type: Object as () => SingleAppointment,
       required: true,
     },
   },
@@ -248,6 +248,7 @@ export default defineComponent({
       props.appointment.endTime,
       props.appointment.comment,
       new Date(),
+      props.appointment.createdBySeriesAppointment,
       false,
       false,
       false
@@ -286,6 +287,7 @@ export default defineComponent({
         newAppointment.endTime,
         newAppointment.comment,
         new Date(),
+        false,
         false,
         false,
         false
