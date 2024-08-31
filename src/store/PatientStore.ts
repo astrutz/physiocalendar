@@ -79,7 +79,11 @@ export const usePatientStore = defineStore('patientStore', {
     },
   },
   getters: {
-    getAllPatients: (state) => state.patients,
+
+    getAllPatients: (state) => {
+      return state.patients;
+    },
+
     getPatientById: (state) => {
       return (id: number) => state.patients.find(patient => patient.id === id);
     },

@@ -12,7 +12,7 @@
        <th class="text-center text-subtitle-2"> <!-- Leere Spalte -->
        </th>
        <th v-for="header in headers" :key="header.value" class="text-center text-subtitle-2">
-         <span>{{ header.therapist.name }}</span>
+         <span>{{ header.therapist.firstName }}</span>
        </th>
      </tr>
    </thead>
@@ -53,6 +53,7 @@
      v-model="createDialog"
      @saveSingle="addAppointment"
      @saveSeries="addSeriesAppointment"
+     @cancel="createDialog = false"
    />
 
    <!-- Dialog für das Anzeigen und Bearbeiten eines Einzeltermins -->
@@ -80,14 +81,12 @@
 
 <script lang="ts">
 import { defineComponent, ref, watch, onMounted } from 'vue';
-import DaylistHeader from './DaylistHeader.vue';
 import CreateAppointmentDialog from './CreateAppointmentDialog.vue';
 import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
 import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
 import { useAppointmentStore } from '@/store/AppointmentStore';
 import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
 import { useAbsenceStore } from '../store/AbsenceStore';
-import { TimeUtils } from '@/class/TimeUtils';
 import Therapist from '@/class/Therapist';
 import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
@@ -116,7 +115,7 @@ export default defineComponent({
     const selectedTherapist = ref<Therapist | null>(null);
     const selectedAppointment = ref<SingleAppointment | null>(null);
     const selectedSeriesAppointment = ref<AppointmentSeries | null>(null);
-    const initAppointment = ref(Appointment.createEmpty());
+    const initAppointment = ref(SingleAppointment.createEmpty());
 
     const appointmentStore = useAppointmentStore();
     const appointmentSeriesStore = useAppointmentSeriesStore();
@@ -140,7 +139,7 @@ export default defineComponent({
       const therapists: Therapist[] = therapistStore.getTherapists();
       headers.value = therapists.map(therapist => ({
           id: therapist.id,
-          text: therapist.name,
+          text: therapist.fullName,
           value: therapist.id,
           therapist: therapist
         }))
@@ -205,25 +204,26 @@ export default defineComponent({
     };
 
     const openCreateDialog = (id: number, startTime: Date) => {
-  const therapist = therapistStore.getTherapists().find(t => t.id === id);
-  if (therapist) {
-    initAppointment.value = new SingleAppointment(
-      0, // oder die korrekte ID
-      therapist,
-      therapist.id,
-      Patient.createEmpty(), // leerer Patient oder der zugewiesene Patient
-      0, // leerer Patient ID oder die korrekte ID
-      startTime,
-      new Date(startTime.getTime() + 60 * 60 * 1000), // Beispiel Endzeit, z.B. 1 Stunde später
-      '',
-      new Date(), // Beispiel für heutiges Datum
-      false,
-      false,
-      false
-    );
-    createDialog.value = true;
-  }
-};
+      const therapist = therapistStore.getTherapists().find(t => t.id === id);
+      if (therapist) {
+        initAppointment.value = new SingleAppointment(
+          0, // oder die korrekte ID
+          therapist,
+          therapist.id,
+          Patient.createEmpty(), // leerer Patient oder der zugewiesene Patient
+          0, // leerer Patient ID oder die korrekte ID
+          startTime,
+          new Date(startTime.getTime() + 20 * 60 * 1000), // Beispiel Endzeit, z.B. 1 Stunde später
+          '',
+          new Date(), // Beispiel für heutiges Datum
+          false,
+          false,
+          false,
+          false
+        );
+        createDialog.value = true;
+      }
+    };
 
 
     const openSingleAppointmentDialog = (appointment: SingleAppointment | AppointmentSeries | null) => {
@@ -242,6 +242,7 @@ export default defineComponent({
     const addAppointment = (appointment: SingleAppointment) => {
       appointmentStore.addAppointment(appointment);
       loadAppointments();
+      createDialog.value = false;
     };
 
     const addSeriesAppointment = (appointment: AppointmentSeries) => {

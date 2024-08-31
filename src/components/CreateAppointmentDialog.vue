@@ -1,10 +1,10 @@
 <template>
-  <v-dialog persistent v-model="dialogIsOpen" width="600">
+  <v-dialog persistent v-model="dialogIsOpen" width="800">
     <v-card>
       <v-card-title class="text-h5 grey lighten-2">
         <v-row>
           <v-col>
-            Neuen Termin erstellen - {{ appointment.therapist.fullName }}
+            Neuen Termin erstellen - {{ appointment.therapist.firstName }}
           </v-col>
           <v-col cols="auto">
             <v-switch v-model="isSeries" label="Serientermin"></v-switch>
@@ -14,30 +14,27 @@
 
       <v-card-text class="pt-4">
         <!-- Einzeltermin Felder -->
-        <div v-if="!isSeries">
+        <div>
           <v-form>
-            <v-text-field
-              v-model="singleAppointment.patient.firstName"
+            <v-autocomplete
+              v-model="singleAppointment.patient"
+              :items="patients"
+              item-text="fullName"
+              item-value="id"
               label="Patient suchen"
-              @click:append="showPatientSearchDialog"
-              :append-icon="'mdi-magnify'"
               :placeholder="singleAppointment.patient ? '' : 'Patient suchen'"
             >
               <template v-slot:append>
                 <v-btn icon @click="openCreatePatientDialog">+</v-btn>
               </template>
-            </v-text-field>
-            <v-text-field
-              v-model="singleAppointment.comment"
-              label="Kommentar"
-            ></v-text-field>
+            </v-autocomplete>
+
 
             <v-row>
               <v-col>
                 <v-text-field
                   v-model="startTimeDisplay"
                   label="Startzeit"
-                  readonly
                 >
                   <template v-slot:append>
                     <v-btn icon @click="openDatePicker('startTime')">
@@ -52,7 +49,6 @@
                   :format="formatTime"
                   @change="handleStartTimeChange"
                   :format-locale="de"
-                  :ref="startDatePickerRef"
                   v-if="showStartDatePicker"
                 />
               </v-col>
@@ -60,7 +56,6 @@
                 <v-text-field
                   v-model="endTimeDisplay"
                   label="Endzeit"
-                  readonly
                 >
                   <template v-slot:append>
                     <v-btn icon @click="openDatePicker('endTime')">
@@ -75,21 +70,28 @@
                   :format="formatTime"
                   @change="handleEndTimeChange"
                   :format-locale="de"
-                  :ref="endDatePickerRef"
                   v-if="showEndDatePicker"
                 />
               </v-col>
             </v-row>
-
-            <v-row>
+            <v-row v-if="!isSeries">
               <v-col>
-                <v-btn
-                  :disabled="!isValid"
-                  color="primary"
-                  @click="saveSingleAppointment"
-                >
-                  Speichern
-                </v-btn>
+                <v-checkbox
+                  v-model="singleAppointment.isHotair"
+                  label="Heißluft"
+                ></v-checkbox>
+              </v-col>
+              <v-col>
+                <v-checkbox
+                  v-model="singleAppointment.isElectric"
+                  label="Elektro"
+                ></v-checkbox>
+              </v-col>
+              <v-col>
+                <v-checkbox
+                  v-model="singleAppointment.isUltrasonic"
+                  label="Ultraschall"
+                ></v-checkbox>
               </v-col>
             </v-row>
           </v-form>
@@ -99,7 +101,7 @@
         <div v-if="isSeries">
           <v-form>
             <v-text-field
-              v-model="seriesAppointment.startDate"
+              v-model="seriesStartDateDisplay"
               label="Von Datum"
               readonly
             >
@@ -117,7 +119,7 @@
             />
             
             <v-text-field
-              v-model="seriesAppointment.endDate"
+              v-model="seriesEndDateDisplay"
               label="Bis Datum"
               readonly
             >
@@ -139,20 +141,25 @@
               label="Intervall (Woche)"
               type="number"
             />
-            
-            <v-btn
-              :disabled="!isSeriesValid"
+          </v-form>
+        </div>
+              <v-text-field
+              v-model="singleAppointment.comment"
+              label="Kommentar"
+            ></v-text-field>
+
+      </v-card-text>
+      
+      <v-card-actions>
+        <v-btn color="grey" @click="closeAppointmentCreateDialog">Abbrechen</v-btn>
+        <v-spacer></v-spacer>
+        <v-btn
+              :disabled="!isSeries ? !isValid : !isSeriesValid"
               color="primary"
-              @click="saveSeriesAppointment"
+              @click="saveAppointment"
             >
               Speichern
             </v-btn>
-          </v-form>
-        </div>
-      </v-card-text>
-
-      <v-card-actions>
-        <v-btn color="grey" @click="closeAppointmentCreateDialog">Abbrechen</v-btn>
       </v-card-actions>
     </v-card>
 
@@ -160,6 +167,7 @@
     <CreatePatient
       v-model="createPatientDialogOpen"
       @save="addPatient"
+      @cancel="createPatientDialogOpen = false"
     />
   </v-dialog>
 </template>
@@ -171,14 +179,13 @@ import AppointmentSeries from '@/class/AppointmentSeries';
 import { usePatientStore } from '@/store/PatientStore';
 import { Weekday } from '@/class/Enums';
 import CreatePatient from './CreatePatient.vue';
-import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
 import { de } from 'date-fns/locale';
 import SingleAppointment from '@/class/SingleAppointment';
+import Patient from '@/class/Patient';
 
 export default defineComponent({
   components: {
     CreatePatient,
-    AppointmentSeriesDialog
   },
   props: {
     currentDay: {
@@ -193,51 +200,16 @@ export default defineComponent({
   setup(props, { emit }) {
     const dialogIsOpen = ref(false);
     const isSeries = ref(false);
-    const isValid = computed(() => 
-      singleAppointment.value.patient &&
-      singleAppointment.value.startTime &&
-      singleAppointment.value.endTime
-    );
-    const isSeriesValid = computed(() => 
-      seriesAppointment.value.startDate &&
-      seriesAppointment.value.endDate &&
-      seriesAppointment.value.weeklyFrequency
-    );
     const patientSearchDialogOpen = ref(false);
     const createPatientDialogOpen = ref(false);
     const showStartDatePicker = ref(false);
     const showEndDatePicker = ref(false);
     const showSeriesStartDatePicker = ref(false);
     const showSeriesEndDatePicker = ref(false);
-    const startDatePickerRef = ref(null);
-    const endDatePickerRef = ref(null);
-    const seriesStartDatePickerRef = ref(null);
-    const seriesEndDatePickerRef = ref(null);
-
-    // Variables for formatted text fields
-    const startTimeDisplay = computed({
-      get: () => formatTime(singleAppointment.value.startTime),
-      set: (val: string) => singleAppointment.value.startTime = parseTime(val)
-    });
-
-    const endTimeDisplay = computed({
-      get: () => formatTime(singleAppointment.value.endTime),
-      set: (val: string) => singleAppointment.value.endTime = parseTime(val)
-    });
-
-    const seriesStartDateDisplay = computed({
-      get: () => formatDate(seriesAppointment.value.startDate),
-      set: (val: string) => seriesAppointment.value.startDate = parseDate(val)
-    });
-
-    const seriesEndDateDisplay = computed({
-      get: () => formatDate(seriesAppointment.value.endDate),
-      set: (val: string) => seriesAppointment.value.endDate = parseDate(val)
-    });
 
     const patientStore = usePatientStore(); // Angenommene Store Hook
+    const patients = ref(patientStore.getAllPatients);
 
-    // Initialisiere das Einzelappointment
     const singleAppointment = ref<SingleAppointment>(new SingleAppointment(
       props.appointment.id,
       props.appointment.therapist,
@@ -265,9 +237,6 @@ export default defineComponent({
       new Date(),
       new Date(),
       props.appointment.comment,
-      false,
-      false,
-      false,
       Weekday.MONDAY,
       1, // Standardwert für weeklyFrequency
       [],
@@ -275,45 +244,67 @@ export default defineComponent({
       false
     ));
 
-    // Beobachte Änderungen am Appointment-Objekt
-    watch(() => props.appointment, (newAppointment) => {
-      singleAppointment.value = new SingleAppointment(
-        newAppointment.id,
-        newAppointment.therapist,
-        newAppointment.therapistId,
-        newAppointment.patient,
-        newAppointment.patientId,
-        newAppointment.startTime,
-        newAppointment.endTime,
-        newAppointment.comment,
-        new Date(),
-        false,
-        false,
-        false,
-        false
-      );
+    // Computed properties for formatted text fields
+    const startTimeDisplay = computed({
+      get: () => formatTime(singleAppointment.value.startTime),
+      set: (val: string) => {
+        const parsedTime = parseTime(val);
+        if (!isNaN(parsedTime.getTime())) {
+          singleAppointment.value.startTime = parsedTime;
+        }
+      }
+    });
 
-      seriesAppointment.value = new AppointmentSeries(
-        newAppointment.id,
-        newAppointment.therapist,
-        newAppointment.therapistId,
-        newAppointment.patient,
-        newAppointment.patientId,
-        newAppointment.startTime,
-        newAppointment.endTime,
-        new Date(),
-        new Date(),
-        newAppointment.comment,
-        false,
-        false,
-        false,
-        Weekday.MONDAY,
-        1, // Standardwert für weeklyFrequency
-        [],
-        [],
-        false
-      );
-    }, { immediate: true, deep: true });
+    const endTimeDisplay = computed({
+      get: () => formatTime(singleAppointment.value.endTime),
+      set: (val: string) => {
+        const parsedTime = parseTime(val);
+        if (!isNaN(parsedTime.getTime())) {
+          singleAppointment.value.endTime = parsedTime;
+        }
+      }
+    });
+
+    const seriesStartDateDisplay = computed({
+      get: () => formatDate(seriesAppointment.value.startDate),
+      set: (val: string) => {
+        const parsedDate = parseDate(val);
+        if (!isNaN(parsedDate.getTime())) {
+          seriesAppointment.value.startDate = parsedDate;
+        }
+      }
+    });
+
+    const seriesEndDateDisplay = computed({
+      get: () => formatDate(seriesAppointment.value.endDate),
+      set: (val: string) => {
+        const parsedDate = parseDate(val);
+        if (!isNaN(parsedDate.getTime())) {
+          seriesAppointment.value.endDate = parsedDate;
+        }
+      }
+    });
+
+    const isValid = computed(() => 
+      singleAppointment.value.patient &&
+      singleAppointment.value.startTime &&
+      singleAppointment.value.endTime
+    );
+
+    const isSeriesValid = computed(() => 
+      seriesAppointment.value.startDate &&
+      seriesAppointment.value.endDate &&
+      seriesAppointment.value.weeklyFrequency
+    );
+
+    const saveAppointment = () => {
+      if (isSeries.value){
+        saveSeriesAppointment();
+      }
+      else{
+        saveSingleAppointment();
+      }
+    };
 
     const saveSingleAppointment = () => {
       emit('saveSingle', singleAppointment.value);
@@ -334,17 +325,17 @@ export default defineComponent({
     };
 
     const closeAppointmentCreateDialog = () => {
-      dialogIsOpen.value = false;
+      emit('cancel');
     };
 
-    const selectPatient = (patient: any) => {
-      singleAppointment.value.patient = patient.name;
+    const selectPatient = (patient: Patient) => {
+      singleAppointment.value.patient = patient;
       singleAppointment.value.patientId = patient.id;
       patientSearchDialogOpen.value = false;
     };
 
-    const addPatient = (patient: any) => {
-      singleAppointment.value.patient = patient.name;
+    const addPatient = (patient: Patient) => {
+      singleAppointment.value.patient = patient;
       singleAppointment.value.patientId = patient.id;
       createPatientDialogOpen.value = false;
     };
@@ -416,6 +407,7 @@ export default defineComponent({
       addPatient,
       saveSingleAppointment,
       saveSeriesAppointment,
+      saveAppointment,
       isValid,
       isSeriesValid,
       handleStartTimeChange,
@@ -427,11 +419,8 @@ export default defineComponent({
       showSeriesStartDatePicker,
       showSeriesEndDatePicker,
       openDatePicker,
-      startDatePickerRef,
-      endDatePickerRef,
-      seriesStartDatePickerRef,
-      seriesEndDatePickerRef,
       de,
+      patients,
     };
   },
 });

@@ -67,7 +67,7 @@
                 {{ formatTime(item.endTime) }}
               </template>
               <template #item.therapist="{ item }">
-                {{ item.therapist.name }}
+                {{ item.therapist.firstName }}
               </template>
             </v-data-table>
           </v-row>
@@ -99,7 +99,7 @@
                 {{ formatDate(item.endDate) }}
               </template>
               <template #item.therapist="{ item }">
-                {{ item.therapist.name }}
+                {{ item.therapist.firstName }}
               </template>
               <template #item.weeklyFrequency="{ item }">
                 {{ item.weeklyFrequency }}

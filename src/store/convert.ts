@@ -140,9 +140,6 @@ export function convertToAppointmentSeries(appointmentSeries: JSONAppointmentSer
     new Date(appointmentSeries.startDate),
     new Date(appointmentSeries.endDate),
     appointmentSeries.comment,
-    appointmentSeries.isHotair,
-    appointmentSeries.isUltrasonic,
-    appointmentSeries.isElectric,
     appointmentSeries.weekday,
     appointmentSeries.weeklyFrequency,
     appointmentSeries.cancellations ? appointmentSeries.cancellations.map(convertToCancellation) : [],
@@ -168,9 +165,6 @@ export function convertToAppointmentSeriesDTO(appointmentSeries: AppointmentSeri
     cancellations: appointmentSeries.cancellations ? appointmentSeries.cancellations.map(convertToCancellationDTO) : [],
     cancellationIds: appointmentSeries.cancellationIds,
     isBWO: appointmentSeries.isBWO,
-    isElectric: appointmentSeries.isElectric,
-    isHotair: appointmentSeries.isHotair,
-    isUltrasonic: appointmentSeries.isUltrasonic
   };
 }
 

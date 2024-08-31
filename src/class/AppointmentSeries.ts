@@ -18,12 +18,6 @@ export default class AppointmentSeries extends Appointment {
 
   endDate: Date;
 
-  isHotair : boolean;
-
-  isUltrasonic : boolean;
-
-  isElectric : boolean;
-
   isBWO: boolean;
 
   constructor(
@@ -37,9 +31,6 @@ export default class AppointmentSeries extends Appointment {
     startDate: Date,
     endDate: Date,
     comment: string,
-    isHotair: boolean,
-    isUltrasonic: boolean,
-    isElectric: boolean,
     weekday: Weekday,
     weeklyFrequency: number,
     cancellations: Cancellation[],
@@ -53,9 +44,6 @@ export default class AppointmentSeries extends Appointment {
     this.cancellationIds = cancellationIds;
     this.startDate = startDate || new Date();
     this.endDate = endDate || new Date();
-    this.isHotair = isHotair;
-    this.isUltrasonic = isUltrasonic;
-    this.isElectric = isElectric;
     this.isBWO = isBWO;
   }
 

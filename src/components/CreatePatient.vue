@@ -1,43 +1,45 @@
 <template>
-  <v-card>
-    <v-card-title class="text-h5">Patient hinzufügen</v-card-title>
-    <v-card-text>
-      <v-row>
-        <v-col>
-          <v-text-field label="Vorname" v-model="patientInput.firstName" clearable required></v-text-field>
-        </v-col>
-        <v-col>
-          <v-text-field label="Nachname" v-model="patientInput.lastName" clearable required></v-text-field>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
-          <v-checkbox label="BWO" v-model="patientInput.isBWO"></v-checkbox>
-        </v-col>
-        <v-col>
-          <v-text-field
-            label="Aktiv seit"
-            v-model="patientInput.activeSince"
-            type="date"
-            clearable
-          ></v-text-field>
-        </v-col>
-        <v-col>
-          <v-text-field
-            label="Aktiv bis"
-            v-model="patientInput.activeUntil"
-            type="date"
-            clearable
-          ></v-text-field>
-        </v-col>
-      </v-row>
-    </v-card-text>
-    <v-card-actions>
-      <v-btn color="error" @click="cancelChanges">Abbrechen</v-btn>
-      <v-spacer></v-spacer>
-      <v-btn color="success" @click="saveChanges">Patient Erstellen</v-btn>
-    </v-card-actions>
-  </v-card>
+  <v-dialog persistent v-model="dialogIsOpen" width="600">
+    <v-card>
+      <v-card-title class="text-h5">Patient hinzufügen</v-card-title>
+      <v-card-text>
+        <v-row>
+          <v-col>
+            <v-text-field label="Vorname" v-model="patientInput.firstName" clearable required></v-text-field>
+          </v-col>
+          <v-col>
+            <v-text-field label="Nachname" v-model="patientInput.lastName" clearable required></v-text-field>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-checkbox label="BWO" v-model="patientInput.isBWO"></v-checkbox>
+          </v-col>
+          <v-col>
+            <v-text-field
+              label="Aktiv seit"
+              v-model="patientInput.activeSince"
+              type="date"
+              clearable
+            ></v-text-field>
+          </v-col>
+          <v-col>
+            <v-text-field
+              label="Aktiv bis"
+              v-model="patientInput.activeUntil"
+              type="date"
+              clearable
+            ></v-text-field>
+          </v-col>
+        </v-row>
+      </v-card-text>
+      <v-card-actions>
+        <v-btn color="grey" @click="cancelChanges">Abbrechen</v-btn>
+        <v-spacer></v-spacer>
+        <v-btn color="success" @click="saveChanges">Patient Erstellen</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts">
@@ -52,6 +54,7 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
+    const dialogIsOpen = ref(false);
     const patientInput = ref<Patient>({
       id: 0,
       firstName: '',
@@ -71,13 +74,14 @@ export default defineComponent({
         alert('Vorname und Nachname sind erforderlich.');
         return;
       }
-      emit('save', { patient: patientInput.value });
+      emit('save', patientInput.value);
     };
 
     return {
       patientInput,
       cancelChanges,
       saveChanges,
+      dialogIsOpen,
     };
   },
 });
