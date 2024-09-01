@@ -37,9 +37,12 @@
 
       <template v-slot:item="{ item }">
         <tr @click="showDetail(item)" style="cursor: pointer;">
-          <td>{{ item.name }}</td>
+          <td>{{ item.fullName }}</td>
           <td>{{ formatDate(item.activeSince) }}</td>
           <td>{{ formatDate(item.activeUntil) }}</td>
+          <td>
+            <v-icon v-if="item.isActive" color="green">mdi-check</v-icon>
+          </td>
         </tr>
       </template>
     </v-data-table>
@@ -91,6 +94,7 @@ export default defineComponent({
       { title: 'Name', value: 'name', sortable: true, filterable: true },
       { title: 'Aktiv seit', value: 'activeSince', sortable: true, filterable: true },
       { title: 'Aktiv bis', value: 'activeUntil', sortable: true, filterable: true },
+      { title: 'Aktiv', value: 'isActive', sortable: true, filterable: true },
     ]);
 
     const detailDialog = ref(false);
@@ -162,7 +166,7 @@ export default defineComponent({
       const searchTerm = search.value.toLowerCase();
       filteredTherapists.value = therapists.value.filter(
         (therapist) =>
-          therapist.name.toLowerCase().includes(searchTerm)
+          therapist.fullName.toLowerCase().includes(searchTerm)
       );
     };
 

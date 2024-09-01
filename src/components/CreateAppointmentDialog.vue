@@ -14,127 +14,98 @@
 
       <v-card-text class="pt-4">
         <!-- Einzeltermin Felder -->
-        <div>
-          <v-form>
-            <v-autocomplete
-              v-model="singleAppointment.patient"
-              :items="patients"
-              item-text="fullName"
-              item-value="id"
-              label="Patient suchen"
-              :placeholder="singleAppointment.patient ? '' : 'Patient suchen'"
-            >
-              <template v-slot:append>
-                <v-btn icon @click="openCreatePatientDialog">+</v-btn>
-              </template>
-            </v-autocomplete>
+        <v-form>
+          <v-autocomplete
+            v-model="selectedPatientId"
+            :items="patientsOptions"
+            item-title="name"
+            item-value="id"
+            label="Patient suchen"
+            :placeholder="singleAppointment.patient?.fullName || 'Patient suchen'"
+            @update:search-input="handleSearchInput"
+          >
+            <template v-slot:item="data">
+              <v-list-item v-bind="data.props">
+              </v-list-item>
+            </template>
+            <template v-slot:append>
+              <v-btn icon @click="openCreatePatientDialog">+</v-btn>
+            </template>
+          </v-autocomplete>
 
-
-            <v-row>
-              <v-col>
-                <v-text-field
-                  v-model="startTimeDisplay"
-                  label="Startzeit"
-                >
-                  <template v-slot:append>
-                    <v-btn icon @click="openDatePicker('startTime')">
-                      <v-icon>mdi-calendar</v-icon>
-                    </v-btn>
-                  </template>
-                </v-text-field>
-                <VueDatePicker
-                  v-model="singleAppointment.startTime"
-                  time-picker
-                  text-input
-                  :format="formatTime"
-                  @change="handleStartTimeChange"
-                  :format-locale="de"
-                  v-if="showStartDatePicker"
-                />
-              </v-col>
-              <v-col>
-                <v-text-field
-                  v-model="endTimeDisplay"
-                  label="Endzeit"
-                >
-                  <template v-slot:append>
-                    <v-btn icon @click="openDatePicker('endTime')">
-                      <v-icon>mdi-calendar</v-icon>
-                    </v-btn>
-                  </template>
-                </v-text-field>
-                <VueDatePicker
-                  v-model="singleAppointment.endTime"
-                  time-picker
-                  text-input
-                  :format="formatTime"
-                  @change="handleEndTimeChange"
-                  :format-locale="de"
-                  v-if="showEndDatePicker"
-                />
-              </v-col>
-            </v-row>
-            <v-row v-if="!isSeries">
-              <v-col>
-                <v-checkbox
-                  v-model="singleAppointment.isHotair"
-                  label="Heißluft"
-                ></v-checkbox>
-              </v-col>
-              <v-col>
-                <v-checkbox
-                  v-model="singleAppointment.isElectric"
-                  label="Elektro"
-                ></v-checkbox>
-              </v-col>
-              <v-col>
-                <v-checkbox
-                  v-model="singleAppointment.isUltrasonic"
-                  label="Ultraschall"
-                ></v-checkbox>
-              </v-col>
-            </v-row>
-          </v-form>
-        </div>
+          <v-row>
+            <v-col>
+              <VueDatePicker
+                v-model="singleAppointment.startTime"
+                :format-locale="de"
+                :format="formatTime"
+                minutes-increment="10"
+                teleport-center
+                select-text="Bestätigen"
+                cancel-text="Abbrechen"
+              />
+            </v-col>
+            <v-col>
+              <VueDatePicker
+                v-model="singleAppointment.endTime"
+                :format-locale="de"
+                :format="formatTime"
+                minutes-increment="10"
+                teleport-center
+                select-text="Bestätigen"
+                cancel-text="Abbrechen"
+              />
+            </v-col>
+          </v-row>
+          <v-row v-if="!isSeries">
+            <v-col>
+              <v-checkbox
+                v-model="singleAppointment.isHotair"
+                label="Heißluft"
+              ></v-checkbox>
+            </v-col>
+            <v-col>
+              <v-checkbox
+                v-model="singleAppointment.isElectric"
+                label="Elektro"
+              ></v-checkbox>
+            </v-col>
+            <v-col>
+              <v-checkbox
+                v-model="singleAppointment.isUltrasonic"
+                label="Ultraschall"
+              ></v-checkbox>
+            </v-col>
+          </v-row>
+        </v-form>
 
         <!-- Serientermin Felder -->
         <div v-if="isSeries">
           <v-form>
-            <v-text-field
-              v-model="seriesStartDateDisplay"
-              label="Von Datum"
-              readonly
-            >
-              <template v-slot:append>
-                <v-btn icon @click="openDatePicker('seriesStartDate')">
-                  <v-icon>mdi-calendar</v-icon>
-                </v-btn>
-              </template>
-            </v-text-field>
-            <VueDatePicker
-              v-model="seriesAppointment.startDate"
-              :format="formatDate"
-              :format-locale="de"
-              v-if="showSeriesStartDatePicker"
-            />
-            
-            <v-text-field
-              v-model="seriesEndDateDisplay"
-              label="Bis Datum"
-              readonly
-            >
-              <template v-slot:append>
-                <v-btn icon @click="openDatePicker('seriesEndDate')">
-                  <v-icon>mdi-calendar</v-icon>
-                </v-btn>
-              </template>
-            </v-text-field>
-            <VueDatePicker
-              v-model="seriesAppointment.endDate"
-              :format="formatDate"
-              :format-locale="de"
-              v-if="showSeriesEndDatePicker"
-            />
+            <v-row>
+            <v-col>
+              <VueDatePicker
+                v-model="seriesAppointment.startDate"
+                :format-locale="de"
+                :format="formatDate"
+                :enable-time-picker="false"
+                teleport-center
+                select-text="Bestätigen"
+                cancel-text="Abbrechen"
+              />
+            </v-col>
+            <v-col>
+              <VueDatePicker
+                v-model="seriesAppointment.endDate"
+                :format-locale="de"
+                :format="formatDate"
+                :enable-time-picker="false"
+                teleport-center
+                select-text="Bestätigen"
+                cancel-text="Abbrechen"
+              />
+            </v-col>
+          </v-row>
 
             <v-text-field
               v-model="seriesAppointment.weeklyFrequency"
@@ -143,23 +114,23 @@
             />
           </v-form>
         </div>
-              <v-text-field
-              v-model="singleAppointment.comment"
-              label="Kommentar"
-            ></v-text-field>
 
+        <v-text-field
+          v-model="singleAppointment.comment"
+          label="Kommentar"
+        ></v-text-field>
       </v-card-text>
-      
+
       <v-card-actions>
         <v-btn color="grey" @click="closeAppointmentCreateDialog">Abbrechen</v-btn>
         <v-spacer></v-spacer>
         <v-btn
-              :disabled="!isSeries ? !isValid : !isSeriesValid"
-              color="primary"
-              @click="saveAppointment"
-            >
-              Speichern
-            </v-btn>
+          :disabled="!isSeries ? !isValid : !isSeriesValid"
+          color="primary"
+          @click="saveAppointment"
+        >
+          Speichern
+        </v-btn>
       </v-card-actions>
     </v-card>
 
@@ -173,7 +144,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, nextTick } from 'vue';
+import { defineComponent, ref, computed, watch, nextTick, onMounted } from 'vue';
 import Appointment from '@/class/Appointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import { usePatientStore } from '@/store/PatientStore';
@@ -182,10 +153,12 @@ import CreatePatient from './CreatePatient.vue';
 import { de } from 'date-fns/locale';
 import SingleAppointment from '@/class/SingleAppointment';
 import Patient from '@/class/Patient';
+import { TimePickerComponent as EjsTimepicker } from "@syncfusion/ej2-vue-calendars";
 
 export default defineComponent({
   components: {
     CreatePatient,
+    EjsTimepicker
   },
   props: {
     currentDay: {
@@ -207,8 +180,12 @@ export default defineComponent({
     const showSeriesStartDatePicker = ref(false);
     const showSeriesEndDatePicker = ref(false);
 
+    const selectedDate = ref(new Date(props.appointment.startTime));
+    const selectedTime = ref(new Date(props.appointment.startTime));
+
     const patientStore = usePatientStore(); // Angenommene Store Hook
-    const patients = ref(patientStore.getAllPatients);
+    const patients = ref<Patient[]>([]);
+      const patientsOptions = ref<{ id: number, name: string }[]>([]);
 
     const singleAppointment = ref<SingleAppointment>(new SingleAppointment(
       props.appointment.id,
@@ -240,9 +217,53 @@ export default defineComponent({
       Weekday.MONDAY,
       1, // Standardwert für weeklyFrequency
       [],
-      [],
-      false
+      []
     ));
+
+    onMounted(() => {
+      loadPatients();
+      console.log(singleAppointment);
+    });
+
+    watch(() => patientStore.getAllPatients, (newPatients) => {
+      patients.value = newPatients;
+      // Update patientsOptions when patients change
+      patientsOptions.value = newPatients.map(patient => ({
+        id: patient.id,
+        name: patient.firstName + ' ' + patient.lastName
+      }));
+    });
+
+    const loadPatients = async () => {
+      // loading.value = true;
+      await patientStore.loadPatients();
+      //loading.value = false;
+      patients.value = patientStore.getAllPatients;
+    };
+
+    const selectedPatientId = ref<number | null>(singleAppointment.value.patient?.id || null);
+
+    watch(selectedPatientId, (newId) => {
+      if (newId) {
+        const patient = patients.value.find(p => p.id === newId);
+        if (patient) {
+          singleAppointment.value.patient = patient;
+          singleAppointment.value.patientId = patient.id;
+        }
+      }
+    });
+
+    const handleSearchInput = (search: string) => {
+      // Optionale Filterlogik basierend auf der Suchanfrage
+    };
+
+    const updateStartTime = () => {
+      singleAppointment.value.startTime = singleAppointment.value.startTime;
+    };
+
+    const updateEndTime = () => {
+      singleAppointment.value.endTime = singleAppointment.value.endTime;
+    };
 
     // Computed properties for formatted text fields
     const startTimeDisplay = computed({
@@ -298,27 +319,43 @@ export default defineComponent({
     );
 
     const saveAppointment = () => {
-      if (isSeries.value){
+      if (isSeries.value) {
+        if (!seriesAppointment.value.startDate || !seriesAppointment.value.endDate || !seriesAppointment.value.weeklyFrequency) {
+          alert('Bitte alle Felder für den Serientermin ausfüllen.');
+          return;
+        }
+        if (!selectedPatientId) {
+          alert('Bitte einen gültigen Patienten auswählen.');
+          return;
+        }
         saveSeriesAppointment();
-      }
-      else{
+      } else {
+        if (!singleAppointment.value.patient || !singleAppointment.value.startTime || !singleAppointment.value.endTime) {
+          alert('Bitte alle Felder für den Einzeltermin ausfüllen.');
+          return;
+        }
         saveSingleAppointment();
       }
     };
 
+
     const saveSingleAppointment = () => {
       emit('saveSingle', singleAppointment.value);
-      dialogIsOpen.value = false;
     };
 
     const saveSeriesAppointment = () => {
+      // Übertrage die Werte von singleAppointment auf seriesAppointment
+      seriesAppointment.value.patient = singleAppointment.value.patient;
+      seriesAppointment.value.patientId = singleAppointment.value.patientId;
+      seriesAppointment.value.startTime = singleAppointment.value.startTime;
+      seriesAppointment.value.endTime = singleAppointment.value.endTime;
+      seriesAppointment.value.comment = singleAppointment.value.comment;
+
       emit('saveSeries', seriesAppointment.value);
       dialogIsOpen.value = false;
     };
 
-    const showPatientSearchDialog = () => {
-      patientSearchDialogOpen.value = true;
-    };
+
 
     const openCreatePatientDialog = () => {
       createPatientDialogOpen.value = true;
@@ -397,14 +434,16 @@ export default defineComponent({
       patientSearchDialogOpen,
       createPatientDialogOpen,
       startTimeDisplay,
+      updateStartTime,
+      updateEndTime,
       endTimeDisplay,
       seriesStartDateDisplay,
       seriesEndDateDisplay,
-      showPatientSearchDialog,
       openCreatePatientDialog,
       closeAppointmentCreateDialog,
       selectPatient,
       addPatient,
+      formatTime,
       saveSingleAppointment,
       saveSeriesAppointment,
       saveAppointment,
@@ -412,9 +451,13 @@ export default defineComponent({
       isSeriesValid,
       handleStartTimeChange,
       handleEndTimeChange,
-      formatTime,
+      handleSearchInput,
+      selectedDate,
+      selectedTime,
       formatDate,
       showStartDatePicker,
+      patientsOptions,
+      selectedPatientId,
       showEndDatePicker,
       showSeriesStartDatePicker,
       showSeriesEndDatePicker,

@@ -50,6 +50,7 @@ export const useTherapistStore = defineStore('therapist', {
     async updateTherapist(id: number, therapist: Therapist): Promise<void> {
       try {
         const therapistDTO = convertToTherapistDTO(therapist);
+        console.log('Therapist:', therapistDTO);
         await axios.put(`http://localhost:8080/api/therapists/${id}`, therapistDTO);
         this.loadTherapists();
       } catch (err) {

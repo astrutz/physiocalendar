@@ -9,7 +9,13 @@
     <v-card-text v-if="therapistInput">
       <v-row>
         <v-col>
-          <v-text-field label="Name" v-model="therapistInput.name" clearable></v-text-field>
+          <v-text-field label="Vorname" v-model="therapistInput.firstName" clearable></v-text-field>
+        </v-col>
+        <v-col>
+          <v-text-field label="Nachname" v-model="therapistInput.lastName" clearable></v-text-field>
+        </v-col>
+        <v-col cols="auto">
+          <v-checkbox label="Aktiv" v-model="therapistInput.isActive"></v-checkbox>
         </v-col>
       </v-row>
       <v-row>
@@ -20,6 +26,10 @@
             text-input
             :format="formatDate"
             :format-locale="de"
+            teleport-center
+            select-text="Bestätigen"
+            cancel-text="Abbrechen"
+            :enable-time-picker="false"
           />
         </v-col>
         <v-col>
@@ -28,6 +38,10 @@
             @change="handleDateUntilChange"
             :format="formatDate"
             :format-locale="de"
+            teleport-center
+            select-text="Bestätigen"
+            cancel-text="Abbrechen"
+            :enable-time-picker="false"
           />
         </v-col>
       </v-row>
@@ -60,7 +74,7 @@
                 {{ formatTime(item.endTime) }}
               </template>
               <template #item.therapist="{ item }">
-                {{ item.therapist.name }}
+                {{ item.therapist.fullName }}
               </template>
             </v-data-table>
           </v-row>
@@ -95,7 +109,7 @@
                 {{ item.weeklyFrequency }}
               </template>
               <template #item.therapist="{ item }">
-                {{ item.therapist.name }}
+                {{ item.therapist.fullName }}
               </template>
             </v-data-table>
           </v-row>
@@ -252,7 +266,7 @@ export default defineComponent({
       { title: 'Datum', value: 'date', sortable: true },
       { title: 'Von', value: 'startTime', sortable: true },
       { title: 'Bis', value: 'endTime', sortable: true },
-      { title: 'Therapeut', value: 'therapist', sortable: true },
+      { title: 'Patient', value: 'patient.fullName', sortable: true },
       { title: 'Kommentar', value: 'comment', sortable: true },
     ]);
 
@@ -260,6 +274,7 @@ export default defineComponent({
       { title: 'Wochentag', value: 'weekday', sortable: true },
       { title: 'Von', value: 'startTime', sortable: true },
       { title: 'Bis', value: 'endTime', sortable: true },
+      { title: 'Patient', value: 'patient.fullName', sortable: true },
       { title: 'Start Datum', value: 'startDate', sortable: true },
       { title: 'End Datum', value: 'endDate', sortable: true },
       { title: 'Kommentar', value: 'comment', sortable: true },

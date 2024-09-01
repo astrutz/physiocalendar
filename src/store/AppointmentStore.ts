@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import SingleAppointment from '@/class/SingleAppointment';
 import { JSONSingleAppointmentDTO } from '@/class/JSONStructures';
 import { convertToAppointment, convertToAppointmentDTO } from './convert';
+import { toast } from 'vue3-toastify';
+import 'vue3-toastify/dist/index.css';
 
 export const useAppointmentStore = defineStore('appointment', {
   state: () => ({
@@ -15,8 +17,11 @@ export const useAppointmentStore = defineStore('appointment', {
         const queryString = params ? this.buildQueryString(params) : '';
         const responseData: JSONSingleAppointmentDTO[] = (await axios.get(`http://localhost:8080/api/appointments${queryString}`)).data;
         this.appointments = responseData.map(dto => convertToAppointment(dto));
+        console.log(this.appointments);
       } catch (err) {
         console.error(err);
+        toast.error('Fehler beim Laden der Termine.');
+        
       }
     },
 
@@ -27,20 +32,70 @@ export const useAppointmentStore = defineStore('appointment', {
     async addAppointment(appointment: SingleAppointment): Promise<void> {
       try {
         const appointmentDTO = convertToAppointmentDTO(appointment);
-        await axios.post('http://localhost:8080/api/appointments', appointmentDTO);
-        this.loadAppointments({ date: appointment.date.toISOString() });
+        const response = await axios.post('http://localhost:8080/api/appointments', appointmentDTO);
+
+          this.loadAppointments({ date: appointment.date.toISOString() });
+          toast.success("Termin erfolgreich erstellt.");
       } catch (err) {
-        console.error(err);
+        if (err instanceof AxiosError) {
+          console.error(err);
+          if (err.response) {
+            switch (err.response.status) {
+              case 409:
+                toast.error(`Konflikt beim Erstellen des Termins: ${err.response.data}`);
+                break;
+              case 400:
+                toast.error(`Ungültige Anfrage: ${err.response.data}`);
+                break;
+              case 404:
+                toast.error('Ressource nicht gefunden.');
+                break;
+              default:
+                toast.error('Fehler beim Erstellen des Termins.');
+                break;
+            }
+          } else {
+            toast.error('Fehler beim Erstellen des Termins.');
+          }
+        } else {
+          toast.error('Unbekannter Fehler beim Erstellen des Termins.');
+        }
       }
     },
 
     async updateAppointment(id: number, appointment: SingleAppointment): Promise<void> {
       try {
         const appointmentDTO = convertToAppointmentDTO(appointment);
-        await axios.put(`http://localhost:8080/api/appointments/${id}`, appointmentDTO);
-        this.loadAppointments({ date: appointment.date.toISOString() });
+        const response = await axios.put(`http://localhost:8080/api/appointments/${id}`, appointmentDTO);
+
+        if (response.status === 200) {
+          this.loadAppointments({ date: appointment.date.toISOString() });
+          toast.success('Termin erfolgreich aktualisiert.');
+        }
       } catch (err) {
-        console.error(err);
+        if (err instanceof AxiosError) {
+          console.error(err);
+          if (err.response) {
+            switch (err.response.status) {
+              case 409:
+                toast.error(`Konflikt beim Aktualisieren des Termins: ${err.response.data}`);
+                break;
+              case 400:
+                toast.error(`Ungültige Anfrage: ${err.response.data}`);
+                break;
+              case 404:
+                toast.error('Ressource nicht gefunden.');
+                break;
+              default:
+                toast.error('Fehler beim Aktualisieren des Termins.');
+                break;
+            }
+          } else {
+            toast.error('Fehler beim Aktualisieren des Termins.');
+          }
+        } else {
+          toast.error('Unbekannter Fehler beim Aktualisieren des Termins.');
+        }
       }
     },
 
@@ -48,8 +103,14 @@ export const useAppointmentStore = defineStore('appointment', {
       try {
         await axios.delete(`http://localhost:8080/api/appointments/${id}`);
         this.loadAppointments();
+        toast.success('Termin erfolgreich gelöscht.');
       } catch (err) {
-        console.error(err);
+        if (err instanceof AxiosError) {
+          console.error(err);
+          toast.error(err.response?.data?.message || 'Fehler beim Löschen des Termins.');
+        } else {
+          toast.error('Unbekannter Fehler beim Löschen des Termins.');
+        }
       }
     },
 

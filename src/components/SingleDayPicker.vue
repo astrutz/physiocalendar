@@ -85,7 +85,7 @@ export default defineComponent({
         return false;
       }
       const day = new Date(dateToCheck).getDay();
-      return day > 0 && day < 6;
+      return day != 0;
     };
 
     const getWeekdaybyDate = (date?: Date): string => {

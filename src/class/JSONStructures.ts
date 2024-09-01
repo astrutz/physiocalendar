@@ -18,7 +18,6 @@ export interface JSONAppointmentSeriesDTO {
   startDate: Date,
   endDate: Date,
   comment: string,
-  isBWO: boolean,
   weekday: Weekday,
   weeklyFrequency: number,
   cancellations: JSONCancellationDTO[],

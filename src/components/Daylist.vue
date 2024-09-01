@@ -94,6 +94,7 @@ import Absence from '@/class/Absence';
 import Appointment from '@/class/Appointment';
 import { useTherapistStore } from '@/store/TherapistStore';
 import Patient from '@/class/Patient';
+import { toast } from 'vue3-toastify';
 
 export default defineComponent({
   components: {
@@ -248,6 +249,7 @@ export default defineComponent({
     const addSeriesAppointment = (appointment: AppointmentSeries) => {
       appointmentSeriesStore.addAppointmentSeries(appointment);
       loadAppointments();
+      createDialog.value = false;
     };
 
     const changeSingleAppointment = (appointment: SingleAppointment) => {
@@ -276,7 +278,7 @@ export default defineComponent({
         return entry.isHotair ? 'cell-hotair' : entry.isUltrasonic ? 'cell-ultrasonic' : entry.isElectric ? 'cell-electric' : '';
       }
       if (entry instanceof AppointmentSeries) {
-        return entry.isBWO ? 'cell-bwo' : '';
+        return entry.patient.isBWO ? 'cell-bwo' : '';
       }
       return '';
     };

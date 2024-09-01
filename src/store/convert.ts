@@ -27,10 +27,10 @@ export function convertToTherapist(therapist: JSONTherapistDTO): Therapist {
 
 export function convertToTherapistDTO(therapist: Therapist): JSONTherapistDTO {
   return {
+    id: therapist.id,
     firstName: therapist.firstName,
     lastName: therapist.lastName,
     fullName: therapist.fullName,
-    id: therapist.id,
     activeSince: therapist.activeSince,
     activeUntil: therapist.activeUntil,
     isActive: therapist.isActive,
@@ -144,7 +144,6 @@ export function convertToAppointmentSeries(appointmentSeries: JSONAppointmentSer
     appointmentSeries.weeklyFrequency,
     appointmentSeries.cancellations ? appointmentSeries.cancellations.map(convertToCancellation) : [],
     appointmentSeries.cancellationIds,
-    appointmentSeries.isBWO
   );
 }
 
@@ -164,7 +163,6 @@ export function convertToAppointmentSeriesDTO(appointmentSeries: AppointmentSeri
     weekday: appointmentSeries.weekday,
     cancellations: appointmentSeries.cancellations ? appointmentSeries.cancellations.map(convertToCancellationDTO) : [],
     cancellationIds: appointmentSeries.cancellationIds,
-    isBWO: appointmentSeries.isBWO,
   };
 }
 

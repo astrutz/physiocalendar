@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import { JSONAppointmentSeriesDTO } from '@/class/JSONStructures';
 import { convertToAppointmentSeries, convertToAppointmentSeriesDTO } from './convert';
+import { toast } from 'vue3-toastify';
+import 'vue3-toastify/dist/index.css';
 
 export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
   state: () => ({
@@ -17,7 +19,7 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
         this.seriesAppointments = responseData.map(dto => convertToAppointmentSeries(dto));
         console.log(this.seriesAppointments);
       } catch (err) {
-        console.error(err);
+        this.handleAxiosError(err, 'Fehler beim Laden der Serientermine.');
       }
     },
 
@@ -28,30 +30,43 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
     async addAppointmentSeries(appointment: AppointmentSeries): Promise<void> {
       try {
         const appointmentDTO = convertToAppointmentSeriesDTO(appointment);
-        await axios.post('http://localhost:8080/api/appointmentseries', appointmentDTO);
-        this.loadAppointmentSeries({ date: appointment.startDate.toISOString().split('T')[0] });
+        const response = await axios.post('http://localhost:8080/api/appointmentseries', appointmentDTO);
+
+          this.loadAppointmentSeries();
+          toast.success('Serientermin erfolgreich erstellt.');
+
       } catch (err) {
-        console.error(err);
+        this.handleAxiosError(err, 'Fehler beim Erstellen des Serientermins.');
       }
     },
 
     async updateAppointmentSeries(id: number, appointment: AppointmentSeries): Promise<void> {
       try {
         const appointmentDTO = convertToAppointmentSeriesDTO(appointment);
-        await axios.put(`http://localhost:8080/api/appointmentseries/${id}`, appointmentDTO);
-        this.loadAppointmentSeries({ date: appointment.startDate.toISOString().split('T')[0] });
+        const response = await axios.put(`http://localhost:8080/api/appointmentseries/${id}`, appointmentDTO);
+
+        if (response.status === 200) {
+          this.loadAppointmentSeries({ date: appointment.startDate.toISOString().split('T')[0] });
+          toast.success('Serientermin erfolgreich aktualisiert.');
+        }
       } catch (err) {
-        console.error(err);
+        this.handleAxiosError(err, 'Fehler beim Aktualisieren des Serientermins.');
       }
     },
 
     async deleteAppointmentSeries(id: number): Promise<void> {
       try {
         const appointmentToDelete = this.getAppointmentSeriesById(id);
+        if (!appointmentToDelete) {
+          toast.error('Serientermin nicht gefunden.');
+          return;
+        }
+
         await axios.delete(`http://localhost:8080/api/appointmentseries/${id}`);
-        this.loadAppointmentSeries({ date: appointmentToDelete?.startDate.toISOString().split('T')[0] });
+        this.loadAppointmentSeries({ date: appointmentToDelete.startDate.toISOString().split('T')[0] });
+        toast.success('Serientermin erfolgreich gelöscht.');
       } catch (err) {
-        console.error(err);
+        this.handleAxiosError(err, 'Fehler beim Löschen des Serientermins.');
       }
     },
 
@@ -72,6 +87,32 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
 
       return queryParts.length ? `?${queryParts.join('&')}` : '';
     },
+
+    handleAxiosError(err: any, defaultMessage: string) {
+      if (err instanceof AxiosError) {
+        console.error(err);
+        if (err.response) {
+          switch (err.response.status) {
+            case 409:
+              toast.error(`Konflikt: ${err.response.data}`);
+              break;
+            case 400:
+              toast.error(`Ungültige Anfrage: ${err.response.data}`);
+              break;
+            case 404:
+              toast.error('Ressource nicht gefunden.');
+              break;
+            default:
+              toast.error(defaultMessage);
+              break;
+          }
+        } else {
+          toast.error(defaultMessage);
+        }
+      } else {
+        toast.error('Unbekannter Fehler.');
+      }
+    },
   },
 
   getters: {
@@ -82,7 +123,6 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
     },
 
     getAppointmentSeriesByPatientId: (state) => (patientId: number) => {
-      console.log(state.seriesAppointments);
       return state.seriesAppointments.filter(appointment => appointment.patient.id === patientId) || [];
     },
 
@@ -98,7 +138,7 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
 
     getAppointmentSeriesByTherapistAndTime: (state) => (therapistId: number, date: Date, time: Date) => {
       return state.seriesAppointments.find(
-        appointment => appointment.therapistId === therapistId && appointment.startTime === time
+        appointment => appointment.therapistId === therapistId && appointment.startDate.toISOString().split('T')[0] === date.toISOString().split('T')[0] && appointment.startTime.toISOString().split('T')[1] === time.toISOString().split('T')[1]
       );
     },
   },
