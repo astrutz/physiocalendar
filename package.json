@@ -20,6 +20,7 @@
     "pinia": "^2.2.2",
     "toastify-js": "^1.12.0",
     "vue": "^3.4.38",
+    "vue-cal": "^4.9.0",
     "vue-router": "^4.2.4",
     "vue-toastify": "^2.0.0-alpha.2",
     "vue3-toastify": "^0.2.2",

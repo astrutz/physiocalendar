@@ -5,6 +5,7 @@ import { JSONSingleAppointmentDTO } from '@/class/JSONStructures';
 import { convertToAppointment, convertToAppointmentDTO } from './convert';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import Appointment from '../class/Appointment';
 
 export const useAppointmentStore = defineStore('appointment', {
   state: () => ({
@@ -17,7 +18,6 @@ export const useAppointmentStore = defineStore('appointment', {
         const queryString = params ? this.buildQueryString(params) : '';
         const responseData: JSONSingleAppointmentDTO[] = (await axios.get(`http://localhost:8080/api/appointments${queryString}`)).data;
         this.appointments = responseData.map(dto => convertToAppointment(dto));
-        console.log(this.appointments);
       } catch (err) {
         console.error(err);
         toast.error('Fehler beim Laden der Termine.');
@@ -32,8 +32,9 @@ export const useAppointmentStore = defineStore('appointment', {
     async addAppointment(appointment: SingleAppointment): Promise<void> {
       try {
         const appointmentDTO = convertToAppointmentDTO(appointment);
+        console.log(appointmentDTO);
         const response = await axios.post('http://localhost:8080/api/appointments', appointmentDTO);
-
+          
           this.loadAppointments({ date: appointment.date.toISOString() });
           toast.success("Termin erfolgreich erstellt.");
       } catch (err) {
@@ -68,10 +69,8 @@ export const useAppointmentStore = defineStore('appointment', {
         const appointmentDTO = convertToAppointmentDTO(appointment);
         const response = await axios.put(`http://localhost:8080/api/appointments/${id}`, appointmentDTO);
 
-        if (response.status === 200) {
-          this.loadAppointments({ date: appointment.date.toISOString() });
+          this.loadAppointments();
           toast.success('Termin erfolgreich aktualisiert.');
-        }
       } catch (err) {
         if (err instanceof AxiosError) {
           console.error(err);
@@ -154,10 +153,36 @@ export const useAppointmentStore = defineStore('appointment', {
       );
     },
 
-    getAppointmentByTherapistAndTime: (state) => (therapistId: number, date: Date, time: Date) => {
-      return state.appointments.find(
-        appointment => appointment.therapistId === therapistId && appointment.date === date && appointment.startTime === time
-      );
+    getAppointmentsForDate: (state) => (date: Date) => {
+      const appointments = state.appointments.filter(appointment => {
+        const appointmentDate = new Date(appointment.date).toISOString().split('T')[0];
+        const searchDate = date.toISOString().split('T')[0];
+        const isSameDate = appointmentDate === searchDate;
+        return isSameDate;
+      });
+      return appointments
     },
+
+    getAppointmentByTherapistAndTime: (state) => (therapistId: number, date: Date, time: Date) => {
+      // console.log(therapistId);
+      // console.log(date);
+      // console.log(time);
+      const appointments = state.appointments.filter(appointment => {
+        const appointmentDate = new Date(appointment.date).toISOString().split('T')[0];
+        const searchDate = date.toISOString().split('T')[0];
+        const isSameDate = appointmentDate === searchDate;
+    
+        const appointmentStartTime = new Date(appointment.startTime);
+        const appointmentEndTime = new Date(appointment.endTime);
+        const isInTimeRange = time >= appointmentStartTime && time <= appointmentEndTime;
+    
+        return therapistId === appointment.therapist.id && isInTimeRange && isSameDate;
+      });
+      if(appointments.length !== 0){
+        console.log(appointments);
+      }
+      return appointments.length > 0 ? appointments[0] : null; // Rückgabe eines einzelnen Termins oder null
+    },
+    
   },
 });

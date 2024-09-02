@@ -17,7 +17,6 @@ export const useAppointmentSeriesStore = defineStore('appointmentSeries', {
         const queryString = params ? this.buildQueryString(params) : '';
         const responseData: JSONAppointmentSeriesDTO[] = (await axios.get(`http://localhost:8080/api/appointmentseries${queryString}`)).data;
         this.seriesAppointments = responseData.map(dto => convertToAppointmentSeries(dto));
-        console.log(this.seriesAppointments);
       } catch (err) {
         this.handleAxiosError(err, 'Fehler beim Laden der Serientermine.');
       }

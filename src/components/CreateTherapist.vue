@@ -4,9 +4,11 @@
     <v-card-text>
       <v-row>
         <v-col>
-          <v-text-field label="Name" v-model="therapistInput.name" clearable required></v-text-field>
+          <v-text-field label="Vorname" v-model="therapistInput.firstName" clearable required></v-text-field>
         </v-col>
-  
+        <v-col>
+          <v-text-field label="Nachname" v-model="therapistInput.lastName" clearable required></v-text-field>
+        </v-col>
       </v-row>
       <v-row>
         <v-col>
@@ -24,6 +26,12 @@
             type="date"
             clearable
           ></v-text-field>
+        </v-col>
+        <v-col cols="auto">
+          <v-checkbox
+            label="Aktiv"
+            v-model="therapistInput.isActive"
+          ></v-checkbox>
         </v-col>
       </v-row>
     </v-card-text>
@@ -51,9 +59,12 @@ export default defineComponent({
   setup(props, { emit }) {
     const therapistInput = ref<Therapist>({
       id: 0,
-      name: '',
+      firstName: '',
+      lastName: '',
+      fullName: '',
       activeSince: new Date(),
       activeUntil: new Date('2050-01-01'),
+      isActive: true,
       absences: [],
       absenceIds: [],
       absenceExceptions: [],
@@ -65,7 +76,7 @@ export default defineComponent({
     };
 
     const saveChanges = () => {
-      if (!therapistInput.value.name) {
+      if (!therapistInput.value.firstName) {
         alert('Vorname und Nachname sind erforderlich.');
         return;
       }

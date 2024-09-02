@@ -22,13 +22,11 @@
       <v-card-title>Suchergebnisse</v-card-title>
       <ul class="pt-2 ml-4 mr-4 mb-4" v-if="searchResults.length > 0">
         <li v-for="(result, i) in searchResults" :key="`${result.id}-${i}`">
-          <!-- <v-btn text @click="navigateTargetDate(result.date)">
-            <strong>{{ result.patient }}:</strong>
-            {{
-              // result.startDate ? `${result.weekday}s` : getReadableDate(result.date)
-            }}, {{ result.startTime }} bis {{ result.endTime }} bei
-            {{ result.therapist }}
-          </v-btn> -->
+          <v-btn @click="navigateTargetDate(result.date)">
+            <strong>{{ result.patient.fullName }}:</strong>
+            {{ result.date }},
+            {{ result.startTime }} bis {{ result.endTime }} bei {{ result.therapist }}
+          </v-btn>
         </li>
       </ul>
       <p v-else>Keine Termine gefunden.</p>
@@ -57,33 +55,32 @@ export default defineComponent({
   setup() {
     const searchTextfield = ref('');
     const showSearchResults = ref(false);
-    const searchResults = ref<Array<SingleAppointment | AppointmentSeries>>([]);
+    const searchResults = ref<Array<SingleAppointment>>([]);
 
     const appointmentStore = useAppointmentStore();
     const appointmentSeriesStore = useAppointmentSeriesStore();
 
-    const search = () => {
-      // searchResults.value = [];
-      // if (searchTextfield.value.length > 2) {
-      //   const searchText = searchTextfield.value.toLowerCase();
+    const search = async () => {
+      await appointmentStore.loadAppointments();
+      
+      searchResults.value = [];
+      if (searchTextfield.value.length > 1) {
+        const searchText = searchTextfield.value.toLowerCase();
 
-      //   const singleAppointments: SingleAppointment[] = appointmentStore.getAllAppointments.filter(
-      //     (appointment: SingleAppointment) => appointment.patient?.lastName.toLowerCase().includes(searchText)
-      //   );
+        const singleAppointments: SingleAppointment[] = appointmentStore.getAllAppointments.filter(
+          (appointment: SingleAppointment) => appointment.patient?.fullName.toLowerCase().includes(searchText)
+        );  
+        
+        searchResults.value = [...singleAppointments];
+        console.log(searchResults.value);
+        searchResults.value.sort((a, b) => {
+          const dateA = a.startTime;
+          const dateB = b.startTime;
+          return dateA.getTime() - dateB.getTime();
+        });
 
-      //   const seriesAppointments: AppointmentSeries[] = appointmentSeriesStore.getAllAppointmentSeriess.filter(
-      //     (appointment: AppointmentSeries) => appointment.patient?.firstName.toLowerCase().includes(searchText)
-      //   );
-
-      //   searchResults.value = [...singleAppointments, ...seriesAppointments];
-      //   searchResults.value.sort((a, b) => {
-      //     const dateA = a instanceof AppointmentSeries ? a.startDate : a.date;
-      //     const dateB = b instanceof AppointmentSeries ? b.startDate : b.date;
-      //     return dateA.getTime() - dateB.getTime();
-      //   });
-
-      //   showSearchResults.value = true;
-      // }
+        showSearchResults.value = true;
+      }
     };
 
     const closeSearchResults = () => {
