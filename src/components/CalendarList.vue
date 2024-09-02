@@ -1,5 +1,9 @@
 <template>
   <v-container>
+    <SingleDayPicker
+    :currentSingleDay="new Date()"
+     @currentDayChanged="updateCurrentSingleDay"
+    />
     <Daylist
       :currentSingleDay="currentSingleDay"
       v-if="listType === 'daylist'"
@@ -13,11 +17,13 @@ import Dateconversions from '@/class/Dateconversions';
 import Daylist from './Daylist.vue';
 import AppBar from './AppBar.vue';
 import EventBus from '@/class/EventBus';
+import SingleDayPicker from './SingleDayPicker.vue';
 
 export default defineComponent({
   components: {
     Daylist,
     AppBar,
+    SingleDayPicker
   },
   props: {
     listType: {
@@ -31,6 +37,7 @@ export default defineComponent({
     );
 
     const updateCurrentSingleDay = (newDate: Date) => {
+      console.log('updateDate', newDate)
       currentSingleDay.value = newDate;
     };
 
@@ -38,11 +45,11 @@ export default defineComponent({
       currentSingleDay.value = Dateconversions.convertReadableStringToDate(dateFormatted);
     };
 
-    // watch(() => EventBus.get('currentDayChanged'), (newDate) => {
-    //   if (newDate) {
-    //     updateCurrentSingleDay(newDate);
-    //   }
-    // });
+    watch(() => EventBus.get('currentDayChanged'), (newDate) => {
+      if (newDate) {
+        updateCurrentSingleDay(newDate);
+      }
+    });
 
     return {
       currentSingleDay,
@@ -57,4 +64,5 @@ export default defineComponent({
 .container {
   max-width: 97%;
 }
+
 </style>

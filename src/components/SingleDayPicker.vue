@@ -48,9 +48,6 @@ export default defineComponent({
     const datePickerOpen = ref(false);
     const weekday = ref<string>('');
 
-    onMounted(() => {
-      updateWeekday();
-    });
 
     const dateFormatted = computed(() =>
       Dateconversions.convertEnglishToGermanReadableString(dateObject.value.toISOString().substr(0, 10))

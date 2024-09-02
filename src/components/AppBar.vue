@@ -2,7 +2,7 @@
   <v-app-bar color="#2a2f79" dark>
     <img src="@/assets/icon-inverted.png" height="50px" class="mr-4" />
     <div class="d-flex align-center">
-      <h1 class="text-h4">Physiokalender - Praxis Meyer</h1>
+      <h1 class="text-h4">Physiokalender - Praxis Meyer 2.0</h1>
     </div>
     <v-spacer></v-spacer>
     <v-text-field
@@ -13,27 +13,32 @@
       @click:prepend="search"
       @keydown.enter="search"
     ></v-text-field>
-    <v-card
-      v-if="showSearchResults"
-      class="search-results"
-      light
-      elevation="24"
+    <v-dialog
+      v-model="showDialog"
+      max-width="600px"
+      persistent
+      scrollable
     >
-      <v-card-title>Suchergebnisse</v-card-title>
-      <ul class="pt-2 ml-4 mr-4 mb-4" v-if="searchResults.length > 0">
-        <li v-for="(result, i) in searchResults" :key="`${result.id}-${i}`">
-          <v-btn @click="navigateTargetDate(result.date)">
-            <strong>{{ result.patient.fullName }}:</strong>
-            {{ result.date }},
-            {{ result.startTime }} bis {{ result.endTime }} bei {{ result.therapist }}
-          </v-btn>
-        </li>
-      </ul>
-      <p v-else>Keine Termine gefunden.</p>
-      <v-card-actions>
-        <v-btn color="primary" @click="closeSearchResults">Schließen</v-btn>
-      </v-card-actions>
-    </v-card>
+      <v-card>
+        <v-card-title>Suchergebnisse</v-card-title>
+        <v-card-text>
+          <ul class="search-results-list" v-if="searchResults.length > 0">
+            <li v-for="(result, i) in searchResults" :key="`${result.id}-${i}`">
+              <v-btn @click="navigateTargetDate(result.startTime)" class="search-result-btn">
+                <strong>{{ result.patient.fullName }}: </strong>
+                {{ getReadableDate(result.startTime) }},
+                {{ result.startTime.toLocaleTimeString() }} bis {{ result.endTime.toLocaleTimeString() }} bei {{ result.therapist.firstName }}
+                
+              </v-btn>
+            </li>
+          </ul>
+          <p v-else>Keine Termine gefunden.</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="primary" @click="closeDialog">Schließen</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <Menu />
   </v-app-bar>
 </template>
@@ -54,7 +59,7 @@ export default defineComponent({
   },
   setup() {
     const searchTextfield = ref('');
-    const showSearchResults = ref(false);
+    const showDialog = ref(false);
     const searchResults = ref<Array<SingleAppointment>>([]);
 
     const appointmentStore = useAppointmentStore();
@@ -72,21 +77,20 @@ export default defineComponent({
         );  
         
         searchResults.value = [...singleAppointments];
-        console.log(searchResults.value);
         searchResults.value.sort((a, b) => {
           const dateA = a.startTime;
           const dateB = b.startTime;
           return dateA.getTime() - dateB.getTime();
         });
-
-        showSearchResults.value = true;
+        
+        showDialog.value = true; // Dialog öffnen
       }
     };
 
-    const closeSearchResults = () => {
+    const closeDialog = () => {
       searchResults.value = [];
       searchTextfield.value = '';
-      showSearchResults.value = false;
+      showDialog.value = false; // Dialog schließen
     };
 
     const navigateTargetDate = (date: Date) => {
@@ -98,7 +102,7 @@ export default defineComponent({
       if (year >= 2000) {
         EventBus.set('currentDayChanged', date);
       }
-      showSearchResults.value = false;
+      closeDialog(); // Dialog schließen nach Auswahl
     };
 
     const getReadableDate = (date: Date) => {
@@ -107,22 +111,13 @@ export default defineComponent({
 
     return {
       searchTextfield,
-      showSearchResults,
+      showDialog,
       searchResults,
       search,
-      closeSearchResults,
+      closeDialog,
       navigateTargetDate,
       getReadableDate,
     };
   },
 });
 </script>
-
-<style scoped>
-.search-results {
-  position: absolute;
-  top: 100px;
-  right: 400px;
-  min-width: 400px;
-}
-</style>

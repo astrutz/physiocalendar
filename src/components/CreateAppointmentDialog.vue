@@ -153,12 +153,10 @@ import CreatePatient from './CreatePatient.vue';
 import { de } from 'date-fns/locale';
 import SingleAppointment from '@/class/SingleAppointment';
 import Patient from '@/class/Patient';
-import { TimePickerComponent as EjsTimepicker } from "@syncfusion/ej2-vue-calendars";
 
 export default defineComponent({
   components: {
-    CreatePatient,
-    EjsTimepicker
+    CreatePatient
   },
   props: {
     currentDay: {

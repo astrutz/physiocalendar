@@ -1,23 +1,29 @@
 <template>
   <v-container class="d-flex justify-center align-center">
+
     <!-- vue-cal Kalender -->
     <vue-cal
+      sticky-split-labels
+      :split-days="splits"
       :disable-views="['years', 'year', 'month']"
+      :hide-view-selector="true"
       :activeView="'day'"
       v-model="selectedDate"
       :events="events"
       :time-from="6 * 60"
       :time-to="20 * 60"
       :editable-events="{ title: false, drag: true, resize: true, delete: true, create: true }"
-      :split-days="splits"
       :selected-date="selectedDate"
       @event-dblclick="handleEventClick"
       @cell-click="handleDateClick"
       :locale="locale"
-      :timeStep="10"
+      :timeStep="20"
       :todayButton="true"
-      class="vue-cal"
     >
+    <template #split-label="{ split, view }">
+      <v-icon>mdi-account</v-icon>
+    <strong>{{ split.label }}</strong>
+  </template>
     </vue-cal>
 
 
@@ -55,7 +61,6 @@ import { useTherapistStore } from '@/store/TherapistStore';
 import Therapist from '@/class/Therapist';
 import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
-import Appointment from '@/class/Appointment';
 import { toast } from 'vue3-toastify';
 import 'vue-cal/dist/vuecal.css';
 import { de } from 'date-fns/locale';
@@ -68,6 +73,12 @@ export default defineComponent({
     SingleAppointmentDialog,
     AppointmentSeriesDialog,
     VueCal,
+  },
+  props: {
+    currentSingleDay: {
+      type: Date,
+      required: true,
+    },
   },
   setup(props, { emit }) {
     const createDialog = ref(false);
@@ -98,8 +109,16 @@ export default defineComponent({
       createEvent: 'Ereignis erstellen',
       dateFormat: 'dddd DD.MM.YYYY',  // Format des Datums
     };
+
     const locale = ref(customLocale);
-  
+
+    const colors = [
+      'blue', 'green', 'orange', 'red', 'purple', 'pink', 
+      'cyan', 'teal', 'lime', 'indigo', 'amber', 'gray'
+    ];
+    
+      // Dynamisch Klassennamen generieren
+    const generateClassName = (index: number) => `split${(index % colors.length) + 1}`;
 
     onMounted(() => {
       loadTherapists();
@@ -110,13 +129,21 @@ export default defineComponent({
       await loadAppointments();
     });
 
+    watch(
+      () => props.currentSingleDay,
+      (newDate) => {
+        selectedDate.value = newDate;
+      }
+    );
+
     const loadTherapists = async () => {
       await therapistStore.loadTherapists();
       const therapists = therapistStore.getTherapists();
-      splits.value = therapists.map((therapist: Therapist) => ({
-      label: therapist.firstName
+      splits.value = therapists.map((therapist, index) => ({
+        label: therapist.firstName,
+        class: generateClassName(index)
       }));
-      };
+    };
 
     const formatDate = (date: Date): string => {
         return format(date, 'yyyy-MM-dd HH:mm');
@@ -235,7 +262,7 @@ export default defineComponent({
         // Erstelle ein Mapping von therapistId zu Index
         const therapistIndexMap = new Map<number, Therapist>();
         therapists.forEach((therapist, index) => {
-          therapistIndexMap.set(index + 1, therapist);
+          therapistIndexMap.set(index+1, therapist);
         });
 
       const therapist = therapistIndexMap.get(clickedSplit);
@@ -255,24 +282,21 @@ export default defineComponent({
       createDialog.value = true;
     };
 
-    const addAppointment = (appointment: SingleAppointment) => {
-      appointmentStore.addAppointment(appointment);
+    const addAppointment = async (appointment: SingleAppointment) => {
+      await appointmentStore.addAppointment(appointment);
       loadAppointments();
       createDialog.value = false;
     };
 
-    const addSeriesAppointment = (appointment: AppointmentSeries) => {
-      appointmentSeriesStore.addAppointmentSeries(appointment);
+    const addSeriesAppointment = async (appointment: AppointmentSeries) => {
+      await appointmentSeriesStore.addAppointmentSeries(appointment);
       loadAppointments();
       createDialog.value = false;
     };
 
-    const changeSingleAppointment = (appointment: SingleAppointment) => {
-      appointmentStore.updateAppointment(appointment.id, appointment).then(() => {
-        loadAppointments(); // Termine neu laden
-      }).catch((error) => {
-        console.error('Fehler beim Aktualisieren des Termins:', error);
-      });
+    const changeSingleAppointment = async (appointment: SingleAppointment) => {
+       await appointmentStore.updateAppointment(appointment.id, appointment)
+       loadAppointments();
     };
 
     const changeSeriesAppointment = (appointment: AppointmentSeries) => {
@@ -280,8 +304,8 @@ export default defineComponent({
       loadAppointments();
     };
 
-    const deleteSingleAppointment = (appointment: SingleAppointment) => {
-      appointmentStore.deleteAppointment(appointment.id);
+    const deleteSingleAppointment = async (appointment: SingleAppointment) => {
+      await appointmentStore.deleteAppointment(appointment.id);
       loadAppointments();
     };
 
@@ -321,18 +345,19 @@ export default defineComponent({
 
 <style scoped>
 /* Optional styles for vue-cal */
-.vue-cal {
-  max-width: 100%;
-  margin: 0 auto;
-}
 
-/* Vertikale Trenner zwischen den Splits */
-.vuecal__cell {
-  border-right: 1px solid rgba(0, 0, 0, 0.1); /* Helle Trennerfarbe */
-}
-
-.vuecal__cell:last-child {
-  border-right: none; /* Kein Trenner an der letzten Spalte */
-}
+.day-split-header {font-size: 40px;}
+.split1 { background-color: rgba(0, 0, 255, 0.7); } /* Blue */
+.vuecal__body .split2 { background-color: rgba(0, 255, 0, 0.7); } /* Green */
+.vuecal__body .split3 { background-color: rgba(255, 165, 0, 0.7); } /* Orange */
+.vuecal__body .split4 { background-color: rgba(255, 0, 0, 0.7); } /* Red */
+.vuecal__body .split5 { background-color: rgba(128, 0, 128, 0.7); } /* Purple */
+.vuecal__body .split6 { background-color: rgba(255, 192, 203, 0.7); } /* Pink */
+.vuecal__body .split7 { background-color: rgba(0, 255, 255, 0.7); } /* Cyan */
+.vuecal__body .split8 { background-color: rgba(0, 128, 128, 0.7); } /* Teal */
+.vuecal__body .split9 { background-color: rgba(255, 255, 0, 0.7); } /* Lime */
+.vuecal__body .split10 { background-color: rgba(75, 0, 130, 0.7); } /* Indigo */
+.vuecal__body .split11 { background-color: rgba(255, 193, 7, 0.7); } /* Amber */
+.vuecal__body .split12 { background-color: rgba(128, 128, 128, 0.7); } /* Gray */
 
 </style>
