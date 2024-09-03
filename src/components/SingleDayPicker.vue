@@ -29,14 +29,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, onMounted } from 'vue';
+import { defineComponent, ref, computed, watch, onMounted, PropType } from 'vue';
 import Dateconversions from '@/class/Dateconversions';
 import holidays from '@/data/holidays.json';
 
 export default defineComponent({
   props: {
     currentSingleDay: {
-      type: Date,
+      type: Date as PropType<Date>,
       required: true,
       default: () => new Date(),
     },
@@ -48,6 +48,12 @@ export default defineComponent({
     const datePickerOpen = ref(false);
     const weekday = ref<string>('');
 
+    watch(
+      () => props.currentSingleDay,
+      (newDate: Date) => {
+        dateObject.value = newDate;
+      }
+    );
 
     const dateFormatted = computed(() =>
       Dateconversions.convertEnglishToGermanReadableString(dateObject.value.toISOString().substr(0, 10))

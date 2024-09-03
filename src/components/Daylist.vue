@@ -51,7 +51,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch, onMounted } from 'vue';
+import { defineComponent, ref, watch, onMounted, PropType } from 'vue';
 import CreateAppointmentDialog from './CreateAppointmentDialog.vue';
 import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
 import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
@@ -64,6 +64,7 @@ import AppointmentSeries from '@/class/AppointmentSeries';
 import { toast } from 'vue3-toastify';
 import 'vue-cal/dist/vuecal.css';
 import { de } from 'date-fns/locale';
+// @ts-ignore
 import VueCal from 'vue-cal';
 import { format } from 'date-fns';
 
@@ -76,7 +77,7 @@ export default defineComponent({
   },
   props: {
     currentSingleDay: {
-      type: Date,
+      type: Date as PropType<Date>,
       required: true,
     },
   },
@@ -131,7 +132,7 @@ export default defineComponent({
 
     watch(
       () => props.currentSingleDay,
-      (newDate) => {
+      (newDate: Date) => {
         selectedDate.value = newDate;
       }
     );
@@ -347,7 +348,7 @@ export default defineComponent({
 /* Optional styles for vue-cal */
 
 .day-split-header {font-size: 40px;}
-.split1 { background-color: rgba(0, 0, 255, 0.7); } /* Blue */
+ .vuecal__cell-split .split1 { background-color: rgba(0, 0, 255, 0.7); } /* Blue */
 .vuecal__body .split2 { background-color: rgba(0, 255, 0, 0.7); } /* Green */
 .vuecal__body .split3 { background-color: rgba(255, 165, 0, 0.7); } /* Orange */
 .vuecal__body .split4 { background-color: rgba(255, 0, 0, 0.7); } /* Red */
@@ -359,5 +360,5 @@ export default defineComponent({
 .vuecal__body .split10 { background-color: rgba(75, 0, 130, 0.7); } /* Indigo */
 .vuecal__body .split11 { background-color: rgba(255, 193, 7, 0.7); } /* Amber */
 .vuecal__body .split12 { background-color: rgba(128, 128, 128, 0.7); } /* Gray */
-
+/* vuecal__flex vuecal__cell-content vuecal__cell-split split1 */
 </style>

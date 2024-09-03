@@ -127,7 +127,7 @@
       <v-card-actions>
         <v-btn color="grey" @click="closeDialog">Abbrechen</v-btn>
         <v-spacer></v-spacer>
-        <v-btn color="error" @click="deleteAppointment">Löschen</v-btn>
+        <v-btn color="error" @click="deleteAppointment">Termin Löschen</v-btn>
         <v-spacer></v-spacer>
         <v-btn
           :disabled="!isSeries ? !isValid : !isSeriesValid"

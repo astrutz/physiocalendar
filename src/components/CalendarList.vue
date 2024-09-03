@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <SingleDayPicker
-    :currentSingleDay="new Date()"
+    :currentSingleDay="currentSingleDay"
      @currentDayChanged="updateCurrentSingleDay"
     />
     <Daylist
@@ -37,7 +37,6 @@ export default defineComponent({
     );
 
     const updateCurrentSingleDay = (newDate: Date) => {
-      console.log('updateDate', newDate)
       currentSingleDay.value = newDate;
     };
 
@@ -45,8 +44,10 @@ export default defineComponent({
       currentSingleDay.value = Dateconversions.convertReadableStringToDate(dateFormatted);
     };
 
-    watch(() => EventBus.get('currentDayChanged'), (newDate) => {
-      if (newDate) {
+    watch(() => EventBus.get('currentDayChanged1'), (newDate: Date | string) => {
+      if (typeof newDate === 'string') {
+        updateCurrentSingleDay(new Date(newDate));
+      } else {
         updateCurrentSingleDay(newDate);
       }
     });

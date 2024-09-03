@@ -24,7 +24,7 @@
         <v-card-text>
           <ul class="search-results-list" v-if="searchResults.length > 0">
             <li v-for="(result, i) in searchResults" :key="`${result.id}-${i}`">
-              <v-btn @click="navigateTargetDate(result.startTime)" class="search-result-btn">
+              <v-btn @click="navigateTargetDate(result.date)" class="search-result-btn">
                 <strong>{{ result.patient.fullName }}: </strong>
                 {{ getReadableDate(result.startTime) }},
                 {{ result.startTime.toLocaleTimeString() }} bis {{ result.endTime.toLocaleTimeString() }} bei {{ result.therapist.firstName }}
@@ -93,15 +93,8 @@ export default defineComponent({
       showDialog.value = false; // Dialog schließen
     };
 
-    const navigateTargetDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      const dateFormatted = `${day}.${month}.${year}`;
-
-      if (year >= 2000) {
-        EventBus.set('currentDayChanged', date);
-      }
+    const navigateTargetDate = (newDate: Date) => {
+      EventBus.set('currentDayChanged1', newDate);
       closeDialog(); // Dialog schließen nach Auswahl
     };
 
