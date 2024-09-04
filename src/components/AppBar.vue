@@ -7,7 +7,7 @@
     <v-spacer></v-spacer>
     <v-text-field
       hide-details
-      prepend-icon="mdi-magnify"
+      append-icon="mdi-magnify"
       single-line
       v-model="searchTextfield"
       @click:prepend="search"
@@ -39,12 +39,49 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <Menu />
+    <Menu
+    />
+     <!-- Benutzer-Menü -->
+     <v-menu 
+     v-model="userMenuOpen" 
+     offset-y
+     >
+      <template  v-slot:activator="{ props }">
+        <v-btn v-bind="props" icon>
+          <v-icon> 
+            mdi-account
+          </v-icon>
+        </v-btn>
+      </template>
+      
+      <v-list>
+        <v-list-item>
+          <v-list-item-title>
+            <v-icon> 
+            mdi-account
+          </v-icon>
+          TODO Username</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="logout">
+          <v-list-item-title>
+            <v-icon> 
+            mdi-logout
+          </v-icon> Logout</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="changePassword">
+          <v-list-item-title>
+            <v-icon> 
+            mdi-key
+          </v-icon>
+           Change Password</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-menu>
   </v-app-bar>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { computed, defineComponent, ref } from 'vue';
 import Menu from '@/components/Menu.vue';
 import { useAppointmentStore } from '@/store/AppointmentStore';
 import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
@@ -52,6 +89,7 @@ import Dateconversions from '@/class/Dateconversions';
 import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import EventBus from '@/class/EventBus';
+import { useAuthStore } from '@/store/authStore';
 
 export default defineComponent({
   components: {
@@ -61,13 +99,25 @@ export default defineComponent({
     const searchTextfield = ref('');
     const showDialog = ref(false);
     const searchResults = ref<Array<SingleAppointment>>([]);
+    const userMenuOpen = ref(false);
 
     const appointmentStore = useAppointmentStore();
-    const appointmentSeriesStore = useAppointmentSeriesStore();
+    const authStore = useAuthStore();
+     
+    const user = computed(() => authStore.user);
+
+    const logout = () => {
+      authStore.logout();
+    };
+
+    const changePassword = () => {
+      // Implementiere die Logik zum Ändern des Passworts
+    };
+      
 
     const search = async () => {
       await appointmentStore.loadAppointments();
-      
+
       searchResults.value = [];
       if (searchTextfield.value.length > 1) {
         const searchText = searchTextfield.value.toLowerCase();
@@ -103,6 +153,10 @@ export default defineComponent({
     };
 
     return {
+      userMenuOpen,
+      user,
+      logout,
+      changePassword,
       searchTextfield,
       showDialog,
       searchResults,
