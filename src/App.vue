@@ -2,7 +2,7 @@
   <v-app>
     <AppBar v-if="isAuthenticated" />
     <v-main>
-      <Login v-if="true" />
+      <Login v-if="!isAuthenticated" />
       <ListTabs v-if="isAuthenticated" />
     </v-main>
   </v-app>
@@ -24,7 +24,7 @@ export default defineComponent({
   setup() {
     const authStore = useAuthStore();
     const isAuthenticated = computed(() => authStore.isAuthenticated);
-
+    
     return { isAuthenticated };
   },
 });

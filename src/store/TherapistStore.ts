@@ -19,8 +19,8 @@ export const useTherapistStore = defineStore('therapist', {
       this.loading = true;
       this.error = null;
       try {
-        const authStore = useAuthStore();
         const responseData: JSONTherapistDTO[] = (await apiClient.get('therapists')).data;
+        console.log('API Antwort:', responseData);
         this.therapists = responseData.map((dto) => convertToTherapist(dto));
       } catch (err) {
         this.error = 'Failed to load therapists';

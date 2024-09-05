@@ -17,7 +17,8 @@ interface AuthState {
 
 export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false);
-  const user = ref(null);
+  const user = ref<User | null>(null); // Definiere das User-Objekt
+  const token = ref<string | null>(null);
 
   const login = async (username: string, password: string) => {
     try {
@@ -25,8 +26,13 @@ export const useAuthStore = defineStore('auth', () => {
       const { token } = response.data;
       localStorage.setItem('authToken', token);
       apiClient.defaults.headers['Authorization'] = `Bearer ${token}`; // Setze den Auth-Header
+
+      // Speichere das Benutzerobjekt
+      const userResponse = await apiClient.get('/auth/user'); // Angenommene Route, um die Benutzerdaten zu erhalten
+      user.value = userResponse.data;
+      console.log(user.value);
+      console.log('Login erfolgreich, Token gespeichert');
       isAuthenticated.value = true;
-      console.log(token);
     } catch (error) {
       console.error('Fehler beim Anmelden:', error);
     }
@@ -42,6 +48,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     isAuthenticated,
     user,
+    token,
     login,
     logout,
   };

@@ -9,6 +9,7 @@
               label="Benutzername"
               :rules="[rules.required]"
               required
+              @keyup.enter="login" 
             ></v-text-field>
             <v-text-field
               v-model="password"
@@ -16,6 +17,7 @@
               :rules="[rules.required]"
               type="password"
               required
+              @keyup.enter="login" 
             ></v-text-field>
           </v-form>
         </v-card-text>
