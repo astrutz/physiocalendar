@@ -29,26 +29,25 @@
     </v-card-text>
 
     <v-data-table
-  :headers="headers"
-  :items="filteredPatients"
-  item-key="id"
-  :loading="loading"
-  :loading-text="'Laden...'">
+      :headers="headers"
+      :items="filteredPatients"
+      item-key="id"
+      :loading="loading"
+      :loading-text="'Laden...'">
 
-  <template v-slot:item="{ item }">
-    <tr @click="showDetail(item)" style="cursor: pointer;">
-      <td>{{ item.firstName }}</td>
-      <td>{{ item.lastName }}</td>
-      <td>{{ formatDate(item.activeSince) }}</td>
-      <td>{{ formatDate(item.activeUntil) }}</td>
-      <td>
-        <v-icon v-if="item.isBWO" color="green">mdi-check</v-icon>
-      </td>
-    </tr>
-  </template>
-</v-data-table>
+      <template v-slot:item="{ item }">
+        <tr @click="showDetail(item)" style="cursor: pointer;">
+          <td>{{ item.firstName }}</td>
+          <td>{{ item.lastName }}</td>
+          <td>{{ formatDate(item.activeSince) }}</td>
+          <td>{{ formatDate(item.activeUntil) }}</td>
+          <td>
+            <v-icon v-if="item.isBWO" color="green">mdi-check</v-icon>
+          </td>
+        </tr>
+      </template>
+    </v-data-table>
 
-   
     <!-- Fehlermeldung, falls ein Fehler aufgetreten ist -->
     <v-alert v-if="error" type="error">{{ error }}</v-alert>
 
@@ -103,7 +102,6 @@ export default defineComponent({
     const detailDialog = ref(false);
     const createPatientDialog = ref(false);
     const selectedPatient = ref<Patient | null>(null);
-    const selectedPatientAppointments = ref([]);
     const search = ref('');
 
     const loading = computed(() => patientStore.loading);
@@ -122,7 +120,6 @@ export default defineComponent({
 
     const showDetail = (item: Patient) => {
       selectedPatient.value = item;
-      console.log(item);
       detailDialog.value = true;
     };
 
@@ -153,7 +150,6 @@ export default defineComponent({
     const closeDetailDialog = () => {
       detailDialog.value = false;
       selectedPatient.value = null;
-      selectedPatientAppointments.value = [];
     };
 
     const closeCreatePatientDialog = () => {
@@ -161,6 +157,7 @@ export default defineComponent({
     };
 
     const openCreatePatientDialog = () => {
+      console.log('Patient hinzufügen');
       createPatientDialog.value = true;
     };
 
@@ -191,7 +188,6 @@ export default defineComponent({
       detailDialog,
       createPatientDialog,
       selectedPatient,
-      selectedPatientAppointments,
       search,
       loading,
       error,

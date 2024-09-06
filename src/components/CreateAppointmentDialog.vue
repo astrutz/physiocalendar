@@ -134,12 +134,14 @@
       </v-card-actions>
     </v-card>
 
-    <!-- Dialog zum Erstellen eines neuen Patienten -->
-    <CreatePatient
-      v-model="createPatientDialogOpen"
-      @save="addPatient"
-      @cancel="createPatientDialogOpen = false"
-    />
+    <v-dialog v-model="createPatientDialogOpen" max-width="1500">
+      <v-card>
+        <CreatePatient 
+          @save="addPatient" 
+          @cancel="createPatientDialogOpen = false" 
+        />
+      </v-card>
+    </v-dialog>
   </v-dialog>
 </template>
 

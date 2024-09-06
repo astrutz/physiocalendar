@@ -1,5 +1,4 @@
 <template>
-  <v-dialog persistent v-model="dialogIsOpen" width="600">
     <v-card>
       <v-card-title class="text-h5">Patient hinzufügen</v-card-title>
       <v-card-text>
@@ -39,7 +38,6 @@
         <v-btn color="success" @click="saveChanges">Patient Erstellen</v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
 </template>
 
 <script lang="ts">

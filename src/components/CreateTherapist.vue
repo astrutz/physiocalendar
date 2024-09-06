@@ -38,7 +38,7 @@
     <v-card-actions>
       <v-btn color="error" @click="cancelChanges">Abbrechen</v-btn>
       <v-spacer></v-spacer>
-      <v-btn color="success" @click="saveChanges">Patient Erstellen</v-btn>
+      <v-btn color="success" @click="saveChanges">Therapeut Erstellen</v-btn>
     </v-card-actions>
   </v-card>
 </template>

@@ -20,7 +20,7 @@ export const useAppointmentStore = defineStore('appointment', {
         const authStore = useAuthStore();
         const queryString = params ? this.buildQueryString(params) : '';
         const responseData: JSONSingleAppointmentDTO[] = (await apiClient.get(`appointments${queryString}`)).data;
-        //this.appointments = responseData.map(dto => convertToAppointment(dto));
+        this.appointments = responseData.map(dto => convertToAppointment(dto));
       } catch (err) {
         console.error(err);
         toast.error('Fehler beim Laden der Termine.');

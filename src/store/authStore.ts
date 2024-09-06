@@ -23,12 +23,22 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (username: string, password: string) => {
     try {
       const response = await apiClient.post('/auth/login', { username, password });
+
+      if (response.data === null || response.data.token === null) {
+        throw new Error('Fehler beim Anmelden: Token nicht gefunden');
+      }
+
       const { token } = response.data;
       localStorage.setItem('authToken', token);
       apiClient.defaults.headers['Authorization'] = `Bearer ${token}`; // Setze den Auth-Header
 
       // Speichere das Benutzerobjekt
       const userResponse = await apiClient.get('/auth/user'); // Angenommene Route, um die Benutzerdaten zu erhalten
+
+      if (userResponse.data === null) {
+        throw new Error('Fehler beim Anmelden: Benutzerdaten nicht gefunden');
+      }
+
       user.value = userResponse.data;
       console.log(user.value);
       console.log('Login erfolgreich, Token gespeichert');

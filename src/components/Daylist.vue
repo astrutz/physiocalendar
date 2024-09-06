@@ -17,7 +17,7 @@
       @event-dblclick="handleEventClick"
       @cell-click="handleDateClick"
       :locale="locale"
-      :timeStep="20"
+      :timeStep="10"
       :todayButton="true"
     >
     <template #split-label="{ split, view }">
