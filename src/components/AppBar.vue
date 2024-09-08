@@ -60,7 +60,7 @@
             <v-icon> 
             mdi-account
           </v-icon>
-          TODO Username</v-list-item-title>
+         {{ user?.username }}</v-list-item-title>
         </v-list-item>
         <v-list-item @click="logout">
           <v-list-item-title>
@@ -73,7 +73,7 @@
             <v-icon> 
             mdi-key
           </v-icon>
-           Change Password</v-list-item-title>
+           Passwort ändern</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>

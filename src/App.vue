@@ -23,7 +23,10 @@ export default defineComponent({
   },
   setup() {
     const authStore = useAuthStore();
-    const isAuthenticated = computed(() => authStore.isAuthenticated);
+    const isAuthenticated = computed(() => {
+      return authStore.isAuthenticated;
+    }
+    );
     
     return { isAuthenticated };
   },
