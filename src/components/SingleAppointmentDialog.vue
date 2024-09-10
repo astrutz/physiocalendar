@@ -35,6 +35,7 @@
           <!-- Zeitpicker für Einzeltermin -->
           <v-row>
             <v-col>
+              <div class="v-label">Von</div>
               <VueDatePicker
                 v-model="singleAppointment.startTime"
                 :format-locale="de"
@@ -46,6 +47,7 @@
               />
             </v-col>
             <v-col>
+              <div class="v-label">Bis</div>
               <VueDatePicker
                 v-model="singleAppointment.endTime"
                 :format-locale="de"
@@ -91,6 +93,7 @@
             <v-form>
               <v-row>
                 <v-col>
+                  <div class="v-label">Datum Von</div>
                   <VueDatePicker
                     v-model="seriesAppointment.startDate"
                     :format-locale="de"
@@ -102,6 +105,7 @@
                   />
                 </v-col>
                 <v-col>
+                  <div class="v-label">Datum Bis</div>
                   <VueDatePicker
                     v-model="seriesAppointment.endDate"
                     :format-locale="de"
@@ -138,8 +142,15 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-
+        <AppointmentSeriesDialog
+          :currentDay="currentDay"
+          :appointment="seriesAppointment"
+          v-model="seriesAppointmentDialogOpen"
+          @saveSeries="handleSeriesSave"
+          @cancel="seriesAppointmentDialogOpen = false"
+        />
   </v-dialog>
+  
 </template>
 
 <script lang="ts">
@@ -150,8 +161,13 @@ import { usePatientStore } from '@/store/PatientStore';
 import { Weekday } from '@/class/Enums';
 import { de } from 'date-fns/locale';
 import Patient from '@/class/Patient';
+import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
+import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
 
 export default defineComponent({
+  components: {
+    AppointmentSeriesDialog
+  },
   props: {
     currentDay: {
       type: Date,
@@ -162,11 +178,13 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ['saveSingle', 'saveSeries', 'deleteSingle', 'cancel'],
   setup(props, { emit }) {
     const dialogIsOpen = ref(false);
     const isSeries = ref(false);
     const createPatientDialogOpen = ref(false);
-
+    const seriesAppointmentDialogOpen = ref(false);
+    const appointmentSeriesStore = useAppointmentSeriesStore();
     const patientStore = usePatientStore();
     const patients = ref<Patient[]>([]);
     const patientsOptions = ref<{ id: number, name: string }[]>([]);
@@ -192,13 +210,16 @@ export default defineComponent({
 
     onMounted(() => {
       loadPatients();
-      console.log(singleAppointment);
+    });
+
+    watch(() => props.appointment, (newAppointment) => {
+      singleAppointment.value = newAppointment;
+      selectedPatientId.value = newAppointment.patient?.id || null;
     });
 
     const loadPatients = async () => {
-      // loading.value = true;
       await patientStore.loadPatients();
-      //loading.value = false;
+      await appointmentSeriesStore.loadAppointmentSeries();
       patients.value = patientStore.getAllPatients;
     };
 
@@ -233,10 +254,6 @@ export default defineComponent({
         }
       }
     });
-
-    const handleSearchInput = (search: string) => {
-      // Optionale Filterlogik basierend auf der Suchanfrage
-    };
 
     const saveAppointment = () => {
       if (isSeries.value) {
@@ -289,7 +306,25 @@ export default defineComponent({
     };
 
     const handleSeriesButtonClick = () => {
-      // Füge hier die Logik für den Button im Titel hinzu, z.B. Öffnen der Serie-Details
+      const appointmentSeries = appointmentSeriesStore.getAppointmentSeriesById(singleAppointment.value.appointmentSeriesId);
+      if (appointmentSeries) {
+        console.log(appointmentSeries);
+        seriesAppointment.value = appointmentSeries;
+        seriesAppointmentDialogOpen.value = true;
+      }
+    };
+
+    const handleSeriesSave = () => {
+      saveAppointment();
+      seriesAppointmentDialogOpen.value = false;
+    };
+
+    const handleSeriesCancel = () => {
+      seriesAppointmentDialogOpen.value = false;
+    };
+
+    const handleSearchInput = (search: string) => {
+      // Optionale Filterlogik basierend auf der Suchanfrage
     };
 
     const formatTime = (date: Date | undefined): string => {
@@ -319,11 +354,14 @@ export default defineComponent({
       isValid,
       isSeriesValid,
       openCreatePatientDialog,
+      seriesAppointmentDialogOpen,
       closeDialog,
       saveAppointment,
       deleteAppointment,
       handleSearchInput,
       handleSeriesButtonClick,
+      handleSeriesSave,
+      handleSeriesCancel,
       createPatientDialogOpen,
       de,
       formatTime,

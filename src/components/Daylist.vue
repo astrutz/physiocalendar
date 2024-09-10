@@ -28,7 +28,6 @@
 
 
     <CreateAppointmentDialog
-      v-if="createDialog"
       :currentDay="selectedDate"
       :appointment="initAppointment"
       v-model="createDialog"
@@ -38,11 +37,12 @@
     />
 
     <SingleAppointmentDialog
-      v-if="selectedAppointment && singleAppointmentDialog"
+      v-if="selectedAppointment"
       :appointment="selectedAppointment"
       :currentDay="selectedDate"
       v-model="singleAppointmentDialog"
       @saveSingle="changeSingleAppointment"
+      @saveSeries="changeSeriesAppointment"
       @deleteSingle="deleteSingleAppointment"
       @cancel="singleAppointmentDialog = false"
     />
@@ -54,7 +54,6 @@
 import { defineComponent, ref, watch, onMounted, PropType } from 'vue';
 import CreateAppointmentDialog from './CreateAppointmentDialog.vue';
 import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
-import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
 import { useAppointmentStore } from '@/store/AppointmentStore';
 import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
 import { useTherapistStore } from '@/store/TherapistStore';
@@ -63,7 +62,7 @@ import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import { toast } from 'vue3-toastify';
 import 'vue-cal/dist/vuecal.css';
-import { de } from 'date-fns/locale';
+
 // @ts-ignore
 import VueCal from 'vue-cal';
 import { format } from 'date-fns';
@@ -72,7 +71,6 @@ export default defineComponent({
   components: {
     CreateAppointmentDialog,
     SingleAppointmentDialog,
-    AppointmentSeriesDialog,
     VueCal,
   },
   props: {
@@ -81,7 +79,7 @@ export default defineComponent({
       required: true,
     },
   },
-  setup(props, { emit }) {
+  setup(props) {
     const createDialog = ref(false);
     const singleAppointmentDialog = ref(false);
     const seriesAppointmentDialog = ref(false);
@@ -113,13 +111,9 @@ export default defineComponent({
 
     const locale = ref(customLocale);
 
-    const colors = [
-      'blue', 'green', 'orange', 'red', 'purple', 'pink', 
-      'cyan', 'teal', 'lime', 'indigo', 'amber', 'gray'
-    ];
     
       // Dynamisch Klassennamen generieren
-    const generateClassName = (index: number) => `split${(index % colors.length) + 1}`;
+    const generateClassName = (index: number) => `split${(index) + 1}`;
 
     onMounted(() => {
       loadTherapists();
@@ -151,7 +145,6 @@ export default defineComponent({
       };
 
     const loadAppointments = async () => {
-        const date: string = formatDate(selectedDate.value);
         await appointmentStore.loadAppointments();
 
         // Lade Therapeuten
@@ -162,21 +155,26 @@ export default defineComponent({
         therapists.forEach((therapist, index) => {
           therapistIndexMap.set(therapist.id, index + 1);
         });
-        //console.log('Loaded Appointments:', a); // Debugging
         // Konvertiere Termine in vue-cal Format
         const appointmentEvents = appointmentStore.getAllAppointments.map((appointment) => {
-          const therapistIndex = therapistIndexMap.get(appointment.therapist.id) || 0; // Standardwert 0, falls kein Therapist gefunden
+        const therapistIndex = therapistIndexMap.get(appointment.therapist.id) || 0;
+           // Definiere die Klasse basierend auf dem isGeneratedBySeries-Flag
+        let className = appointment.createdBySeriesAppointment ? 'generated-single-appointment' : 'single-appointment';
+        className = appointment.patient.isBWO ? 'bwo-appointment' : className;
+        className = appointment.isElectric ? 'checkbox-electric' : className;
+        className = appointment.isHotair ? 'checkbox-hotair' : className;
+        className = appointment.isUltrasonic ? 'checkbox-ultrasonic' : className;
+
           return {
             id: appointment.id,
             start: formatDate(appointment.startTime),
             end: formatDate(appointment.endTime),
             title: appointment.patient.fullName,
-            class: 'single-appointment',
+            class: className,
             split: therapistIndex, // Hier wird der korrekte Index zugewiesen
           };
         });
 
-        console.log('Loaded Events:', appointmentEvents); // Debugging
         events.value = [...appointmentEvents];
     };
 
@@ -344,21 +342,48 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-/* Optional styles for vue-cal */
+<style>
+/* Style für Einzeltermine */
+.single-appointment {
+  background-color: rgba(117, 117, 122, 0.3); /* Hellblau für reguläre Einzeltermine */
+}
 
-.day-split-header {font-size: 40px;}
- .vuecal__cell-split .split1 { background-color: rgba(0, 0, 255, 0.7); } /* Blue */
-.vuecal__body .split2 { background-color: rgba(0, 255, 0, 0.7); } /* Green */
-.vuecal__body .split3 { background-color: rgba(255, 165, 0, 0.7); } /* Orange */
-.vuecal__body .split4 { background-color: rgba(255, 0, 0, 0.7); } /* Red */
-.vuecal__body .split5 { background-color: rgba(128, 0, 128, 0.7); } /* Purple */
-.vuecal__body .split6 { background-color: rgba(255, 192, 203, 0.7); } /* Pink */
-.vuecal__body .split7 { background-color: rgba(0, 255, 255, 0.7); } /* Cyan */
-.vuecal__body .split8 { background-color: rgba(0, 128, 128, 0.7); } /* Teal */
-.vuecal__body .split9 { background-color: rgba(255, 255, 0, 0.7); } /* Lime */
-.vuecal__body .split10 { background-color: rgba(75, 0, 130, 0.7); } /* Indigo */
-.vuecal__body .split11 { background-color: rgba(255, 193, 7, 0.7); } /* Amber */
-.vuecal__body .split12 { background-color: rgba(128, 128, 128, 0.7); } /* Gray */
+/* Style für aus Serienterminen generierte Einzeltermine */
+.generated-single-appointment {
+  background-color: rgba(7, 247, 87, 0.3)
+}
+
+.checkbox-electric {
+  background-color: yellow;
+}
+
+.checkbox-hotair {
+  background-color: orange;
+}
+
+.checkbox-ultrasonic {
+  background-color: rgba(208, 85, 233, 0.3); /* Hier kannst du den gewünschten Farbton anpassen */
+}
+
+.bwo-appointment {
+  background-color: lightblue;
+}
+
+
+.day-split-header {font-size: 10px;}
+.vuecal__body .split1, 
+.vuecal__body .split2, 
+.vuecal__body .split3, 
+.vuecal__body .split4, 
+.vuecal__body .split5, 
+.vuecal__body .split6, 
+.vuecal__body .split7, 
+.vuecal__body .split8, 
+.vuecal__body .split9, 
+.vuecal__body .split10, 
+.vuecal__body .split11, 
+.vuecal__body .split12 {
+  border-right: 1px solid black;
+}
 /* vuecal__flex vuecal__cell-content vuecal__cell-split split1 */
 </style>

@@ -1,6 +1,6 @@
 // src/stores/authStore.ts
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import apiClient from './apiClient';
 
 interface User {
@@ -13,12 +13,28 @@ interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   token: string | null;
+  therapistId: number | null; // Füge hier die Therapisten-ID hinzu
 }
 
 export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false);
   const user = ref<User | null>(null); // Definiere das User-Objekt
   const token = ref<string | null>(null);
+
+  onMounted(() => {
+    const storedToken = localStorage.getItem('authToken');
+    if (storedToken) {
+      isAuthenticated.value = true; // Falls Token vorhanden, als authentifiziert markieren
+      token.value = storedToken;
+      apiClient.defaults.headers['Authorization'] = `Bearer ${storedToken}`;
+      // Optionale: Benutzerdaten abrufen
+      apiClient.get('/auth/user').then(response => {
+        user.value = response.data;
+      }).catch(error => {
+        console.error('Fehler beim Abrufen der Benutzerdaten:', error);
+      });
+    }
+  });
 
   const login = async (username: string, password: string) => {
     try {

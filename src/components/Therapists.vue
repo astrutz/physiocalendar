@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-card-title>
-      <v-row align="center">
+      <v-row>
         <v-col>
           Therapeuten verwalten
         </v-col>
@@ -21,7 +21,7 @@
         </v-col>
         <!-- Plus Button -->
         <v-col cols="auto">
-          <v-btn color="green" @click="openCreateTherapistDialog">
+          <v-btn class="createTherapistBtn" color="green" @click="openCreateTherapistDialog">
             <v-icon color="white">mdi-plus</v-icon>
           </v-btn>
         </v-col>
@@ -208,5 +208,9 @@ export default defineComponent({
 .resizable-dialog .v-card {
   resize: both;
   overflow: auto;
+}
+
+.v-btn {
+  height: 100%;
 }
 </style>

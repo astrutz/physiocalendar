@@ -20,6 +20,7 @@
       </v-row>
       <v-row>
         <v-col>
+          <div class="v-label">Aktiv Seit</div>
           <VueDatePicker
             v-model="therapistInput.activeSince"
             @change="handleDateSinceChange"
@@ -33,6 +34,7 @@
           />
         </v-col>
         <v-col>
+          <div class="v-label">Aktiv Bis</div>
           <VueDatePicker
             v-model="therapistInput.activeUntil"
             @change="handleDateUntilChange"
@@ -46,7 +48,8 @@
         </v-col>
       </v-row>
       <v-spacer></v-spacer>
-      <!-- Tab Selector -->
+      <div  class="tabs text-h6">
+        <!-- Tab Selector -->
       <v-tabs v-model="activeTab">
         <v-tab>Einzeltermine</v-tab>
         <v-tab>Serientermine</v-tab>
@@ -64,18 +67,15 @@
               :loading="loadingAppointments"
               :loading-text="'Laden...'"
             >
-              <template #item.date="{ item }">
-                {{ formatDate(item.date) }}
-              </template>
-              <template #item.startTime="{ item }">
-                {{ formatTime(item.startTime) }}
-              </template>
-              <template #item.endTime="{ item }">
-                {{ formatTime(item.endTime) }}
-              </template>
-              <template #item.therapist="{ item }">
-                {{ item.therapist.fullName }}
-              </template>
+            <template v-slot:item="{ item }">
+        <tr @click="showSingleAppointmentDialog(item)" style="cursor: pointer;">
+          <td>{{ formatDate(item.date) }}</td>
+          <td>{{ formatTime(item.startTime) }}</td>
+          <td>{{ formatTime(item.endTime) }}</td>
+          <td>{{ item.patient.fullName }}</td>
+          <td>{{ item.comment }}</td>
+        </tr>
+      </template>
             </v-data-table>
           </v-row>
         </v-tab-item>
@@ -90,26 +90,17 @@
               :loading="loadingSeries"
               :loading-text="'Laden...'"
             >
-              <template #item.weekday="{ item }">
-                {{ item.weekday }}
-              </template>
-              <template #item.startTime="{ item }">
-                {{ formatTime(item.startTime) }}
-              </template>
-              <template #item.endTime="{ item }">
-                {{ formatTime(item.endTime) }}
-              </template>
-              <template #item.startDate="{ item }">
-                {{ formatDate(item.startDate) }}
-              </template>
-              <template #item.endDate="{ item }">
-                {{ formatDate(item.endDate) }}
-              </template>
-              <template #item.weeklyFrequency="{ item }">
-                {{ item.weeklyFrequency }}
-              </template>
-              <template #item.therapist="{ item }">
-                {{ item.therapist.fullName }}
+            <template v-slot:item="{ item }">
+              <tr @click="showAppointmentSeriesDialog(item)" style="cursor: pointer;">
+                <td>{{ item.weekday }}</td>
+                <td>{{ item.patient.fullName }}</td>
+                <td>{{ formatTime(item.startTime) }}</td>
+                <td>{{ formatTime(item.endTime) }}</td>
+                <td>{{ formatDate(item.startDate) }}</td>
+                <td>{{ formatDate(item.endDate) }}</td>
+                <td>{{ item.weeklyFrequency }}</td>
+                <td>{{ item.comment }}</td>
+              </tr>
               </template>
             </v-data-table>
           </v-row>
@@ -189,7 +180,8 @@
             </v-btn>
           </v-row>
         </v-tab-item>
-      </v-tabs-items>
+      </v-tabs-items>  
+      </div>
     </v-card-text>
     <v-card-actions>
       <v-btn color="grey" @click="cancelChanges">Abbrechen</v-btn>
@@ -204,7 +196,25 @@
       :absence="absenceInput"
       @update:dialogVisible="isAbsenceDialogVisible = $event"
     />
-  </v-card>
+    <SingleAppointmentDialog
+      v-if="selectedSingleAppointment"
+      :appointment.sync="selectedSingleAppointment"
+      :currentDay="new Date()"
+      v-model="singleAppointmentDialog"
+      @saveSingle="changeSingleAppointment"
+      @saveSeries="changeSeriesAppointment"
+      @deleteSingle="deleteSingleAppointment"
+      @cancel="singleAppointmentDialog = false"
+    />
+    <AppointmentSeriesDialog
+       v-if="selectedAppointmentSeries"
+      :currentDay="new Date()"
+      :appointment.sync="selectedAppointmentSeries"
+      v-model="appointmentSeriesDialog"
+      @saveSeries="changeSeriesAppointment"
+      @cancel="appointmentSeriesDialog = false"
+    />
+</v-card>
 </template>
 
 <script lang="ts">
@@ -220,10 +230,14 @@ import AppointmentSeries from '@/class/AppointmentSeries';
 import { useAbsenceStore } from '@/store/AbsenceStore';
 import AbsenceDialog from './AbsenceDialog.vue';
 import { Weekday } from '@/class/Enums';
+import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
+import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
 
 export default defineComponent({
   components: {
     AbsenceDialog,
+    SingleAppointmentDialog,
+    AppointmentSeriesDialog,
   },
   props: {
     therapistId: {
@@ -243,6 +257,10 @@ export default defineComponent({
     const isAbsenceDialogVisible = ref(false);
     const editingAbsence = ref<Absence | null>(null);
     const absenceInput = ref<Absence | null>(null);
+    const selectedSingleAppointment = ref<SingleAppointment | null>(null);
+    const selectedAppointmentSeries = ref<AppointmentSeries | null>(null);
+    const singleAppointmentDialog = ref(false);
+    const appointmentSeriesDialog = ref(false);
 
 
     const formatDate = (date: Date | undefined): string => {
@@ -272,13 +290,13 @@ export default defineComponent({
 
     const appointmentSeriesHeaders = ref([
       { title: 'Wochentag', value: 'weekday', sortable: true },
+      { title: 'Patient', value: 'patient.fullName', sortable: true },
       { title: 'Von', value: 'startTime', sortable: true },
       { title: 'Bis', value: 'endTime', sortable: true },
-      { title: 'Patient', value: 'patient.fullName', sortable: true },
       { title: 'Start Datum', value: 'startDate', sortable: true },
       { title: 'End Datum', value: 'endDate', sortable: true },
-      { title: 'Kommentar', value: 'comment', sortable: true },
       { title: 'Interval', value: 'weeklyFrequency', sortable: true },
+      { title: 'Kommentar', value: 'comment', sortable: true },
     ]);
 
     const absenceHeaders = ref([
@@ -311,7 +329,6 @@ export default defineComponent({
       loadingAbsences.value = true;
       await absenceStore.loadAbsences(props.therapistId);
       absences.value = await absenceStore.getAbsencesForTherapist();
-      console.log('Loaded absences:', absences.value);
       loadingAbsences.value = false;
     };
 
@@ -320,7 +337,6 @@ export default defineComponent({
       await loadAppointments();
       await loadAppointmentSeries();
       await loadAbsences();
-      //
     });
 
     const handleDateSinceChange = (date: Date) => {
@@ -351,6 +367,27 @@ export default defineComponent({
       }
     };
 
+    const changeSingleAppointment = async (appointment: SingleAppointment) => {
+       await appointmentStore.updateAppointment(appointment.id, appointment)
+       loadAppointments();
+    };
+
+    const changeSeriesAppointment = (appointment: AppointmentSeries) => {
+      appointmentSeriesStore.updateAppointmentSeries(appointment.id, appointment);
+      loadAppointments();
+    };
+
+    const deleteSingleAppointment = async (appointment: SingleAppointment) => {
+      await appointmentStore.deleteAppointment(appointment.id);
+      loadAppointments();
+    };
+
+    const deleteSeriesAppointment = (id: number) => {
+      appointmentSeriesStore.deleteAppointmentSeries(id);
+      loadAppointments();
+    };
+
+
     const openAddAbsenceDialog = () => {
       absenceInput.value = {
         id: 0,
@@ -360,6 +397,17 @@ export default defineComponent({
         weekday: Weekday.MONDAY,
       };
       isAbsenceDialogVisible.value = true;
+    };
+
+    const showSingleAppointmentDialog = (appointment: SingleAppointment) => {
+      selectedSingleAppointment.value = appointment ; 
+      console.log(appointment);
+      singleAppointmentDialog.value = true;
+    };
+
+    const showAppointmentSeriesDialog = (appointmentSeries: AppointmentSeries) => {
+      selectedAppointmentSeries.value = appointmentSeries;
+      appointmentSeriesDialog.value = true;
     };
 
     const closeAddAbsenceDialog = () => {
@@ -401,6 +449,14 @@ export default defineComponent({
       cancelChanges,
       saveChanges,
       deleteTherapist,
+      changeSingleAppointment,
+      changeSeriesAppointment,
+      deleteSingleAppointment,
+      deleteSeriesAppointment,
+      selectedSingleAppointment,
+      selectedAppointmentSeries,
+      singleAppointmentDialog,
+      appointmentSeriesDialog,
       openAddAbsenceDialog,
       closeAddAbsenceDialog,
       handleDateSinceChange,
@@ -408,6 +464,8 @@ export default defineComponent({
       openAbsenceDialog,
       editAbsence,
       deleteAbsence,
+      showSingleAppointmentDialog,
+      showAppointmentSeriesDialog,
     };
   },
 });
@@ -420,5 +478,18 @@ export default defineComponent({
 
 .single-appointment {
   background-color: #ffffff;
+}
+
+.tabs {
+  padding-top: 40px;
+}
+
+.v-tab {
+  padding-bottom: 10px;
+  padding-top: 10px;
+}
+
+.v-data-table {
+  padding-top: 15px;
 }
 </style>

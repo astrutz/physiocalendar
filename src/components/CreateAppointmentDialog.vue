@@ -198,6 +198,7 @@ export default defineComponent({
       props.appointment.comment,
       new Date(),
       props.appointment.createdBySeriesAppointment,
+      props.appointment.appointmentSeriesId,
       false,
       false,
       false

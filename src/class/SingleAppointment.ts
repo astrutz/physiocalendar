@@ -7,6 +7,8 @@ export default class SingleAppointment extends Appointment {
 
   createdBySeriesAppointment : boolean;
 
+  appointmentSeriesId : number;
+
   isHotair : boolean;
 
   isUltrasonic : boolean;
@@ -24,6 +26,7 @@ export default class SingleAppointment extends Appointment {
     comment: string,
     date: Date,
     createdBySeriesAppointment: boolean,
+    appointmentSeriesId: number,
     isHotair: boolean,
     isUltrasonic: boolean,
     isElectric: boolean,
@@ -31,6 +34,7 @@ export default class SingleAppointment extends Appointment {
     super(id, therapist, therapistId, patient, patientId, startTime, endTime, comment);
     this.date = date;
     this.createdBySeriesAppointment = createdBySeriesAppointment;
+    this.appointmentSeriesId = appointmentSeriesId;
     this.isHotair = isHotair;
     this.isUltrasonic = isUltrasonic;
     this.isElectric = isElectric;
@@ -48,6 +52,7 @@ export default class SingleAppointment extends Appointment {
       '',
       new Date(),
       false,
+      0,
       false,
       false,
       false,

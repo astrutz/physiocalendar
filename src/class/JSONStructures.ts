@@ -44,6 +44,7 @@ export interface JSONSingleAppointmentDTO {
   date: Date,
   comment: string,
   createdBySeriesAppointment: boolean,
+  appointmentSeriesId: number,
   isHotair: boolean,
   isUltrasonic: boolean,
   isElectric: boolean,

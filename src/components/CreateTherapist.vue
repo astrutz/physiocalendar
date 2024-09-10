@@ -47,7 +47,6 @@
 import { defineComponent, ref } from 'vue';
 import Patient from '@/class/Patient';
 import Therapist from '@/class/Therapist';
-import Cancellation from '@/class/Cancellation';
 
 export default defineComponent({
   props: {
