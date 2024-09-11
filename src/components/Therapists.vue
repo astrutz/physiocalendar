@@ -81,6 +81,7 @@ import TherapistDetail from '@/components/TherapistDetail.vue';
 import CreateTherapist from '@/components/CreateTherapist.vue';
 import { useTherapistStore } from '@/store/TherapistStore';
 import Therapist from '@/class/Therapist';
+import { formatDate } from '@/class/Dateconversions';
 
 export default defineComponent({
   components: {
@@ -168,15 +169,6 @@ export default defineComponent({
         (therapist) =>
           therapist.fullName.toLowerCase().includes(searchTerm)
       );
-    };
-
-    const formatDate = (date: Date) => {
-      if (!date) return '';
-      return new Date(date).toLocaleDateString('de-DE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
     };
 
     return {

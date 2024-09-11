@@ -74,6 +74,7 @@ import Absence from '@/class/Absence';
 import { de } from 'date-fns/locale';
 import { useAbsenceStore } from '@/store/AbsenceStore';
 import { Weekday } from '@/class/Enums';
+import { formatDate, formatTime } from '@/class/Dateconversions';
 
 export default defineComponent({
   name: 'AbsenceDialog',
@@ -105,23 +106,6 @@ export default defineComponent({
     const absence = computed(() => {
       return props.absence ? { ...props.absence } : new Absence(1, new Date(), Weekday.MONDAY, new Date(), new Date());
     });
-
-    const formatDate = (date: Date | undefined): string => {
-      if (!date) return '';
-      return new Date(date).toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      });
-    };
-
-    const formatTime = (date: Date | undefined): string => {
-      if (!date) return '';
-      return new Date(date).toLocaleTimeString('de-DE', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    };
 
     const handleDateChange = (date: Date) => {
       if (absence.value) {

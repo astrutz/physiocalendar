@@ -81,6 +81,7 @@ import { defineComponent, ref, onMounted, computed } from 'vue';
 import PatientDetail from '@/components/PatientDetail.vue';
 import CreatePatient from '@/components/CreatePatient.vue';
 import { usePatientStore } from '@/store/PatientStore';
+import { formatDate } from '@/class/Dateconversions';
 import Patient from '@/class/Patient';
 
 export default defineComponent({
@@ -172,15 +173,6 @@ export default defineComponent({
           patient.firstName.toLowerCase().includes(searchTerm) ||
           patient.lastName.toLowerCase().includes(searchTerm)
       );
-    };
-
-    const formatDate = (date: Date) => {
-      if (!date) return '';
-      return new Date(date).toLocaleDateString('de-DE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
     };
 
     return {

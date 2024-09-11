@@ -147,7 +147,6 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, watch, nextTick, onMounted } from 'vue';
-import Appointment from '@/class/Appointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import { usePatientStore } from '@/store/PatientStore';
 import { Weekday } from '@/class/Enums';
@@ -155,6 +154,7 @@ import CreatePatient from './CreatePatient.vue';
 import { de } from 'date-fns/locale';
 import SingleAppointment from '@/class/SingleAppointment';
 import Patient from '@/class/Patient';
+import { formatDate, formatTime } from '@/class/Dateconversions';
 
 export default defineComponent({
   components: {
@@ -180,8 +180,8 @@ export default defineComponent({
     const showSeriesStartDatePicker = ref(false);
     const showSeriesEndDatePicker = ref(false);
 
-    const selectedDate = ref(new Date(props.appointment.startTime));
-    const selectedTime = ref(new Date(props.appointment.startTime));
+    const selectedDate = ref(props.appointment.startTime);
+    const selectedTime = ref(props.appointment.startTime);
 
     const patientStore = usePatientStore(); // Angenommene Store Hook
     const patients = ref<Patient[]>([]);
@@ -223,7 +223,7 @@ export default defineComponent({
 
     onMounted(() => {
       loadPatients();
-      console.log(singleAppointment);
+      //console.log(singleAppointment.value);
     });
 
     watch(() => patientStore.getAllPatients, (newPatients) => {
@@ -252,6 +252,11 @@ export default defineComponent({
           singleAppointment.value.patientId = patient.id;
         }
       }
+    });
+
+    watch(() => props.appointment, (newAppointment) => {
+      selectedPatientId.value = null;
+      singleAppointment.value = newAppointment;
     });
 
     const handleSearchInput = (search: string) => {
@@ -341,6 +346,8 @@ export default defineComponent({
 
 
     const saveSingleAppointment = () => {
+      console.log(singleAppointment.value);
+      //singleAppointment.value =
       emit('saveSingle', singleAppointment.value);
     };
 
@@ -384,23 +391,6 @@ export default defineComponent({
 
     const handleEndTimeChange = (date: Date) => {
       singleAppointment.value.endTime = date;
-    };
-
-    const formatTime = (date: Date | undefined): string => {
-      if (!date) return '';
-      return new Date(date).toLocaleTimeString('de-DE', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    };
-
-    const formatDate = (date: Date | undefined): string => {
-      if (!date) return '';
-      return new Date(date).toLocaleDateString('de-DE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
     };
 
     const openDatePicker = (type: string) => {

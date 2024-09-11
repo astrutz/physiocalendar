@@ -101,7 +101,7 @@ import { computed, defineComponent, ref } from 'vue';
 import Menu from '@/components/Menu.vue';
 import { useAppointmentStore } from '@/store/AppointmentStore';
 import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
-import Dateconversions from '@/class/Dateconversions';
+import { formatTime, convertDateToReadableString } from '@/class/Dateconversions';
 import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import EventBus from '@/class/EventBus';
@@ -191,25 +191,19 @@ export default defineComponent({
     };
 
     const getReadableDate = (date: Date) => {
-      return Dateconversions.convertDateToReadableString(date);
+      return convertDateToReadableString(date);
     };
 
     const changeSeriesAppointment = (appointment: AppointmentSeries) => {
       appointmentSeriesStore.updateAppointmentSeries(appointment.id, appointment);
       closeDialog();
+      appointmentSeriesDialog.value = false;
     };
 
     const deleteSeriesAppointment = (appointment: AppointmentSeries) => {
       appointmentSeriesStore.deleteAppointmentSeries(appointment.id);
+      appointmentSeriesDialog.value = false;
       closeDialog();
-    };
-
-    const formatTime = (date: Date | undefined): string => {
-      if (!date) return '';
-      return new Date(date).toLocaleTimeString('de-DE', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
     };
 
     return {

@@ -90,8 +90,8 @@
           </v-btn>
         </v-row>
         <v-tooltip top>
-          <template v-slot:activator="{ on, attrs }">
-            <v-icon style="float: right" v-bind="attrs" v-on="on" large>
+          <template >
+            <v-icon style="float: right" large>
               mdi-information
             </v-icon>
           </template>
@@ -259,7 +259,7 @@
 import { defineComponent, ref, computed, watch } from 'vue';
 import AppointmentRequest from '@/class/AppointmentRequest';
 import SingleAppointment from '@/class/SingleAppointment';
-import Dateconversions from '@/class/Dateconversions';
+import { convertDateToReadableString } from '@/class/Dateconversions';
 import { useTherapistStore } from '@/store/TherapistStore';
 import { usePatientStore } from '@/store/PatientStore';
 import Patient from '@/class/Patient';
@@ -301,7 +301,7 @@ export default defineComponent({
 
     const loadTherapists = async () => {
       await therapistStore.loadTherapists();
-      therapists.value = therapistStore.getAllTherapists.map(t => t.name);
+      therapists.value = therapistStore.getAllTherapists.map(t => t.fullName);
     };
 
     const loadPatients = async () => {
@@ -347,7 +347,7 @@ export default defineComponent({
     };
 
     const convertSuggestionDate = (date: Date) => {
-      return Dateconversions.convertDateToReadableString(date);
+      return convertDateToReadableString(date);
     };
 
     const findAppointments = () => {

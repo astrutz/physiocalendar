@@ -163,6 +163,7 @@ import { de } from 'date-fns/locale';
 import Patient from '@/class/Patient';
 import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
 import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
+import { formatDate, formatTime } from '@/class/Dateconversions';
 
 export default defineComponent({
   components: {
@@ -325,23 +326,6 @@ export default defineComponent({
 
     const handleSearchInput = (search: string) => {
       // Optionale Filterlogik basierend auf der Suchanfrage
-    };
-
-    const formatTime = (date: Date | undefined): string => {
-      if (!date) return '';
-      return new Date(date).toLocaleTimeString('de-DE', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    };
-
-    const formatDate = (date: Date | undefined): string => {
-      if (!date) return '';
-      return new Date(date).toLocaleDateString('de-DE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
     };
 
     return {

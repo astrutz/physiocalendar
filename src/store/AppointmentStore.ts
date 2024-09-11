@@ -12,6 +12,7 @@ import apiClient from './apiClient';
 export const useAppointmentStore = defineStore('appointment', {
   state: () => ({
     appointments: [] as SingleAppointment[],
+    appointmentConflicts: [] as SingleAppointment[],
   }),
 
   actions: {
@@ -29,6 +30,21 @@ export const useAppointmentStore = defineStore('appointment', {
 
     async loadAppointmentsForDate(date: string): Promise<void> {
       await this.loadAppointments({ date });
+    },
+
+    async loadAppointmentConflicts(): Promise<void> {
+      try {
+        const responseData: JSONSingleAppointmentDTO[] = (await apiClient.get('appointments/conflicts')).data;
+        if (responseData) {
+          this.appointmentConflicts = responseData.map(dto => convertToAppointment(dto));
+          if (this.appointmentConflicts.length > 0) {
+            toast.info('Es wurden Konflikte in den Terminen gefunden.');
+          }
+        }
+      } catch (err) {
+        console.error('Fehler beim Laden der Terminkonflikte:', err);
+        toast.error('Fehler beim Laden der Terminkonflikte.');
+      }
     },
 
     async addAppointment(appointment: SingleAppointment): Promise<void> {
@@ -87,6 +103,8 @@ export const useAppointmentStore = defineStore('appointment', {
 
   getters: {
     getAllAppointments: (state) => state.appointments,
+
+    getAppointmentConflicts: (state) => state.appointmentConflicts,
 
     getAppointmentById: (state) => (id: number) => {
       return state.appointments.find(appointment => appointment.id === id);

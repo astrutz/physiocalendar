@@ -12,8 +12,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, watch } from 'vue';
-import Dateconversions from '@/class/Dateconversions';
+import { defineComponent, ref, watch } from 'vue';
+import { convertReadableStringToDate } from '@/class/Dateconversions';
 import Daylist from './Daylist.vue';
 import AppBar from './AppBar.vue';
 import EventBus from '@/class/EventBus';
@@ -41,7 +41,7 @@ export default defineComponent({
     };
 
     const updateCurrentSingleDayFromAppBar = (dateFormatted: string) => {
-      currentSingleDay.value = Dateconversions.convertReadableStringToDate(dateFormatted);
+      currentSingleDay.value = convertReadableStringToDate(dateFormatted);
     };
 
     watch(() => EventBus.get('currentDayChanged1'), (newDate: Date | string) => {

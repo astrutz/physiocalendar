@@ -30,7 +30,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, watch, onMounted, PropType } from 'vue';
-import Dateconversions from '@/class/Dateconversions';
+import { getWeekdayStringForDate, convertEnglishToGermanReadableString } from '@/class/Dateconversions';
 import holidays from '@/data/holidays.json';
 
 export default defineComponent({
@@ -56,7 +56,7 @@ export default defineComponent({
     );
 
     const dateFormatted = computed(() =>
-      Dateconversions.convertEnglishToGermanReadableString(dateObject.value.toISOString().substr(0, 10))
+      convertEnglishToGermanReadableString(dateObject.value.toISOString().substr(0, 10))
     );
 
     const updateWeekday = () => {
@@ -93,7 +93,7 @@ export default defineComponent({
 
     const getWeekdaybyDate = (date?: Date): string => {
       const dateToCheck = date || dateObject.value;
-      return Dateconversions.getWeekdayStringForDate(dateToCheck);
+      return getWeekdayStringForDate(dateToCheck);
     };
 
     const setPreviousDate = (): void => {

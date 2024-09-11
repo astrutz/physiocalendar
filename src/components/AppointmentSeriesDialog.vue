@@ -103,7 +103,7 @@
 <script lang="ts">
 import { computed, defineComponent, onMounted, ref, watch } from 'vue';
 import AppointmentSeries from '@/class/AppointmentSeries';
-import Dateconversions from '@/class/Dateconversions';
+import { formatDate, formatTime, getAllTimes } from '@/class/Dateconversions';
 import { de } from 'date-fns/locale';
 import Patient from '@/class/Patient';
 import { usePatientStore } from '@/store/PatientStore';
@@ -127,7 +127,7 @@ export default defineComponent({
     const patientStore = usePatientStore();
     const patients = ref<Patient[]>([]);
     const patientsOptions = ref<{ id: number, name: string }[]>([]);
-    const times = ref(Dateconversions.getAllTimes());
+    const times = ref(getAllTimes());
     const selectedPatientId = ref<number | null>(props.appointment.patient?.id || null);
 
     const isValid = computed(() =>

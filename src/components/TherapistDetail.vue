@@ -232,6 +232,7 @@ import AbsenceDialog from './AbsenceDialog.vue';
 import { Weekday } from '@/class/Enums';
 import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
 import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
+import { formatDate, formatTime } from '@/class/Dateconversions';
 
 export default defineComponent({
   components: {
@@ -261,24 +262,6 @@ export default defineComponent({
     const selectedAppointmentSeries = ref<AppointmentSeries | null>(null);
     const singleAppointmentDialog = ref(false);
     const appointmentSeriesDialog = ref(false);
-
-
-    const formatDate = (date: Date | undefined): string => {
-      if (!date) return '';
-      return new Date(date).toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      });
-    };
-
-    const formatTime = (date: Date | undefined): string => {
-      if (!date) return '';
-      return new Date(date).toLocaleTimeString('de-DE', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    };
 
     const appointmentHeaders = ref([
       { title: 'Datum', value: 'date', sortable: true },
@@ -444,8 +427,6 @@ export default defineComponent({
       isAbsenceDialogVisible,
       editingAbsence,
       absenceInput,
-      formatDate,
-      formatTime,
       cancelChanges,
       saveChanges,
       deleteTherapist,
@@ -457,6 +438,8 @@ export default defineComponent({
       selectedAppointmentSeries,
       singleAppointmentDialog,
       appointmentSeriesDialog,
+      formatTime,
+      formatDate,
       openAddAbsenceDialog,
       closeAddAbsenceDialog,
       handleDateSinceChange,

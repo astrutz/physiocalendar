@@ -1,30 +1,44 @@
 <template>
-  <v-container class="d-flex justify-center align-center">
-
+  <v-container class="d-flex flex-column align-center">
+    <!-- Konflikte anzeigen -->
+    <v-row justify="center">
+      <v-col cols="12">
+        <v-alert v-if="conflicts.length > 0" type="warning" dense>
+          Konflikt gefunden:
+          <v-list dense>
+            <v-list-item v-for="(conflict, index) in conflicts" :key="index">
+                 {{ formatDate(conflict.date) }} bei {{ conflict.therapist.firstName }} um {{ formatTime(conflict.startTime) }}
+            </v-list-item>
+          </v-list>
+        </v-alert>
+      </v-col>
+    </v-row>
+  </v-container>
     <!-- vue-cal Kalender -->
-    <vue-cal
-      sticky-split-labels
-      :split-days="splits"
-      :disable-views="['years', 'year', 'month']"
-      :hide-view-selector="true"
-      :activeView="'day'"
-      v-model="selectedDate"
-      :events="events"
-      :time-from="6 * 60"
-      :time-to="20 * 60"
-      :editable-events="{ title: false, drag: true, resize: true, delete: true, create: true }"
-      :selected-date="selectedDate"
-      @event-dblclick="handleEventClick"
-      @cell-click="handleDateClick"
-      :locale="locale"
-      :timeStep="10"
-      :todayButton="true"
-    >
-    <template #split-label="{ split, view }">
-      <v-icon>mdi-account</v-icon>
-    <strong>{{ split.label }}</strong>
-  </template>
-    </vue-cal>
+
+        <vue-cal
+          sticky-split-labels
+          :split-days="splits"
+          :disable-views="['years', 'year', 'month']"
+          :hide-view-selector="true"
+          :activeView="'day'"
+          v-model="selectedDate"
+          :events="events"
+          :time-from="6 * 60"
+          :time-to="20 * 60"
+          :editable-events="{ title: false, drag: true, resize: true, delete: true, create: true }"
+          :selected-date="selectedDate"
+          @event-dblclick="handleEventClick"
+          @cell-click="handleDateClick"
+          :locale="locale"
+          :timeStep="10"
+          :todayButton="true"
+        >
+        <template #split-label="{ split, view }">
+          <v-icon>mdi-account</v-icon>
+        <strong>{{ split.label }}</strong>
+      </template>
+        </vue-cal>
 
 
     <CreateAppointmentDialog
@@ -47,7 +61,7 @@
       @cancel="singleAppointmentDialog = false"
     />
 
-  </v-container>
+
 </template>
 
 <script lang="ts">
@@ -66,6 +80,7 @@ import 'vue-cal/dist/vuecal.css';
 // @ts-ignore
 import VueCal from 'vue-cal';
 import { format } from 'date-fns';
+import { formatDate, formatTime } from '../class/Dateconversions';
 
 export default defineComponent({
   components: {
@@ -93,6 +108,8 @@ export default defineComponent({
     const therapistStore = useTherapistStore();
     const splits = ref<any[]>([]);
     const events = ref<any[]>([]);
+    const conflicts = ref<SingleAppointment[] | []>([]);
+
     const customLocale = {
       weekDays: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'],
       months: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
@@ -111,13 +128,12 @@ export default defineComponent({
 
     const locale = ref(customLocale);
 
-    
-      // Dynamisch Klassennamen generieren
     const generateClassName = (index: number) => `split${(index) + 1}`;
 
     onMounted(() => {
       loadTherapists();
       loadAppointments();
+      checkForConflicts();
     });
 
     watch(selectedDate, async () => {
@@ -140,7 +156,13 @@ export default defineComponent({
       }));
     };
 
-    const formatDate = (date: Date): string => {
+    const checkForConflicts = async () => {
+      await appointmentStore.loadAppointmentConflicts();
+      const conflictResults = await appointmentStore.getAppointmentConflicts;
+      conflicts.value = conflictResults;
+    }
+
+    const formatDateString = (date: Date): string => {
         return format(date, 'yyyy-MM-dd HH:mm');
       };
 
@@ -167,8 +189,8 @@ export default defineComponent({
 
           return {
             id: appointment.id,
-            start: formatDate(appointment.startTime),
-            end: formatDate(appointment.endTime),
+            start: formatDateString(appointment.startTime),
+            end: formatDateString(appointment.endTime),
             title: appointment.patient.fullName,
             class: className,
             split: therapistIndex, // Hier wird der korrekte Index zugewiesen
@@ -261,7 +283,7 @@ export default defineComponent({
         // Erstelle ein Mapping von therapistId zu Index
         const therapistIndexMap = new Map<number, Therapist>();
         therapists.forEach((therapist, index) => {
-          therapistIndexMap.set(index+1, therapist);
+          therapistIndexMap.set(index + 1, therapist);
         });
 
       const therapist = therapistIndexMap.get(clickedSplit);
@@ -337,6 +359,10 @@ export default defineComponent({
       customLocale,
       splits,
       locale,
+      conflicts,
+      formatDate,
+      formatTime,
+      formatDateString,
     };
   },
 });

@@ -114,6 +114,8 @@
       <v-spacer></v-spacer>
       <v-btn color="error" @click="deletePatient">Patient löschen</v-btn>
       <v-spacer></v-spacer>
+      <v-btn color="primary" @click="printAppointments">Termine Drucken</v-btn>
+      <v-spacer></v-spacer>
       <v-btn color="green" @click="saveChanges">Speichern</v-btn>
     </v-card-actions>
   </v-card>
@@ -127,8 +129,9 @@ import AppointmentSeries from '@/class/AppointmentSeries';
 import { useAppointmentSeriesStore } from '@/store/AppointmentSeriesStore';
 import SingleAppointment from '@/class/SingleAppointment';
 import Patient from '@/class/Patient';
+import { formatDate, formatTime } from '@/class/Dateconversions';
 import { de } from 'date-fns/locale';
-import { Weekday } from '../class/Enums';
+import Printer from '@/class/Printer';
 
 export default defineComponent({
   props: {
@@ -144,23 +147,7 @@ export default defineComponent({
     const appointments = ref<SingleAppointment[]>([]);
     const appointmentSeries = ref<AppointmentSeries[]>([]);
     const activeTab = ref(0);
-
-    const formatDate = (date: Date | undefined): string => {
-      if (!date) return '';
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Monate sind nullbasiert
-      const year = date.getFullYear();
-
-      return `${day}.${month}.${year}`;
-    };
-
-    const formatTime = (date: Date | undefined): string => {
-      if (!date) return '';
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-
-      return `${hours}:${minutes}`;
-    };
+    const printer = new Printer(props.patientId);
 
     const appointmentHeaders = ref([
       { title: 'Datum', value: 'date', sortable: true },
@@ -232,7 +219,12 @@ export default defineComponent({
       }
     };
 
+    const printAppointments = async () => {
+      await printer.printPatientAppointments(); // Rufen Sie die Druckmethode auf
+    };
+
     return {
+      printAppointments,
       patientInput,
       de,
       loadingAppointments,
