@@ -51,15 +51,15 @@ export function datesAreEqual(date1: Date, date2: Date): boolean {
   return convertDateToReadableString(date1) === convertDateToReadableString(date2);
 }
 
-export function getWeekdayForDate(date: Date): Weekday | undefined {
+export function getWeekdayForDate(date: Date): Weekday | undefined | string {
   switch (date.getDay()) {
-    case 0: return undefined;
+    case 0: return 'Sonntag';
     case 1: return Weekday.MONDAY;
     case 2: return Weekday.TUESDAY;
     case 3: return Weekday.WEDNESDAY;
     case 4: return Weekday.THURSDAY;
     case 5: return Weekday.FRIDAY;
-    case 6: return undefined;
+    case 6: return 'Samstag';
     default: return undefined;
   }
 }
