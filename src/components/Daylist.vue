@@ -149,7 +149,7 @@ export default defineComponent({
 
     const loadTherapists = async () => {
       await therapistStore.loadTherapists();
-      const therapists = therapistStore.getTherapists();
+      const therapists = therapistStore.getTherapists().filter((therapist) => therapist.isActive);
       splits.value = therapists.map((therapist, index) => ({
         label: therapist.firstName,
         class: generateClassName(index)

@@ -59,7 +59,9 @@
     <!-- Dialoge für die Patientenverwaltung -->
     <v-dialog v-model="createPatientDialog" max-width="1500">
       <v-card>
-        <CreatePatient @save="createPatient" @cancel="closeCreatePatientDialog" />
+        <CreatePatient 
+        @save="createPatient" 
+        @cancel="createPatientDialog = false" />
       </v-card>
     </v-dialog>
 
@@ -140,12 +142,10 @@ export default defineComponent({
       }
     };
 
-    const createPatient = async (event: { patient: Patient }) => {
-      if (event.patient) {
-        await patientStore.addPatient(event.patient);
+    const createPatient = async (patient: Patient ) => {
+        await patientStore.addPatient(patient);
         await loadPatients();
-        closeCreatePatientDialog();
-      }
+        createPatientDialog.value = false;
     };
 
     const closeDetailDialog = () => {
@@ -153,12 +153,7 @@ export default defineComponent({
       selectedPatient.value = null;
     };
 
-    const closeCreatePatientDialog = () => {
-      createPatientDialog.value = false;
-    };
-
     const openCreatePatientDialog = () => {
-      console.log('Patient hinzufügen');
       createPatientDialog.value = true;
     };
 
@@ -191,7 +186,6 @@ export default defineComponent({
       deletePatient,
       createPatient,
       closeDetailDialog,
-      closeCreatePatientDialog,
       openCreatePatientDialog,
       filterPatients,
       formatDate,

@@ -3,6 +3,7 @@ import axios from 'axios';
 import Patient from '@/class/Patient';
 import { JSONPatientDTO } from '@/class/JSONStructures';
 import { convertToPatient, convertToPatientDTO } from './convert';
+import { toast } from 'vue3-toastify';
 
 export const usePatientStore = defineStore('patientStore', {
   state: () => ({
@@ -38,8 +39,10 @@ export const usePatientStore = defineStore('patientStore', {
       this.loading = true;
       this.error = null;
       try {
+        patient.fullName = patient.firstName + ' ' + patient.lastName;
         const patientDTO = convertToPatientDTO(patient);
         await axios.post('http://localhost:8080/api/patients', patientDTO);
+        toast.success('Patient erfolgreich erstellt');
         await this.loadPatients();
       } catch (err) {
         this.error = 'Failed to add patient';
@@ -53,8 +56,10 @@ export const usePatientStore = defineStore('patientStore', {
       this.loading = true;
       this.error = null;
       try {
+        patient.fullName = patient.firstName + ' ' + patient.lastName;
         const patientDTO = convertToPatientDTO(patient);
         await axios.put(`http://localhost:8080/api/patients/${id}`, patientDTO);
+        toast.success('Patient erfolgreich gespeichert');
         await this.loadPatients();
       } catch (err) {
         this.error = 'Failed to update patient';
@@ -69,6 +74,7 @@ export const usePatientStore = defineStore('patientStore', {
       this.error = null;
       try {
         await axios.delete(`http://localhost:8080/api/patients/${id}`);
+        toast.success('Patient erfolgreich gelöscht');
         await this.loadPatients();
       } catch (err) {
         this.error = 'Failed to delete patient';

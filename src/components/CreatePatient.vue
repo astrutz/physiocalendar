@@ -15,21 +15,21 @@
             <v-checkbox label="BWO" v-model="patientInput.isBWO"></v-checkbox>
           </v-col>
           <v-col>
-            <v-text-field
-              label="Aktiv seit"
-              v-model="patientInput.activeSince"
-              type="date"
-              clearable
-            ></v-text-field>
-          </v-col>
-          <v-col>
-            <v-text-field
-              label="Aktiv bis"
-              v-model="patientInput.activeUntil"
-              type="date"
-              clearable
-            ></v-text-field>
-          </v-col>
+          <div class="v-label">Aktiv seit</div>
+          <VueDatePicker
+            v-model="patientInput.activeSince"
+            :format="formatDate"
+            :format-locale="de"
+          />
+        </v-col>
+        <v-col>
+          <div class="v-label">Aktiv bis</div>
+          <VueDatePicker
+            v-model="patientInput.activeUntil"
+            :format="formatDate"
+            :format-locale="de"
+          />
+        </v-col>
         </v-row>
       </v-card-text>
       <v-card-actions>
@@ -43,6 +43,8 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 import Patient from '@/class/Patient';
+import { de } from 'date-fns/locale';
+import { formatDate } from '@/class/Dateconversions';
 
 export default defineComponent({
   props: {
@@ -80,6 +82,8 @@ export default defineComponent({
       cancelChanges,
       saveChanges,
       dialogIsOpen,
+      de,
+      formatDate
     };
   },
 });

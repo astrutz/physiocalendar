@@ -67,15 +67,15 @@
               :loading="loadingAppointments"
               :loading-text="'Laden...'"
             >
-            <template v-slot:item="{ item }">
-        <tr @click="showSingleAppointmentDialog(item)" style="cursor: pointer;">
-          <td>{{ formatDate(item.date) }}</td>
-          <td>{{ formatTime(item.startTime) }}</td>
-          <td>{{ formatTime(item.endTime) }}</td>
-          <td>{{ item.patient.fullName }}</td>
-          <td>{{ item.comment }}</td>
-        </tr>
-      </template>
+        <template v-slot:item="{ item }">
+          <tr @click="showSingleAppointmentDialog(item)" style="cursor: pointer;">
+            <td>{{ item.patient.fullName }}</td>
+            <td>{{ formatDate(item.date) }}</td>
+            <td>{{ formatTime(item.startTime) }}</td>
+            <td>{{ formatTime(item.endTime) }}</td>
+            <td>{{ item.comment }}</td>
+          </tr>
+        </template>
             </v-data-table>
           </v-row>
         </v-tab-item>
@@ -92,8 +92,8 @@
             >
             <template v-slot:item="{ item }">
               <tr @click="showAppointmentSeriesDialog(item)" style="cursor: pointer;">
-                <td>{{ item.weekday }}</td>
                 <td>{{ item.patient.fullName }}</td>
+                <td>{{ item.weekday }}</td>
                 <td>{{ formatTime(item.startTime) }}</td>
                 <td>{{ formatTime(item.endTime) }}</td>
                 <td>{{ formatDate(item.startDate) }}</td>
@@ -264,16 +264,16 @@ export default defineComponent({
     const appointmentSeriesDialog = ref(false);
 
     const appointmentHeaders = ref([
+      { title: 'Patient', value: 'patient.fullName', sortable: true },
       { title: 'Datum', value: 'date', sortable: true },
       { title: 'Von', value: 'startTime', sortable: true },
       { title: 'Bis', value: 'endTime', sortable: true },
-      { title: 'Patient', value: 'patient.fullName', sortable: true },
       { title: 'Kommentar', value: 'comment', sortable: true },
     ]);
 
     const appointmentSeriesHeaders = ref([
-      { title: 'Wochentag', value: 'weekday', sortable: true },
       { title: 'Patient', value: 'patient.fullName', sortable: true },
+      { title: 'Wochentag', value: 'weekday', sortable: true },
       { title: 'Von', value: 'startTime', sortable: true },
       { title: 'Bis', value: 'endTime', sortable: true },
       { title: 'Start Datum', value: 'startDate', sortable: true },
@@ -384,7 +384,6 @@ export default defineComponent({
 
     const showSingleAppointmentDialog = (appointment: SingleAppointment) => {
       selectedSingleAppointment.value = appointment ; 
-      console.log(appointment);
       singleAppointmentDialog.value = true;
     };
 

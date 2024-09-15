@@ -3,27 +3,39 @@ import SingleAppointment from '@/class/SingleAppointment';
 import { useAppointmentStore } from '@/store/AppointmentStore';
 import jsPDF from 'jspdf';
 import Patient from './Patient';
-import { Weekday } from './Enums';
 
 export default class Printer {
   private patientId: number;
   private startDate: Date;
+  private endDate: Date;
   private patient: Patient | null = null;
   private appointmentStore = useAppointmentStore();
 
-  constructor(patientId: number, startDate?: Date) {
+  constructor(patientId: number, startDate?: Date, endDate?: Date) {
     this.patientId = patientId;
     this.startDate = startDate || new Date();
+    this.endDate = endDate || new Date();
   }
 
   public async printPatientAppointments(): Promise<void> {
+    await this.loadAndPrintAppointments(this.startDate, this.endDate);
+  }
+
+  public async printPatientAppointmentsWithinDateRange(startDate: Date, endDate: Date): Promise<void> {
+    await this.loadAndPrintAppointments(startDate, endDate);
+  }
+
+  private async loadAndPrintAppointments(startDate: Date, endDate: Date): Promise<void> {
     await this.appointmentStore.loadAppointments();
     const appointments: SingleAppointment[] = await this.appointmentStore.getAppointmentsByPatientId(this.patientId);
     this.patient = appointments[0].patient;
-    //const filteredAppointments = appointments.filter(app => app.date >= this.startDate);
-    console.log(appointments);
-    //appointments.sort((a, b) => a.date.getTime() - b.date.getTime());
-    this.generatePDF(this.chunkAppointmentsForPrinting(appointments));
+
+    const filteredAppointments = appointments.filter(app =>
+      new Date(app.date) >= startDate && new Date(app.date) <= endDate
+    );
+
+    filteredAppointments.sort((a, b) => new Date(a.date).getTime()  -new Date(b.date).getTime());
+    this.generatePDF(this.chunkAppointmentsForPrinting(filteredAppointments));
   }
 
   private chunkAppointmentsForPrinting(appointments: SingleAppointment[]): string[][] {

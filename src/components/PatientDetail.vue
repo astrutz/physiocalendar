@@ -19,20 +19,24 @@
       </v-row>
       <v-row>
         <v-col>
+          <div class="v-label">Aktiv seit</div>
           <VueDatePicker
             v-model="patientInput.activeSince"
             @change="handleDateSinceChange"
             text-input
+            teleport-center
             :format="formatDate"
             :format-locale="de"
           />
         </v-col>
         <v-col>
+          <div class="v-label">Aktiv bis</div>
           <VueDatePicker
             v-model="patientInput.activeUntil"
             @change="handleDateUntilChange"
             :format="formatDate"
             :format-locale="de"
+            teleport-center
           />
         </v-col>
         <v-col cols="auto">
@@ -49,6 +53,7 @@
       <v-tabs-items v-model="activeTab">
         <!-- Einzeltermine -->
         <v-tab-item v-if="activeTab === 0">
+
           <v-row>
             <v-data-table
               :headers="appointmentHeaders"
@@ -57,18 +62,15 @@
               :loading="loadingAppointments"
               :loading-text="'Laden...'"
             >
-              <template #item.date="{ item }">
-                {{ new Date(item.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) }}
-              </template>
-              <template #item.startTime="{ item }">
-                {{ formatTime(item.startTime) }}
-              </template>
-              <template #item.endTime="{ item }">
-                {{ formatTime(item.endTime) }}
-              </template>
-              <template #item.therapist="{ item }">
-                {{ item.therapist.firstName }}
-              </template>
+            <template v-slot:item="{ item }">
+              <tr @click="showSingleAppointmentDialog(item)" style="cursor: pointer;">
+                <td>{{ item.therapist.firstName }}</td>
+                <td>{{ formatDate(item.date) }}</td>
+                <td>{{ formatTime(item.startTime) }}</td>
+                <td>{{ formatTime(item.endTime) }}</td>
+                <td>{{ item.comment }}</td>
+              </tr>
+            </template>
             </v-data-table>
           </v-row>
         </v-tab-item>
@@ -83,26 +85,17 @@
               :loading="loadingSeries"
               :loading-text="'Laden...'"
             >
-              <template #item.weekday="{ item }">
-                {{ item.weekday }}
-              </template>
-              <template #item.startTime="{ item }">
-                {{ formatTime(item.startTime) }}
-              </template>
-              <template #item.endTime="{ item }">
-                {{ formatTime(item.endTime) }}
-              </template>
-              <template #item.startDate="{ item }">
-                {{ formatDate(item.startDate) }}
-              </template>
-              <template #item.endDate="{ item }">
-                {{ formatDate(item.endDate) }}
-              </template>
-              <template #item.therapist="{ item }">
-                {{ item.therapist.firstName }}
-              </template>
-              <template #item.weeklyFrequency="{ item }">
-                {{ item.weeklyFrequency }}
+            <template v-slot:item="{ item }">
+              <tr @click="showAppointmentSeriesDialog(item)" style="cursor: pointer;">
+                <td>{{ item.therapist.firstName }}</td>
+                <td>{{ item.weekday }}</td>
+                <td>{{ formatTime(item.startTime) }}</td>
+                <td>{{ formatTime(item.endTime) }}</td>
+                <td>{{ formatDate(item.startDate) }}</td>
+                <td>{{ formatDate(item.endDate) }}</td>
+                <td>{{ item.weeklyFrequency }}</td>
+                <td>{{ item.comment }}</td>
+              </tr>
               </template>
             </v-data-table>
           </v-row>
@@ -114,10 +107,35 @@
       <v-spacer></v-spacer>
       <v-btn color="error" @click="deletePatient">Patient löschen</v-btn>
       <v-spacer></v-spacer>
-      <v-btn color="primary" @click="printAppointments">Termine Drucken</v-btn>
+      <v-btn color="primary" @click="openPrintDialog">Termine Drucken</v-btn>
       <v-spacer></v-spacer>
       <v-btn color="green" @click="saveChanges">Speichern</v-btn>
     </v-card-actions>
+    <v-dialog v-model="printDialogOpen" persistent class="resizable-dialog">
+      <v-card v-if="patientInput">
+        <PrintDialog
+          :patientId="patientInput.id"
+          @cancel="printDialogOpen = false"
+        />
+      </v-card>
+    </v-dialog>
+    <SingleAppointmentDialog
+          v-if="selectedSingleAppointment"
+          :appointment.sync="selectedSingleAppointment"
+          :currentDay="new Date()"
+          v-model="singleAppointmentDialog"
+          @saveSingle="changeSingleAppointment"
+          @deleteSingle="deleteSingleAppointment"
+          @cancel="singleAppointmentDialog = false"
+        />
+        <AppointmentSeriesDialog
+          v-if="selectedAppointmentSeries"
+          :currentDay="new Date()"
+          :appointment.sync="selectedAppointmentSeries"
+          v-model="appointmentSeriesDialog"
+          @saveSeries="changeSeriesAppointment"
+          @cancel="appointmentSeriesDialog = false"
+        />
   </v-card>
 </template>
 
@@ -132,8 +150,16 @@ import Patient from '@/class/Patient';
 import { formatDate, formatTime } from '@/class/Dateconversions';
 import { de } from 'date-fns/locale';
 import Printer from '@/class/Printer';
+import PrintDialog from './PrintDialog.vue';
+import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
+import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
 
 export default defineComponent({
+  components: {
+    PrintDialog,
+    SingleAppointmentDialog,
+    AppointmentSeriesDialog,
+  },
   props: {
     patientId: {
       type: Number,
@@ -148,16 +174,22 @@ export default defineComponent({
     const appointmentSeries = ref<AppointmentSeries[]>([]);
     const activeTab = ref(0);
     const printer = new Printer(props.patientId);
+    const printDialogOpen = ref(false);
+    const selectedSingleAppointment = ref<SingleAppointment | null>(null);
+    const selectedAppointmentSeries = ref<AppointmentSeries | null>(null);
+    const singleAppointmentDialog = ref(false);
+    const appointmentSeriesDialog = ref(false);
 
     const appointmentHeaders = ref([
+      { title: 'Therapeut', value: 'therapist', sortable: true },
       { title: 'Datum', value: 'date', sortable: true },
       { title: 'Von', value: 'startTime', sortable: true },
       { title: 'Bis', value: 'endTime', sortable: true },
-      { title: 'Therapeut', value: 'therapist', sortable: true },
       { title: 'Kommentar', value: 'comment', sortable: true },
     ]);
 
     const appointmentSeriesHeaders = ref([
+      { title: 'Therapeut', value: 'therapist', sortable: true },
       { title: 'Wochentag', value: 'weekday', sortable: true },
       { title: 'Von', value: 'startTime', sortable: true },
       { title: 'Bis', value: 'endTime', sortable: true },
@@ -181,7 +213,6 @@ export default defineComponent({
       loadingSeries.value = true;
       await appointmentSeriesStore.loadAppointmentSeries();
       appointmentSeries.value = await appointmentSeriesStore.getAppointmentSeriesByPatientId(props.patientId);
-      console.log(appointmentSeries.value);
       loadingSeries.value = false;
     };
 
@@ -203,6 +234,26 @@ export default defineComponent({
       }
     };
 
+    const changeSingleAppointment = async (appointment: SingleAppointment) => {
+       await appointmentStore.updateAppointment(appointment.id, appointment)
+       loadAppointments();
+    };
+
+    const changeSeriesAppointment = (appointment: AppointmentSeries) => {
+      appointmentSeriesStore.updateAppointmentSeries(appointment.id, appointment);
+      loadAppointments();
+    };
+
+    const deleteSingleAppointment = async (appointment: SingleAppointment) => {
+      await appointmentStore.deleteAppointment(appointment.id);
+      loadAppointments();
+    };
+
+    const deleteSeriesAppointment = (id: number) => {
+      appointmentSeriesStore.deleteAppointmentSeries(id);
+      loadAppointments();
+    };
+
     const cancelChanges = () => {
       emit('cancel');
     };
@@ -219,13 +270,24 @@ export default defineComponent({
       }
     };
 
-    const printAppointments = async () => {
-      await printer.printPatientAppointments(); // Rufen Sie die Druckmethode auf
+    const openPrintDialog = async () => {
+      printDialogOpen.value = true;
+    };
+
+    const showSingleAppointmentDialog = (appointment: SingleAppointment) => {
+      selectedSingleAppointment.value = appointment ; 
+      singleAppointmentDialog.value = true;
+    };
+
+    const showAppointmentSeriesDialog = (appointmentSeries: AppointmentSeries) => {
+      selectedAppointmentSeries.value = appointmentSeries;
+      appointmentSeriesDialog.value = true;
     };
 
     return {
-      printAppointments,
       patientInput,
+      openPrintDialog,
+      printDialogOpen,
       de,
       loadingAppointments,
       appointmentHeaders,
@@ -241,6 +303,16 @@ export default defineComponent({
       formatTime,
       handleDateSinceChange,
       handleDateUntilChange,
+      changeSingleAppointment,
+      changeSeriesAppointment,
+      deleteSingleAppointment,
+      deleteSeriesAppointment,
+      showSingleAppointmentDialog,
+      showAppointmentSeriesDialog,
+      singleAppointmentDialog,
+      appointmentSeriesDialog,
+      selectedSingleAppointment,
+      selectedAppointmentSeries,
     };
   },
 });

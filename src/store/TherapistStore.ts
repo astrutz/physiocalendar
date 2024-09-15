@@ -5,6 +5,7 @@ import { JSONTherapistDTO } from '@/class/JSONStructures';
 import { convertToTherapist, convertToTherapistDTO } from './convert';
 import { useAuthStore } from './authStore';
 import apiClient from './apiClient';
+import { toast } from 'vue3-toastify';
 
 export const useTherapistStore = defineStore('therapist', {
   state: () => ({
@@ -20,7 +21,6 @@ export const useTherapistStore = defineStore('therapist', {
       this.error = null;
       try {
         const responseData: JSONTherapistDTO[] = (await apiClient.get('therapists')).data;
-        console.log('API Antwort:', responseData);
         this.therapists = responseData.map((dto) => convertToTherapist(dto));
       } catch (err) {
         this.error = 'Failed to load therapists';
@@ -41,8 +41,10 @@ export const useTherapistStore = defineStore('therapist', {
 
     async addTherapist(therapist: Therapist): Promise<void> {
       try {
+        therapist.fullName = therapist.firstName + ' ' + therapist.lastName;
         const therapistDTO = convertToTherapistDTO(therapist);
         await apiClient.post('therapists', therapistDTO);
+        toast.success('Therapeut erfolgreich erstellt');
         this.loadTherapists();
       } catch (err) {
         console.error(err);
@@ -51,8 +53,10 @@ export const useTherapistStore = defineStore('therapist', {
 
     async updateTherapist(id: number, therapist: Therapist): Promise<void> {
       try {
+        therapist.fullName = therapist.firstName + ' ' + therapist.lastName;
         const therapistDTO = convertToTherapistDTO(therapist);
         await apiClient.put(`therapists/${id}`, therapistDTO);
+        toast.success('Therapeut erfolgreich gespeichert');
         this.loadTherapists();
       } catch (err) {
         console.error(err);
@@ -62,6 +66,7 @@ export const useTherapistStore = defineStore('therapist', {
     async deleteTherapist(id: number): Promise<void> {
       try {
         await apiClient.delete(`therapists/${id}`);
+        toast.success('Therapeut erfolgreich gelöscht');
         this.loadTherapists();
       } catch (err) {
         console.error(err);
