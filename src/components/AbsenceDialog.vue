@@ -1,13 +1,21 @@
 <template>
-  <v-dialog v-model="dialogVisible" max-width="1500px">
+  <v-dialog v-model="dialogIsOpen" max-width="800px">
     <v-card>
       <v-card-title>
-        {{ editingAbsence ? 'Abwesenheit bearbeiten' : 'Abwesenheit hinzufügen' }}
+        <v-row>
+          <v-col>
+            {{ editingAbsence ? 'Abwesenheit bearbeiten' : 'Abwesenheit hinzufügen' }}
+          </v-col>
+          <v-col cols="auto">
+            <v-switch v-model="isReacurringAbsence" label="Wöchentliche Abwesenheit"></v-switch>
+          </v-col>
+        </v-row>
       </v-card-title>
       <v-card-text>
         <v-form ref="absenceForm" v-model="formValid">
           <v-row>
-            <v-col>
+            <v-col v-if="!isReacurringAbsence">
+              <div class="v-label">Datum</div>
               <VueDatePicker
                 v-model="absence.date"
                 @change="handleDateChange"
@@ -17,7 +25,7 @@
                 :value="absence.date"
               />
             </v-col>
-            <v-col>
+            <v-col v-if="isReacurringAbsence">
               <v-select
                 v-model="absence.weekday"
                 :items="weekdays"
@@ -29,6 +37,7 @@
           </v-row>
             <v-row>
               <v-col>
+              <div class="v-label">Von</div>
               <VueDatePicker
                 time-picker
                 v-model="absence.startTime"
@@ -40,6 +49,7 @@
               />
             </v-col>
             <v-col>
+              <div class="v-label">Bis</div>
               <VueDatePicker
                 time-picker
                 v-model="absence.endTime"
@@ -54,10 +64,12 @@
         </v-form>
       </v-card-text>
       <v-card-actions>
-        <v-spacer></v-spacer>
         <v-btn @click="closeDialog">Abbrechen</v-btn>
+        <v-spacer></v-spacer>
+        <v-btn v-if="absence.id" color="error" @click="deleteAbsence">Abwesenheit löschen</v-btn>
+        <v-spacer></v-spacer>
         <v-btn
-          color="primary"
+          color="success"
           @click="saveAbsence"
           :disabled="!formValid"
         >
@@ -87,13 +99,11 @@ export default defineComponent({
       type: Object as () => Absence | null,
       default: null,
     },
-    dialogVisible: {
-      type: Boolean,
-      default: false,
-    },
   },
   setup(props, { emit }) {
-    const store = useAbsenceStore();
+    const dialogIsOpen = ref(false);
+    const isReacurringAbsence = ref(false);
+    const absenceStore = useAbsenceStore();
     const formValid = ref(false);
     const weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 
@@ -104,7 +114,7 @@ export default defineComponent({
     const editingAbsence = computed(() => !!props.absence);
 
     const absence = computed(() => {
-      return props.absence ? { ...props.absence } : new Absence(1, new Date(), Weekday.MONDAY, new Date(), new Date());
+      return props.absence ? { ...props.absence } : new Absence(1, props.therapistId, new Date(), Weekday.MONDAY, new Date(), new Date());
     });
 
     const handleDateChange = (date: Date) => {
@@ -134,15 +144,19 @@ export default defineComponent({
       }
 
       if (editingAbsence.value) {
-        await store.updateAbsence(props.therapistId, absence.value);
-      } else {
-        await store.addAbsence(props.therapistId, absence.value);
+        emit('save', absence.value);
       }
-      emit('update:dialogVisible', false);
+      else {
+        await absenceStore.addAbsence(absence.value.therapistId, absence.value);
+      }
+    };
+
+    const deleteAbsence = () => {
+      emit('delete', absence.value);
     };
 
     const closeDialog = () => {
-      emit('update:dialogVisible', false);
+      emit('cancel');
     };
 
     return {
@@ -151,13 +165,16 @@ export default defineComponent({
       absence,
       rules,
       editingAbsence,
+      dialogIsOpen,
       formatDate,
       formatTime,
       handleDateChange,
       handleStartTimeChange,
       handleEndTimeChange,
       saveAbsence,
+      deleteAbsence,
       closeDialog,
+      isReacurringAbsence,
       de,
     };
   },

@@ -66,12 +66,13 @@ export function convertToPatient(patient: JSONPatientDTO): Patient {
   }
 
 export function convertToAbsence(absence: JSONAbsenceDTO): Absence {
-  return new Absence(absence.id, absence.date, absence.weekday, absence.startTime, absence.endTime);
+  return new Absence(absence.id, absence.therapistId, absence.date, absence.weekday, absence.startTime, absence.endTime);
 }
 
 export function convertToAbsenceDTO(absence: Absence): JSONAbsenceDTO {
   return {
     id: absence.id,
+    therapistId: absence.therapistId,
     date: absence.date,
     weekday: absence.weekday,
     startTime: absence.startTime,

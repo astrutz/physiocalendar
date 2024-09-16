@@ -109,75 +109,26 @@
         <!-- Abwesenheiten -->
         <v-tab-item v-if="activeTab === 2">
           <v-row>
+            <v-btn color="success" @click="openAddAbsenceDialog">
+              <v-icon>mdi-plus</v-icon>
+              Abwesenheit hinzufügen
+            </v-btn>
             <v-data-table
               :headers="absenceHeaders"
               :items="absences"
               item-key="id"
               :loading="loadingAbsences"
               :loading-text="'Laden...'"
-            >
-              <template #item.date="{ item }">
-                {{ formatDate(item.date) }}
-              </template>
-              <template #item.startTime="{ item }">
-                {{ formatTime(item.startTime) }}
-              </template>
-              <template #item.endTime="{ item }">
-                {{ formatTime(item.endTime) }}
-              </template>
-              <template #item.weekday="{ item }">
-                {{ item.weekday }}
-              </template>
-              <template #item.actions="{ item }">
-                <v-btn icon @click="editAbsence(item)">
-                  <v-icon>mdi-pencil</v-icon>
-                </v-btn>
-                <v-btn icon @click="deleteAbsence(item.id)">
-                  <v-icon>mdi-delete</v-icon>
-                </v-btn>
+            > 
+            <template v-slot:item="{ item }">
+              <tr @click="showAbsenceDialog(item)" style="cursor: pointer;">
+                <td>{{ formatDate(item.date) }}</td>
+                <td>{{ item.weekday }}</td>
+                <td>{{ formatTime(new Date(item.startTime)) }}</td>
+                <td>{{ formatTime(new Date(item.endTime)) }}</td>
+              </tr>
               </template>
             </v-data-table>
-            <v-btn color="green" @click="openAddAbsenceDialog">
-              <v-icon color="white">mdi-plus</v-icon>
-              Abwesenheit hinzufügen
-            </v-btn>
-          </v-row>
-        </v-tab-item>
-
-        <v-tab-item v-if="activeTab === 3">
-          <v-row>
-            <v-data-table
-              :headers="absenceHeaders"
-              :items="absences"
-              item-key="id"
-              :loading="loadingAbsences"
-              :loading-text="'Laden...'"
-            >
-              <template #item.date="{ item }">
-                {{ formatDate(item.date) }}
-              </template>
-              <template #item.startTime="{ item }">
-                {{ formatTime(item.startTime) }}
-              </template>
-              <template #item.endTime="{ item }">
-                {{ formatTime(item.endTime) }}
-              </template>
-              <template #item.weekday="{ item }">
-                {{ item.weekday }}
-              </template>
-              <template #item.actions="{ item }">
-                <v-btn icon @click="editAbsence(item)">
-                  <v-icon>mdi-pencil</v-icon>
-                </v-btn>
-                <v-btn icon @click="deleteAbsence(item.id)">
-                  <v-icon>mdi-delete</v-icon>
-                </v-btn>
-              </template>
-            </v-data-table>
-            <v-btn color="green" @click="openAddAbsenceDialog">
-              <v-icon color="white">mdi-plus</v-icon>
-              Abwesenheit hinzufügen
-            </v-btn>
           </v-row>
         </v-tab-item>
       </v-tabs-items>  
@@ -191,10 +142,12 @@
       <v-btn color="green" @click="saveChanges">Speichern</v-btn>
     </v-card-actions>
     <AbsenceDialog
-      :dialogVisible="isAbsenceDialogVisible"
       :therapistId="therapistId"
       :absence="absenceInput"
-      @update:dialogVisible="isAbsenceDialogVisible = $event"
+      v-model="isAbsenceDialogVisible"
+      @save="changeAbsence"
+      @delete="deleteAbsence"
+      @cancel="isAbsenceDialogVisible = false"
     />
     <SingleAppointmentDialog
       v-if="selectedSingleAppointment"
@@ -260,8 +213,10 @@ export default defineComponent({
     const absenceInput = ref<Absence | null>(null);
     const selectedSingleAppointment = ref<SingleAppointment | null>(null);
     const selectedAppointmentSeries = ref<AppointmentSeries | null>(null);
+    const selectedAbsence = ref<Absence | null>(null);
     const singleAppointmentDialog = ref(false);
     const appointmentSeriesDialog = ref(false);
+    const absenceDialog = ref(false);
 
     const appointmentHeaders = ref([
       { title: 'Patient', value: 'patient.fullName', sortable: true },
@@ -287,7 +242,6 @@ export default defineComponent({
       { title: 'Wochentag', value: 'weekday', sortable: true },
       { title: 'Von', value: 'startTime', sortable: true },
       { title: 'Bis', value: 'endTime', sortable: true },
-      { title: '', value: 'actions', sortable: true },
     ]);
 
     const therapistStore = useTherapistStore();
@@ -311,7 +265,7 @@ export default defineComponent({
     const loadAbsences = async () => {
       loadingAbsences.value = true;
       await absenceStore.loadAbsences(props.therapistId);
-      absences.value = await absenceStore.getAbsencesForTherapist();
+      absences.value = await absenceStore.getAbsencesForTherapist(props.therapistId);
       loadingAbsences.value = false;
     };
 
@@ -360,6 +314,12 @@ export default defineComponent({
       loadAppointments();
     };
 
+
+    const changeAbsence = (absence: Absence) => {
+      absenceStore.updateAbsence(absence.id, absence);
+      loadAppointments();
+    };
+
     const deleteSingleAppointment = async (appointment: SingleAppointment) => {
       await appointmentStore.deleteAppointment(appointment.id);
       loadAppointments();
@@ -374,6 +334,7 @@ export default defineComponent({
     const openAddAbsenceDialog = () => {
       absenceInput.value = {
         id: 0,
+        therapistId: props.therapistId,
         date: new Date(),
         startTime: new Date(),
         endTime: new Date(),
@@ -390,6 +351,11 @@ export default defineComponent({
     const showAppointmentSeriesDialog = (appointmentSeries: AppointmentSeries) => {
       selectedAppointmentSeries.value = appointmentSeries;
       appointmentSeriesDialog.value = true;
+    };
+
+    const showAbsenceDialog = (absence: Absence) => {
+      selectedAbsence.value = absence;
+      absenceDialog.value = true;
     };
 
     const closeAddAbsenceDialog = () => {
@@ -448,6 +414,10 @@ export default defineComponent({
       deleteAbsence,
       showSingleAppointmentDialog,
       showAppointmentSeriesDialog,
+      selectedAbsence,
+      absenceDialog,
+      showAbsenceDialog,
+      changeAbsence,
     };
   },
 });

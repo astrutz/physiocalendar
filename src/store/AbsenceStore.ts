@@ -3,6 +3,8 @@ import axios from 'axios';
 import Absence from '@/class/Absence';
 import { JSONAbsenceDTO } from '@/class/JSONStructures';
 import { convertToAbsence, convertToAbsenceDTO } from './convert';
+import { toast } from 'vue3-toastify';
+import apiClient from './apiClient';
 
 export const useAbsenceStore = defineStore('absence', {
   state: () => ({
@@ -12,7 +14,7 @@ export const useAbsenceStore = defineStore('absence', {
   actions: {
     async loadAbsences(therapistId: number): Promise<void> {
       try {
-        const responseData: JSONAbsenceDTO[] = (await axios.get(`http://localhost:8080/api/therapists/${therapistId}/absences`)).data;
+        const responseData: JSONAbsenceDTO[] = (await apiClient.get(`/absences/therapist/${therapistId}`)).data;
         this.absences = responseData.map(dto => convertToAbsence(dto));
       } catch (err) {
         console.error(err);
@@ -22,18 +24,20 @@ export const useAbsenceStore = defineStore('absence', {
     async addAbsence(therapistId: number, absence: Absence): Promise<void> {
       try {
         const absenceDTO = convertToAbsenceDTO(absence);
-        await axios.post(`http://localhost:8080/api/therapists/${therapistId}/absences`, absenceDTO);
+        await apiClient.post(`/absences`, absenceDTO);
+        toast.success("Abwesenheit erfolgreich erstellt");
         this.loadAbsences(therapistId);
       } catch (err) {
         console.error(err);
       }
     },
 
-    async updateAbsence(therapistId: number, absence: Absence): Promise<void> {
+    async updateAbsence( id: number, absence: Absence): Promise<void> {
       try {
         const absenceDTO = convertToAbsenceDTO(absence);
-        await axios.put(`http://localhost:8080/api/absences/${absence.id}`, absenceDTO);
-        this.loadAbsences(therapistId);
+        await apiClient.put(`absences/${id}`, absenceDTO);
+        toast.success("Abwesenheit erfolgreich gespeichert");
+        this.loadAbsences(absence.therapistId);
       } catch (err) {
         console.error(err);
       }
@@ -41,7 +45,8 @@ export const useAbsenceStore = defineStore('absence', {
 
     async deleteAbsence(therapistId: number, absenceId: number): Promise<void> {
       try {
-        await axios.delete(`http://localhost:8080/api/absences/${absenceId}`);
+        await apiClient.delete(`absences/${absenceId}`);
+        toast.success("Abwesenheit erfolgreich gelöscht");
         this.loadAbsences(therapistId);
       } catch (err) {
         console.error(err);
@@ -52,12 +57,12 @@ export const useAbsenceStore = defineStore('absence', {
   getters: {
     getAllAbsences: (state) => state.absences,
 
-    getAbsencetById: (state) => (absenceId: number) => {
-      return state.absences.find(absence => absence.id === absenceId);
+    getAbsencetById: (state) => (id: number) => {
+      return state.absences.filter(absence => absence.id === id);
     },
 
-    getAbsencesForTherapist: (state) => () => {
-      return state.absences || [];
+    getAbsencesForTherapist: (state) => (id: number) => {
+      return state.absences.filter(absence => absence.therapistId === id) || [];
     },
 
   },

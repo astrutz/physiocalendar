@@ -33,6 +33,8 @@
           :locale="locale"
           :timeStep="10"
           :todayButton="true"
+          :special-hours="specialHours"
+          :showTimeInCells="false"
         >
         <template #split-label="{ split, view }">
           <v-icon>mdi-account</v-icon>
@@ -125,6 +127,40 @@ export default defineComponent({
       createEvent: 'Ereignis erstellen',
       dateFormat: 'dddd DD.MM.YYYY',  // Format des Datums
     };
+
+    const specialHours =  {
+      1: [
+        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
+        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' }, 
+        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' } 
+      ],
+      2: [
+        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
+        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' },
+        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' }
+      ],
+      3: [
+        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
+        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' },
+        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' }
+      ],
+      4: [
+        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
+        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' },
+        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' }
+      ],
+      5: [
+        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
+        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' },
+        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' }
+      ],
+      6: [
+        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
+        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' },
+        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' }
+      ],
+      7: { from: 0 * 60, to: 24 * 60, class: 'non-work-hours' } 
+    }
 
     const locale = ref(customLocale);
 
@@ -288,13 +324,11 @@ export default defineComponent({
 
       const therapist = therapistIndexMap.get(clickedSplit);
       if (therapist){
-        // Initialisiere das Terminobjekt
       initAppointment.value = SingleAppointment.createEmpty();
       initAppointment.value.date = roundedDate;
       initAppointment.value.startTime = roundedDate;
       initAppointment.value.endTime = new Date(roundedDate.getTime() + 20 * 60 * 1000);
       initAppointment.value.therapist = therapist;
-      console.log(initAppointment);
       openCreateDialog();
       }
     };
@@ -359,6 +393,7 @@ export default defineComponent({
       customLocale,
       splits,
       locale,
+      specialHours,
       conflicts,
       formatDate,
       formatTime,
@@ -411,5 +446,9 @@ export default defineComponent({
 .vuecal__body .split12 {
   border-right: 1px solid black;
 }
-/* vuecal__flex vuecal__cell-content vuecal__cell-split split1 */
+
+.non-work-hours {
+  background-color: #333; /* Dunkelgrau für Nicht-Arbeitszeiten */
+}
+
 </style>

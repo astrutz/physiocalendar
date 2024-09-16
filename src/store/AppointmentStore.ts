@@ -5,7 +5,6 @@ import { JSONSingleAppointmentDTO } from '@/class/JSONStructures';
 import { convertToAppointment, convertToAppointmentDTO } from './convert';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
-import Appointment from '../class/Appointment';
 import { useAuthStore } from './authStore';
 import apiClient from './apiClient';
 
