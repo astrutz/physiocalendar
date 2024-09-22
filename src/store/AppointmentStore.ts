@@ -17,7 +17,6 @@ export const useAppointmentStore = defineStore('appointment', {
   actions: {
     async loadAppointments(params?: { date?: string; therapistId?: number; patientId?: number }): Promise<void> {
       try {
-        const authStore = useAuthStore();
         const queryString = params ? this.buildQueryString(params) : '';
         const responseData: JSONSingleAppointmentDTO[] = (await apiClient.get(`appointments${queryString}`)).data;
         this.appointments = responseData.map(dto => convertToAppointment(dto));

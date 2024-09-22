@@ -5,9 +5,9 @@ export default class Absence {
 
   therapistId: number;
 
-  date: Date;
+  date: Date | null;
   
-  weekday: Weekday;
+  weekday: Weekday | null;
 
   startTime : Date;
 
@@ -16,8 +16,8 @@ export default class Absence {
   constructor(
     id: number,
     therapistId: number,
-    date: Date,
-    weekday: Weekday,
+    date: Date | null,
+    weekday: Weekday | null,
     startTime: Date,
     endTime: Date,
   ) {

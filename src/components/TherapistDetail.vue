@@ -47,8 +47,9 @@
           />
         </v-col>
       </v-row>
-      <v-spacer></v-spacer>
-      <div  class="tabs text-h6">
+      <v-row>
+       <v-spacer></v-spacer>
+      
         <!-- Tab Selector -->
       <v-tabs v-model="activeTab">
         <v-tab>Einzeltermine</v-tab>
@@ -56,6 +57,9 @@
         <v-tab>Abwesenheiten</v-tab>
       </v-tabs>
       <v-spacer></v-spacer>
+  
+      </v-row>
+    
       <v-tabs-items v-model="activeTab">
         <!-- Einzeltermine -->
         <v-tab-item v-if="activeTab === 0">
@@ -109,10 +113,6 @@
         <!-- Abwesenheiten -->
         <v-tab-item v-if="activeTab === 2">
           <v-row>
-            <v-btn color="success" @click="openAddAbsenceDialog">
-              <v-icon>mdi-plus</v-icon>
-              Abwesenheit hinzufügen
-            </v-btn>
             <v-data-table
               :headers="absenceHeaders"
               :items="absences"
@@ -121,18 +121,25 @@
               :loading-text="'Laden...'"
             > 
             <template v-slot:item="{ item }">
-              <tr @click="showAbsenceDialog(item)" style="cursor: pointer;">
-                <td>{{ formatDate(item.date) }}</td>
-                <td>{{ item.weekday }}</td>
+              <tr 
+              @click="showAbsenceDialog(item)"
+              :class="{'recurring-absence': !item.date}" 
+              style="cursor: pointer;"
+              >
+                <td>{{ item.date ? formatDate(item.date) : item.date }}</td>
+                <td>{{ item.weekday ? item.weekday + 's' : '' }}</td>
                 <td>{{ formatTime(new Date(item.startTime)) }}</td>
                 <td>{{ formatTime(new Date(item.endTime)) }}</td>
               </tr>
               </template>
             </v-data-table>
+            <v-btn color="green" @click="openAddAbsenceDialog">
+              <v-icon>mdi-plus</v-icon>
+              Abwesenheit hinzufügen
+            </v-btn>
           </v-row>
         </v-tab-item>
       </v-tabs-items>  
-      </div>
     </v-card-text>
     <v-card-actions>
       <v-btn color="grey" @click="cancelChanges">Abbrechen</v-btn>
@@ -182,7 +189,6 @@ import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
 import { useAbsenceStore } from '@/store/AbsenceStore';
 import AbsenceDialog from './AbsenceDialog.vue';
-import { Weekday } from '@/class/Enums';
 import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
 import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
 import { formatDate, formatTime } from '@/class/Dateconversions';
@@ -265,7 +271,7 @@ export default defineComponent({
     const loadAbsences = async () => {
       loadingAbsences.value = true;
       await absenceStore.loadAbsences(props.therapistId);
-      absences.value = await absenceStore.getAbsencesForTherapist(props.therapistId);
+      absences.value = await absenceStore.getAllAbsences;
       loadingAbsences.value = false;
     };
 
@@ -315,14 +321,24 @@ export default defineComponent({
     };
 
 
-    const changeAbsence = (absence: Absence) => {
-      absenceStore.updateAbsence(absence.id, absence);
-      loadAppointments();
+    const changeAbsence = async (absence: Absence) => {
+      if(therapistInput.value === undefined) return;
+
+      if (absence.id === 0) {
+        absenceStore.addAbsence(therapistInput.value.id, absence);
+        await loadAbsences();
+        closeAddAbsenceDialog();
+      }
+      else{
+        absenceStore.updateAbsence(absence.id, absence);
+        loadAbsences();
+      }
     };
 
     const deleteSingleAppointment = async (appointment: SingleAppointment) => {
       await appointmentStore.deleteAppointment(appointment.id);
       loadAppointments();
+      closeAddAbsenceDialog();
     };
 
     const deleteSeriesAppointment = (id: number) => {
@@ -335,10 +351,10 @@ export default defineComponent({
       absenceInput.value = {
         id: 0,
         therapistId: props.therapistId,
-        date: new Date(),
+        date: null,
         startTime: new Date(),
         endTime: new Date(),
-        weekday: Weekday.MONDAY,
+        weekday: null,
       };
       isAbsenceDialogVisible.value = true;
     };
@@ -354,8 +370,8 @@ export default defineComponent({
     };
 
     const showAbsenceDialog = (absence: Absence) => {
-      selectedAbsence.value = absence;
-      absenceDialog.value = true;
+      absenceInput.value = absence;
+      isAbsenceDialogVisible.value = true;
     };
 
     const closeAddAbsenceDialog = () => {
@@ -374,6 +390,7 @@ export default defineComponent({
 
     const deleteAbsence = async (absenceId: number) => {
       await absenceStore.deleteAbsence(props.therapistId, absenceId);
+      isAbsenceDialogVisible.value = false;
     };
 
     return {
@@ -423,14 +440,7 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
-.series-appointment {
-  background-color: #34d685;
-}
-
-.single-appointment {
-  background-color: #ffffff;
-}
+<style>
 
 .tabs {
   padding-top: 40px;
@@ -443,5 +453,9 @@ export default defineComponent({
 
 .v-data-table {
   padding-top: 15px;
+}
+
+.recurring-absence {
+  background-color: #f0f0f0;
 }
 </style>

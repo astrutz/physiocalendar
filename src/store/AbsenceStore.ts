@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia';
-import axios from 'axios';
 import Absence from '@/class/Absence';
 import { JSONAbsenceDTO } from '@/class/JSONStructures';
 import { convertToAbsence, convertToAbsenceDTO } from './convert';
@@ -15,7 +14,9 @@ export const useAbsenceStore = defineStore('absence', {
     async loadAbsences(therapistId: number): Promise<void> {
       try {
         const responseData: JSONAbsenceDTO[] = (await apiClient.get(`/absences/therapist/${therapistId}`)).data;
-        this.absences = responseData.map(dto => convertToAbsence(dto));
+        if(responseData) {
+          this.absences = responseData.map(dto => convertToAbsence(dto));
+        }
       } catch (err) {
         console.error(err);
       }
