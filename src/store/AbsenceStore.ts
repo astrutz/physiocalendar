@@ -53,6 +53,17 @@ export const useAbsenceStore = defineStore('absence', {
         console.error(err);
       }
     },
+
+    async isTherapistAbsent(therapistId: number, date: Date): Promise<boolean> {
+      try {
+        const responseData = (await apiClient.get(`absences?therapistId=${therapistId}&date=${encodeURIComponent(date.getTime())}`)).data;
+        return responseData.length > 0; // If there are any absences, the therapist is absent
+      } catch (err) {
+        console.error('Fehler beim Überprüfen der Abwesenheit:', err);
+        toast.error('Fehler beim Überprüfen der Abwesenheit.');
+        return false;
+      }
+    }    
   },
 
   getters: {

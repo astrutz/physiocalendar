@@ -326,12 +326,13 @@ export default defineComponent({
 
       if (absence.id === 0) {
         absenceStore.addAbsence(therapistInput.value.id, absence);
-        await loadAbsences();
+        loadAbsences();
         closeAddAbsenceDialog();
       }
       else{
         absenceStore.updateAbsence(absence.id, absence);
         loadAbsences();
+        closeAddAbsenceDialog();
       }
     };
 

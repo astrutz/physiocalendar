@@ -97,6 +97,33 @@ export const useAppointmentStore = defineStore('appointment', {
 
       return queryParts.length ? `?${queryParts.join('&')}` : '';
     },
+
+    async findAvailableAppointments(params: { therapist?: string | null; timeOfDay?: string | null; duration?: number | null }): Promise<SingleAppointment[]> {
+      try {
+        const queryParts: string[] = [];
+        
+        if (params.therapist) {
+          queryParts.push(`therapist=${encodeURIComponent(params.therapist)}`);
+        }
+    
+        if (params.timeOfDay) {
+          queryParts.push(`timeOfDay=${encodeURIComponent(params.timeOfDay)}`);
+        }
+    
+        if (params.duration) {
+          queryParts.push(`duration=${encodeURIComponent(params.duration)}`);
+        }
+    
+        const queryString = queryParts.length ? `?${queryParts.join('&')}` : '';
+        const responseData: JSONSingleAppointmentDTO[] = (await apiClient.get(`appointments/available${queryString}`)).data;
+        return responseData.map(dto => convertToAppointment(dto));
+      } catch (err) {
+        console.error('Fehler beim Laden der verfügbaren Termine:', err);
+        toast.error('Fehler beim Laden der verfügbaren Termine.');
+        return [];
+      }
+    }
+    
   },
 
   getters: {
@@ -131,6 +158,8 @@ export const useAppointmentStore = defineStore('appointment', {
       });
       return appointments;
     },
+
+    
 
     getAppointmentByTherapistAndTime: (state) => (therapistId: number, date: Date, time: Date) => {
       const appointments = state.appointments.filter(appointment => {

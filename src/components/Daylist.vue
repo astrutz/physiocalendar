@@ -206,7 +206,7 @@ export default defineComponent({
         await appointmentStore.loadAppointments();
 
         // Lade Therapeuten
-        const therapists = therapistStore.getTherapists();
+        const therapists = therapistStore.getTherapists().filter((therapist) => therapist.isActive);
         
         // Erstelle ein Mapping von therapistId zu Index
         const therapistIndexMap = new Map<number, number>();
@@ -239,7 +239,6 @@ export default defineComponent({
     const handleEventClick = (event: any) => {
       // Handle event click (open dialogs)
       const appointment = appointmentStore.getAppointmentById(event.id);
-      console.log(appointment);
       if (appointment) {
         selectedAppointment.value = appointment;
         singleAppointmentDialog.value = true;
@@ -314,7 +313,7 @@ export default defineComponent({
       const clickedSplit = event.split;
       const roundedDate = roundToNearestTenMinutes(clickedDate);
 
-      const therapists = therapistStore.getTherapists();
+      const therapists = therapistStore.getTherapists().filter((therapist) => therapist.isActive);
         
         // Erstelle ein Mapping von therapistId zu Index
         const therapistIndexMap = new Map<number, Therapist>();

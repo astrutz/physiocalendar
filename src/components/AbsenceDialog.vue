@@ -44,6 +44,7 @@
                 @change="handleStartTimeChange"
                 text-input
                 teleport-center
+                minutes-increment="10"
                 :format="formatTime"
                 :format-locale="de"
                 :value="absence.startTime"
@@ -56,6 +57,7 @@
                 @change="handleEndTimeChange"
                 text-input
                 teleport-center
+                minutes-increment="10"
                 :format="formatTime"
                 :format-locale="de"
                 :value="absence.endTime"
@@ -81,9 +83,7 @@
 import { defineComponent, ref, computed, watch } from 'vue';
 import Absence from '@/class/Absence';
 import { de } from 'date-fns/locale';
-import { Weekday } from '@/class/Enums';
 import { formatDate, formatTime } from '@/class/Dateconversions';
-import { aliases } from 'vuetify/iconsets/mdi';
 
 export default defineComponent({
   name: 'AbsenceDialog',

@@ -126,7 +126,7 @@
         <v-spacer></v-spacer>
         <v-btn
           :disabled="!isSeries ? !isValid : !isSeriesValid"
-          color="primary"
+          color="green"
           @click="saveAppointment"
         >
           Speichern
