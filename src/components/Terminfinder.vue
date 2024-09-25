@@ -1,4 +1,7 @@
 <template>
+  <v-dialog v-model="dialogIsOpen" max-width="1500">
+  <!-- Dein Stepper und sonstiger Inhalt hier -->
+
   <v-stepper v-model="currentStep" show-actions>
     <v-stepper-header>
       <v-stepper-item title="Therapeut & Patient auswählen" :value="1" complete editable></v-stepper-item>
@@ -6,6 +9,10 @@
       <v-stepper-item title="Tageszeiten & Termindauer" :value="2" complete editable></v-stepper-item>
       <v-divider></v-divider>
       <v-stepper-item title="Verfügbare Slots" :value="3" complete editable></v-stepper-item>
+      <v-btn icon @click="closeDialog">
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
+
     </v-stepper-header>
 
     <v-stepper-window>
@@ -39,7 +46,7 @@
           v-model="selectedTimeOfDay"
           :items="timeOfDayOptions"
           item-title="text"
-          item-value="value"
+          item-value="id"
           label="Tageszeiten auswählen oder leer lassen"
           clearable
         ></v-select>
@@ -66,10 +73,11 @@
     <v-stepper-actions prev-text="Zurück" next-text="Weiter" @click:next="nextStep" @click:prev="prevStep">
     </v-stepper-actions>
   </v-stepper>
+</v-dialog>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, onMounted } from 'vue';
+import { defineComponent, ref, computed, watch, onMounted, createApp } from 'vue';
 import { useTherapistStore } from '@/store/TherapistStore';
 import { usePatientStore } from '@/store/PatientStore';
 import { useAppointmentStore } from '@/store/AppointmentStore';
@@ -79,23 +87,22 @@ import { formatDate } from '@/class/Dateconversions';
 
 export default defineComponent({
   setup() {
+    const dialogIsOpen = ref(true);
     const currentStep = ref(0);
     const selectedTherapistId = ref<number | null>(null);
     const selectedPatientId = ref<number | null>(null);
-    const selectedTherapist = ref<string | null>(null);
-    const selectedPatient = ref<string | null>(null);
     const searchValue = ref('');
-    const selectedTimeOfDay = ref<string | null>(null);
+    const selectedTimeOfDay = ref<number | null>(null);
     const selectedDuration = ref<number | null>(null);
     const availableSlots = ref<SingleAppointment[]>([]);
 
-    const timeOfDayOptions = [
-      { text: 'Morgen (07:00-10:00)', value: 'Morgen' },
-      { text: 'Vormittag (10:00-12:00)', value: 'Vormittag' },
-      { text: 'Mittag (12:00-15:00)', value: 'Mittag' },
-      { text: 'Nachmittag (15:00-18:00)', value: 'Nachmittag' },
-      { text: 'Abend (18:00-20:00)', value: 'Abend' },
-    ];
+    const timeOfDayOptions = ref([
+      { id: 1, text: 'Morgen (07:00-10:00)' },
+      { id: 2, text: 'Vormittag (10:00-12:00)' },
+      { id: 3, text: 'Mittag (12:00-15:00)' },
+      { id: 4, text: 'Nachmittag (15:00-18:00)' },
+      { id: 5, text: 'Abend (18:00-20:00)' }
+    ]);
 
     const therapistsOptions = ref<{ id: number; fullName: string }[]>([]);
     const patientsOptions = ref<{ id: number; fullName: string }[]>([]);
@@ -129,6 +136,12 @@ export default defineComponent({
       }
     });
 
+    watch(currentStep, async (newStep) => {
+      if (newStep === 3) { // Wenn der dritte Schritt erreicht wird
+        await findAvailableSlots();
+      }
+    });
+
     const handleSearchInput = async (val: string) => {
       searchValue.value = val;
     };
@@ -142,30 +155,43 @@ export default defineComponent({
     };
 
     const findAvailableSlots = async () => {
-      // Filter for available appointments by selected therapist, patient, time of day, and absence checking
-      const possibleAppointments = await appointmentStore.findAvailableAppointments({
-        therapist: selectedTherapist.value,
-        timeOfDay: selectedTimeOfDay.value,
-        duration: selectedDuration.value,
-      });
-
-      const availableAppointments = possibleAppointments.filter(
-        (appointment: SingleAppointment) => !absenceStore.isTherapistAbsent(appointment.therapistId, appointment.date)
-      );
-
-      availableSlots.value = availableAppointments;
-      nextStep();
+      try {
+        const queryParams = {
+          therapistId: selectedTherapistId.value,
+          timeOfDayId: selectedTimeOfDay.value,
+          duration: selectedDuration.value
+        };
+        const availableAppointments = await appointmentStore.findAvailableAppointments(queryParams);
+        availableSlots.value = availableAppointments;
+        nextStep();  // Gehe zum nächsten Schritt, wenn Termine gefunden wurden
+      } catch (error) {
+        console.error('Error finding available slots:', error);
+      }
     };
 
-    const bookSlot = async (slot: SingleAppointment) => {
-      // Logic to book the selected slot
-      //await appointmentStore.bookAppointment(slot);
-      // Optionally reset the wizard
+
+    const bookSlot = async (appointment: SingleAppointment) => {
+      try {
+        await appointmentStore.addAppointment(appointment);
+        // Reset und Schließen des Wizards nach erfolgreicher Buchung
+        resetWizard();
+      } catch (error) {
+        console.error('Error booking appointment:', error);
+      }
+    };
+
+    const closeDialog = () => {
+      dialogIsOpen.value = false;
+    };
+
+
+    const resetWizard = () => {
       currentStep.value = 1;
-      selectedTherapist.value = null;
-      selectedPatient.value = null;
+      selectedTherapistId.value = null;
+      selectedPatientId.value = null;
       selectedTimeOfDay.value = null;
       selectedDuration.value = null;
+      availableSlots.value = [];
     };
 
     return {
@@ -180,12 +206,14 @@ export default defineComponent({
       patientsOptions,
       timeOfDayOptions,
       availableAppointmentDurations,
+      dialogIsOpen,
       nextStep,
       prevStep,
       findAvailableSlots,
       bookSlot,
       handleSearchInput,
       formatDate,
+      closeDialog,
     };
   },
 });

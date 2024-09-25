@@ -98,16 +98,20 @@ export const useAppointmentStore = defineStore('appointment', {
       return queryParts.length ? `?${queryParts.join('&')}` : '';
     },
 
-    async findAvailableAppointments(params: { therapist?: string | null; timeOfDay?: string | null; duration?: number | null }): Promise<SingleAppointment[]> {
+    async findAvailableAppointments(params: { therapistId?: number | null; patientId?: number ; timeOfDayId?: number | null; duration?: number | null }): Promise<SingleAppointment[]> {
       try {
         const queryParts: string[] = [];
         
-        if (params.therapist) {
-          queryParts.push(`therapist=${encodeURIComponent(params.therapist)}`);
+        if (params.therapistId) {
+          queryParts.push(`therapistId=${encodeURIComponent(params.therapistId)}`);
+        }
+
+        if (params.patientId) {
+          queryParts.push(`patientId=${encodeURIComponent(params.patientId)}`);
         }
     
-        if (params.timeOfDay) {
-          queryParts.push(`timeOfDay=${encodeURIComponent(params.timeOfDay)}`);
+        if (params.timeOfDayId) {
+          queryParts.push(`timeOfDayId=${encodeURIComponent(params.timeOfDayId)}`);
         }
     
         if (params.duration) {
