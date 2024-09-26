@@ -195,11 +195,11 @@ export default defineComponent({
       const today = new Date(selectedDate.value);
 
       therapistAbsences.forEach(absence => {
-        let eventAdded = false; // Flag, um zu verfolgen, ob ein Ereignis hinzugefügt wurde
+        let eventAdded = false;
 
         if (absence.weekday) {
           const absenceDayIndex = getDayIndex(absence.weekday);
-          const todayDayIndex =today.getDay(); // Heutiger Wochentag als Zahl
+          const todayDayIndex = today.getDay();
 
           if (absenceDayIndex === todayDayIndex) {
             const startTime = new Date(today);

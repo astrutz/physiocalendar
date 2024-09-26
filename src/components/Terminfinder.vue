@@ -65,6 +65,9 @@
           :items="availableSlots"
           :items-per-page="10"
           class="elevation-1"
+          :loading="loading"
+          loading-text="Termine werden geladen..."
+          no-data-text="Keine verfügbaren Termine"
         >
         <template v-slot:item="{ item }">
               <tr @click="showAppointmentDialog(item)" style="cursor: pointer;">
@@ -120,12 +123,13 @@ export default defineComponent({
     const availableSlots = ref<SingleAppointment[]>([]);
     const appointmentDialogOpen = ref(false);
     const selectedAppointment = ref<SingleAppointment | null>(null);;
+    const loading = ref(false);
 
     const headers = ref([
-      { text: 'Therapeut', value: 'therapist.firstName' },
-      { text: 'Datum', value: 'date', formatter: formatDate },
-      { text: 'Startzeit', value: 'startTime', formatter: formatTime },
-      { text: 'Endzeit', value: 'endTime', formatter: formatTime },
+      { title: 'Therapeut', value: 'therapist.firstName', sortable: true  },
+      { title: 'Datum', value: 'date', formatter: formatDate, sortable: true  },
+      { title: 'Startzeit', value: 'startTime', formatter: formatTime },
+      { title: 'Endzeit', value: 'endTime', formatter: formatTime },
     ]);
 
     const timeOfDayOptions = ref([
@@ -194,17 +198,20 @@ export default defineComponent({
 
     const findAvailableSlots = async () => {
       try {
+        loading.value = true;
         const queryParams = {
           therapistId: selectedTherapistId.value,
           patientId: selectedPatientId.value,
           timeOfDayId: selectedTimeOfDay.value,
           duration: selectedDuration.value
         };
+        nextStep(); 
         const availableAppointments = await appointmentStore.findAvailableAppointments(queryParams);
         availableSlots.value = availableAppointments;
-        nextStep(); 
+        loading.value = false;
       } catch (error) {
         console.error('Error finding available slots:', error);
+        loading.value = false;
       }
     };
 
@@ -242,6 +249,7 @@ export default defineComponent({
       dialogIsOpen,
       appointmentDialogOpen,
       selectedAppointment,
+      loading,
       showAppointmentDialog,
       nextStep,
       prevStep,
