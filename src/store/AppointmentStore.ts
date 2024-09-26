@@ -98,7 +98,7 @@ export const useAppointmentStore = defineStore('appointment', {
       return queryParts.length ? `?${queryParts.join('&')}` : '';
     },
 
-    async findAvailableAppointments(params: { therapistId?: number | null; patientId?: number ; timeOfDayId?: number | null; duration?: number | null }): Promise<SingleAppointment[]> {
+    async findAvailableAppointments(params: { therapistId?: number | null; patientId?: number | null; timeOfDayId?: number | null; duration?: number | null }): Promise<SingleAppointment[]> {
       try {
         const queryParts: string[] = [];
         

@@ -60,32 +60,55 @@
 
       <!-- Schritt 3: Verfügbare Slots anzeigen -->
       <v-stepper-window-item :value="3">
-        <v-row>
-          <v-col v-for="slot in availableSlots" :key="slot.id">
-            <v-card @click="bookSlot(slot)">
-              <v-card-title>{{ slot.therapist }} - {{ formatDate(slot.date) }}</v-card-title>
-            </v-card>
-          </v-col>
-        </v-row>
+        <v-data-table
+          :headers="headers"
+          :items="availableSlots"
+          :items-per-page="10"
+          class="elevation-1"
+        >
+        <template v-slot:item="{ item }">
+              <tr @click="showAppointmentDialog(item)" style="cursor: pointer;">
+                <td>{{ item.therapist.firstName }}</td>
+                <td>{{ formatDate(item.date) }}</td>
+                <td>{{ formatTime(item.startTime) }}</td>
+                <td>{{ formatTime(item.endTime) }}</td>
+                <td>{{ item.comment }}</td>
+              </tr>
+            </template>
+      </v-data-table>
       </v-stepper-window-item>
     </v-stepper-window>
 
     <v-stepper-actions prev-text="Zurück" next-text="Weiter" @click:next="nextStep" @click:prev="prevStep">
     </v-stepper-actions>
   </v-stepper>
+  <v-dialog v-model="appointmentDialogOpen" max-width="800px">
+    <SingleAppointmentDialog
+          v-if="selectedAppointment"
+          :appointment.sync="selectedAppointment"
+          :currentDay="new Date()"
+          v-model="appointmentDialogOpen"
+          @saveSingle="changeSingleAppointment"
+          @cancel="appointmentDialogOpen = false"
+        />
+  </v-dialog>
 </v-dialog>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, onMounted, createApp } from 'vue';
+import { defineComponent, ref, watch, onMounted } from 'vue';
 import { useTherapistStore } from '@/store/TherapistStore';
 import { usePatientStore } from '@/store/PatientStore';
 import { useAppointmentStore } from '@/store/AppointmentStore';
 import { useAbsenceStore } from '@/store/AbsenceStore';
 import SingleAppointment from '@/class/SingleAppointment';
-import { formatDate } from '@/class/Dateconversions';
+import { formatDate, formatTime } from '@/class/Dateconversions';
+import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
 
 export default defineComponent({
+  components: {
+    SingleAppointmentDialog
+  },
   setup() {
     const dialogIsOpen = ref(true);
     const currentStep = ref(0);
@@ -95,13 +118,23 @@ export default defineComponent({
     const selectedTimeOfDay = ref<number | null>(null);
     const selectedDuration = ref<number | null>(null);
     const availableSlots = ref<SingleAppointment[]>([]);
+    const appointmentDialogOpen = ref(false);
+    const selectedAppointment = ref<SingleAppointment | null>(null);;
+
+    const headers = ref([
+      { text: 'Therapeut', value: 'therapist.firstName' },
+      { text: 'Datum', value: 'date', formatter: formatDate },
+      { text: 'Startzeit', value: 'startTime', formatter: formatTime },
+      { text: 'Endzeit', value: 'endTime', formatter: formatTime },
+    ]);
 
     const timeOfDayOptions = ref([
       { id: 1, text: 'Morgen (07:00-10:00)' },
       { id: 2, text: 'Vormittag (10:00-12:00)' },
       { id: 3, text: 'Mittag (12:00-15:00)' },
       { id: 4, text: 'Nachmittag (15:00-18:00)' },
-      { id: 5, text: 'Abend (18:00-20:00)' }
+      { id: 5, text: 'Abend (18:00-20:00)' },
+      { id: 6, text: 'Ganzer Tag (07:00-20:00)' }
     ]);
 
     const therapistsOptions = ref<{ id: number; fullName: string }[]>([]);
@@ -137,10 +170,15 @@ export default defineComponent({
     });
 
     watch(currentStep, async (newStep) => {
-      if (newStep === 3) { // Wenn der dritte Schritt erreicht wird
+      if (newStep === 3) {
         await findAvailableSlots();
       }
     });
+
+    function showAppointmentDialog(item: SingleAppointment) {
+      selectedAppointment.value = item;
+      appointmentDialogOpen.value = true;
+    }
 
     const handleSearchInput = async (val: string) => {
       searchValue.value = val;
@@ -158,26 +196,20 @@ export default defineComponent({
       try {
         const queryParams = {
           therapistId: selectedTherapistId.value,
+          patientId: selectedPatientId.value,
           timeOfDayId: selectedTimeOfDay.value,
           duration: selectedDuration.value
         };
         const availableAppointments = await appointmentStore.findAvailableAppointments(queryParams);
         availableSlots.value = availableAppointments;
-        nextStep();  // Gehe zum nächsten Schritt, wenn Termine gefunden wurden
+        nextStep(); 
       } catch (error) {
         console.error('Error finding available slots:', error);
       }
     };
 
-
-    const bookSlot = async (appointment: SingleAppointment) => {
-      try {
-        await appointmentStore.addAppointment(appointment);
-        // Reset und Schließen des Wizards nach erfolgreicher Buchung
-        resetWizard();
-      } catch (error) {
-        console.error('Error booking appointment:', error);
-      }
+    const changeSingleAppointment = async (appointment: SingleAppointment) => {
+       await appointmentStore.addAppointment(appointment);
     };
 
     const closeDialog = () => {
@@ -203,16 +235,21 @@ export default defineComponent({
       selectedDuration,
       availableSlots,
       therapistsOptions,
+      headers,
       patientsOptions,
       timeOfDayOptions,
       availableAppointmentDurations,
       dialogIsOpen,
+      appointmentDialogOpen,
+      selectedAppointment,
+      showAppointmentDialog,
       nextStep,
       prevStep,
       findAvailableSlots,
-      bookSlot,
+      changeSingleAppointment,
       handleSearchInput,
       formatDate,
+      formatTime,
       closeDialog,
     };
   },

@@ -149,7 +149,6 @@ import SingleAppointment from '@/class/SingleAppointment';
 import Patient from '@/class/Patient';
 import { formatDate, formatTime } from '@/class/Dateconversions';
 import { de } from 'date-fns/locale';
-import Printer from '@/class/Printer';
 import PrintDialog from './PrintDialog.vue';
 import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
 import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
@@ -173,7 +172,6 @@ export default defineComponent({
     const appointments = ref<SingleAppointment[]>([]);
     const appointmentSeries = ref<AppointmentSeries[]>([]);
     const activeTab = ref(0);
-    const printer = new Printer(props.patientId);
     const printDialogOpen = ref(false);
     const selectedSingleAppointment = ref<SingleAppointment | null>(null);
     const selectedAppointmentSeries = ref<AppointmentSeries | null>(null);

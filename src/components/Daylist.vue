@@ -76,6 +76,7 @@ import { useTherapistStore } from '@/store/TherapistStore';
 import Therapist from '@/class/Therapist';
 import SingleAppointment from '@/class/SingleAppointment';
 import AppointmentSeries from '@/class/AppointmentSeries';
+import Absence from '@/class/Absence';
 import { toast } from 'vue3-toastify';
 import 'vue-cal/dist/vuecal.css';
 
@@ -83,6 +84,7 @@ import 'vue-cal/dist/vuecal.css';
 import VueCal from 'vue-cal';
 import { format } from 'date-fns';
 import { formatDate, formatTime } from '../class/Dateconversions';
+import { useAbsenceStore } from '@/store/AbsenceStore';
 
 export default defineComponent({
   components: {
@@ -104,10 +106,12 @@ export default defineComponent({
     const selectedAppointment = ref<SingleAppointment | null>(null);
     const selectedSeriesAppointment = ref<AppointmentSeries | null>(null);
     const initAppointment = ref(SingleAppointment.createEmpty());
+    const therapists = ref<Therapist[]>([]);
 
     const appointmentStore = useAppointmentStore();
     const appointmentSeriesStore = useAppointmentSeriesStore();
     const therapistStore = useTherapistStore();
+    const absenceStore = useAbsenceStore();
     const splits = ref<any[]>([]);
     const events = ref<any[]>([]);
     const conflicts = ref<SingleAppointment[] | []>([]);
@@ -128,38 +132,27 @@ export default defineComponent({
       dateFormat: 'dddd DD.MM.YYYY',  // Format des Datums
     };
 
-    const specialHours =  {
-      1: [
-        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
-        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' }, 
-        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' } 
-      ],
-      2: [
-        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
-        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' },
-        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' }
-      ],
-      3: [
-        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
-        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' },
-        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' }
-      ],
-      4: [
-        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
-        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' },
-        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' }
-      ],
-      5: [
-        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
-        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' },
-        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' }
-      ],
-      6: [
-        { from: 0 * 60, to: 7 * 60, class: 'non-work-hours' },
-        { from: 7 * 60, to: 17.5 * 60, class: 'work-hours' },
-        { from: 17.5 * 60, to: 24 * 60, class: 'non-work-hours' }
-      ],
-      7: { from: 0 * 60, to: 24 * 60, class: 'non-work-hours' } 
+    const specialHours = ref({
+      1: [{ from: 0, to: 7 * 60, class: 'non-work-hours' }, { from: 7 * 60, to: 19 * 60, class: 'work-hours' }, { from: 19 * 60, to: 24 * 60, class: 'non-work-hours' }],
+      2: [{ from: 0, to: 7 * 60, class: 'non-work-hours' }, { from: 7 * 60, to: 19 * 60, class: 'work-hours' }, { from: 19 * 60, to: 24 * 60, class: 'non-work-hours' }],
+      3: [{ from: 0, to: 7 * 60, class: 'non-work-hours' }, { from: 7 * 60, to: 19 * 60, class: 'work-hours' }, { from: 19 * 60, to: 24 * 60, class: 'non-work-hours' }],
+      4: [{ from: 0, to: 7 * 60, class: 'non-work-hours' }, { from: 7 * 60, to: 19 * 60, class: 'work-hours' }, { from: 19 * 60, to: 24 * 60, class: 'non-work-hours' }],
+      5: [{ from: 0, to: 7 * 60, class: 'non-work-hours' }, { from: 7 * 60, to: 19 * 60, class: 'work-hours' }, { from: 19 * 60, to: 24 * 60, class: 'non-work-hours' }],
+      6: [{ from: 0, to: 7 * 60, class: 'non-work-hours' }, { from: 7 * 60, to: 19 * 60, class: 'work-hours' }, { from: 19 * 60, to: 24 * 60, class: 'non-work-hours' }],
+      7: [{ from: 0, to: 24 * 60, class: 'non-work-hours' }]
+    });
+
+    function getDayIndex(weekday: string): number {
+      const indexMap = {
+        'Montag': 1,
+        'Dienstag': 2,
+        'Mittwoch': 3,
+        'Donnerstag': 4,
+        'Freitag': 5,
+        'Samstag': 6,
+        'Sonntag': 0
+      };
+      return (indexMap as { [key: string]: number })[weekday] || 0; // Rückgabe 0 für nicht definierte Werte
     }
 
     const locale = ref(customLocale);
@@ -167,54 +160,92 @@ export default defineComponent({
     const generateClassName = (index: number) => `split${(index) + 1}`;
 
     onMounted(() => {
-      loadTherapists();
-      loadAppointments();
-      checkForConflicts();
-    });
-
-    watch(selectedDate, async () => {
-      await loadAppointments();
+      refreshData();
     });
 
     watch(
       () => props.currentSingleDay,
       (newDate: Date) => {
         selectedDate.value = newDate;
+        refreshData();
       }
     );
 
+    const refreshData = async () => {
+      await loadTherapists();
+      checkForConflicts();
+    };
+
     const loadTherapists = async () => {
       await therapistStore.loadTherapists();
-      const therapists = therapistStore.getTherapists().filter((therapist) => therapist.isActive);
-      splits.value = therapists.map((therapist, index) => ({
+      therapists.value = therapistStore.getTherapists().filter((therapist) => therapist.isActive);
+      splits.value = therapists.value.map((therapist, index) => ({
         label: therapist.firstName,
         class: generateClassName(index)
       }));
+      await loadAppointments();
+      for (const therapist of therapists.value) {
+        await loadAbsences(therapist.id);
+      }
     };
 
-    const checkForConflicts = async () => {
-      await appointmentStore.loadAppointmentConflicts();
-      const conflictResults = await appointmentStore.getAppointmentConflicts;
-      conflicts.value = conflictResults;
-    }
+    const loadAbsences = async (therapistId: number) => {
+      await absenceStore.loadAbsences(therapistId);
+      const therapistAbsences = absenceStore.getAbsencesForTherapist(therapistId);
+      const today = new Date(selectedDate.value);
 
-    const formatDateString = (date: Date): string => {
-        return format(date, 'yyyy-MM-dd HH:mm');
+      therapistAbsences.forEach(absence => {
+        let eventAdded = false; // Flag, um zu verfolgen, ob ein Ereignis hinzugefügt wurde
+
+        if (absence.weekday) {
+          const absenceDayIndex = getDayIndex(absence.weekday);
+          const todayDayIndex =today.getDay(); // Heutiger Wochentag als Zahl
+
+          if (absenceDayIndex === todayDayIndex) {
+            const startTime = new Date(today);
+            const endTime = new Date(today);
+
+            startTime.setHours(new Date(absence.startTime).getHours(), new Date(absence.startTime).getMinutes(), 0, 0);
+            endTime.setHours(new Date(absence.endTime).getHours(), new Date(absence.endTime).getMinutes(), 0, 0);
+
+            absence.startTime = startTime;
+            absence.endTime = endTime;
+
+            events.value.push(createAbsenceEvent(absence));
+            eventAdded = true;
+          }
+        } else if (absence.date) {
+          const absenceDate = new Date(absence.date);
+
+          if (absenceDate.setHours(0, 0, 0, 0) === today.setHours(0, 0, 0, 0)) {
+              events.value.push(createAbsenceEvent(absence));
+            eventAdded = true;
+          }
+        }
+
+      });
+    };
+
+    function createAbsenceEvent(absence: Absence) {
+      return {
+        id: 'absence-' + absence.id,
+        start: format(absence.startTime, 'yyyy-MM-dd HH:mm'),
+        end: format(absence.endTime, 'yyyy-MM-dd HH:mm'),
+        class: 'absence',
+        split: therapistIdToSplitIndex(absence.therapistId)
       };
+    }
 
     const loadAppointments = async () => {
         await appointmentStore.loadAppointments();
-
-        // Lade Therapeuten
-        const therapists = therapistStore.getTherapists().filter((therapist) => therapist.isActive);
         
         // Erstelle ein Mapping von therapistId zu Index
         const therapistIndexMap = new Map<number, number>();
-        therapists.forEach((therapist, index) => {
+        therapists.value.forEach((therapist, index) => {
           therapistIndexMap.set(therapist.id, index + 1);
         });
         // Konvertiere Termine in vue-cal Format
-        const appointmentEvents = appointmentStore.getAllAppointments.map((appointment) => {
+        const appointmentEvents = appointmentStore.getAppointmentsForDate(selectedDate.value).map((appointment) => {
         const therapistIndex = therapistIndexMap.get(appointment.therapist.id) || 0;
            // Definiere die Klasse basierend auf dem isGeneratedBySeries-Flag
         let className = appointment.createdBySeriesAppointment ? 'generated-single-appointment' : 'single-appointment';
@@ -229,12 +260,26 @@ export default defineComponent({
             end: formatDateString(appointment.endTime),
             title: appointment.patient.fullName,
             class: className,
-            split: therapistIndex, // Hier wird der korrekte Index zugewiesen
+            split: therapistIndex,
           };
         });
 
         events.value = [...appointmentEvents];
     };
+
+    function therapistIdToSplitIndex(therapistId: number) {
+      return therapists.value.findIndex(t => t.id === therapistId) + 1;
+    }
+    
+    const checkForConflicts = async () => {
+      await appointmentStore.loadAppointmentConflicts();
+      const conflictResults = await appointmentStore.getAppointmentConflicts;
+      conflicts.value = conflictResults;
+    }
+
+    const formatDateString = (date: Date): string => {
+        return format(date, 'yyyy-MM-dd HH:mm');
+      };
 
     const handleEventClick = (event: any) => {
       // Handle event click (open dialogs)
@@ -279,7 +324,7 @@ export default defineComponent({
 
           // Speichere das aktualisierte Appointment
           await appointmentStore.updateAppointment(appointment.id, appointment);
-          await loadAppointments(); // Lade die aktualisierten Termine
+          refreshData(); // Lade die aktualisierten Termine
         }
       } catch (error) {
         console.error('Error handling event resize:', error);
@@ -292,7 +337,6 @@ export default defineComponent({
       try {
         // Lösche das Appointment
         await appointmentStore.deleteAppointment(id);
-        await loadAppointments(); // Lade die aktualisierten Termine
       } catch (error) {
         console.error('Error handling event delete:', error);
         toast.error('Fehler beim Löschen des Termins.');
@@ -338,34 +382,34 @@ export default defineComponent({
 
     const addAppointment = async (appointment: SingleAppointment) => {
       await appointmentStore.addAppointment(appointment);
-      loadAppointments();
+      refreshData();
       createDialog.value = false;
     };
 
     const addSeriesAppointment = async (appointment: AppointmentSeries) => {
       await appointmentSeriesStore.addAppointmentSeries(appointment);
-      loadAppointments();
+      refreshData();
       createDialog.value = false;
     };
 
     const changeSingleAppointment = async (appointment: SingleAppointment) => {
        await appointmentStore.updateAppointment(appointment.id, appointment)
-       loadAppointments();
+       refreshData();
     };
 
     const changeSeriesAppointment = (appointment: AppointmentSeries) => {
       appointmentSeriesStore.updateAppointmentSeries(appointment.id, appointment);
-      loadAppointments();
+      refreshData();
     };
 
     const deleteSingleAppointment = async (appointment: SingleAppointment) => {
       await appointmentStore.deleteAppointment(appointment.id);
-      loadAppointments();
+      refreshData();
     };
 
     const deleteSeriesAppointment = (id: number) => {
       appointmentSeriesStore.deleteAppointmentSeries(id);
-      loadAppointments();
+      refreshData();
     };
 
     return {
@@ -377,6 +421,7 @@ export default defineComponent({
       selectedSeriesAppointment,
       initAppointment,
       events,
+      therapists,
       handleEventClick,
       handleDateClick,
       handleEventDrop,
@@ -447,6 +492,10 @@ export default defineComponent({
 }
 
 .non-work-hours {
+  background-color: #333; /* Dunkelgrau für Nicht-Arbeitszeiten */
+}
+
+.absence {
   background-color: #333; /* Dunkelgrau für Nicht-Arbeitszeiten */
 }
 
