@@ -19,12 +19,6 @@
         <v-col>
           <v-text-field v-model="search" label="Suche" clearable @input="filterTherapists" />
         </v-col>
-        <!-- Plus Button -->
-        <v-col cols="auto">
-          <v-btn class="createTherapistBtn" color="green" @click="openCreateTherapistDialog">
-            <v-icon color="white">mdi-plus</v-icon>
-          </v-btn>
-        </v-col>
       </v-row>
     </v-card-text>
 
@@ -53,6 +47,10 @@
     <v-card-actions>
       <v-btn color="grey" @click="closeDialog">Abbrechen</v-btn>
       <v-spacer></v-spacer>
+        <!-- Plus Button -->
+          <v-btn class="createTherapistBtn" color="green" @click="openCreateTherapistDialog">
+            Therapeut erstellen
+          </v-btn>
     </v-card-actions>
 
     <!-- Dialoge für die Therapeutenverwaltung -->

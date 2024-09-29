@@ -107,7 +107,6 @@ import AppointmentSeries from '@/class/AppointmentSeries';
 import EventBus from '@/class/EventBus';
 import { useAuthStore } from '@/store/authStore';
 import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
-import { format } from 'date-fns';
 
 export default defineComponent({
   components: {

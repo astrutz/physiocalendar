@@ -6,7 +6,6 @@ import { JSONAbsenceDTO, JSONAbsenceExceptionDTO, JSONAppointmentSeriesDTO, JSON
 JSONTherapistDTO } from '@/class/JSONStructures';
 import SingleAppointment from '@/class/SingleAppointment';
 import AbsenceException from '@/class/AbsenceException';
-import { Weekday } from '../class/Enums';
 import Patient from '@/class/Patient';
 
 export function convertToTherapist(therapist: JSONTherapistDTO): Therapist {

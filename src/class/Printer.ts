@@ -26,7 +26,7 @@ export default class Printer {
   }
 
   private async loadAndPrintAppointments(startDate: Date, endDate: Date): Promise<void> {
-    await this.appointmentStore.loadAppointments();
+    this.appointmentStore.loadAppointments();
     const appointments: SingleAppointment[] = await this.appointmentStore.getAppointmentsByPatientId(this.patientId);
     this.patient = appointments[0].patient;
 

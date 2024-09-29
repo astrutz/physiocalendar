@@ -149,7 +149,6 @@ export default defineComponent({
     const therapistStore = useTherapistStore();
     const patientStore = usePatientStore();
     const appointmentStore = useAppointmentStore();
-    const absenceStore = useAbsenceStore();
 
     const foundPatients = ref(patientStore.patients);
 

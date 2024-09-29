@@ -70,8 +70,8 @@ export interface JSONAbsenceExceptionDTO {
 export interface JSONAbsenceDTO {
   id: number;
   therapistId: number;
-  date: Date;
-  weekday: Weekday;
+  date: Date | null;
+  weekday: Weekday | null;
   startTime: Date;
   endTime: Date;
 }

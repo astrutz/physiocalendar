@@ -10,8 +10,8 @@
       </v-btn>
     </template>
     <v-list>
-      <v-list-item @click="downloadItem">
-        <v-list-item-title>Backup runterladen</v-list-item-title>
+      <v-list-item @click="openDialog(0)">
+        <v-list-item-title>Konflikte prüfen</v-list-item-title>
       </v-list-item>
       <v-list-item @click="openDialog(1)">
         <v-list-item-title>Terminfinder</v-list-item-title>
@@ -26,6 +26,9 @@
   </v-menu>
 
   <!-- Dialoge -->
+  <v-dialog v-model="menuItems[0].dialog" max-width="1000">
+    <ConflictDialog @dialogClosed="closeDialog(0)" />
+  </v-dialog>
   <v-dialog v-model="menuItems[1].dialog" max-width="800">
     <Terminfinder @dialogClosed="closeDialog(1)" />
   </v-dialog>
@@ -42,17 +45,19 @@ import { defineComponent, ref } from 'vue';
 import Terminfinder from '@/components/Terminfinder.vue';
 import Therapists from '@/components/Therapists.vue';
 import Patients from '@/components/Patients.vue';
+import ConflictDialog from './ConflictDialog.vue';
 
 export default defineComponent({
   components: {
     Terminfinder,
     Therapists,
     Patients,
+    ConflictDialog,
   },
   setup() {
     const dropdownOpen = ref(false);
     const menuItems = ref([
-      { title: 'Backup einspielen', dialog: false },
+      { title: 'Konflikte prüfen', dialog: false },
       { title: 'Terminfinder', dialog: false },
       { title: 'Therapeuten verwalten', dialog: false },
       { title: 'Patienten verwalten', dialog: false },

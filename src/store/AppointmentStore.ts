@@ -5,7 +5,6 @@ import { JSONSingleAppointmentDTO } from '@/class/JSONStructures';
 import { convertToAppointment, convertToAppointmentDTO } from './convert';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
-import { useAuthStore } from './authStore';
 import apiClient from './apiClient';
 
 export const useAppointmentStore = defineStore('appointment', {
@@ -15,19 +14,49 @@ export const useAppointmentStore = defineStore('appointment', {
   }),
 
   actions: {
-    async loadAppointments(params?: { date?: string; therapistId?: number; patientId?: number }): Promise<void> {
+    async loadAppointments(params?: { date?: Date; therapistId?: number; patientId?: number }): Promise<void> {
       try {
         const queryString = params ? this.buildQueryString(params) : '';
+        
+        // Führe die Anfrage aus
         const responseData: JSONSingleAppointmentDTO[] = (await apiClient.get(`appointments${queryString}`)).data;
-        this.appointments = responseData.map(dto => convertToAppointment(dto));
+    
+        if (responseData.length === 0) {
+          // Wenn die zurückgegebene Liste leer ist, Liste der appointments leeren
+          this.appointments = [];
+          console.log('Keine Termine für den ausgewählten Zeitraum.');
+        } else {
+          // Konvertiere die DTOs in Appointment-Objekte
+          this.appointments = responseData.map((dto: JSONSingleAppointmentDTO) => convertToAppointment(dto));
+        }
       } catch (err) {
         console.error(err);
         toast.error('Fehler beim Laden der Termine.');
       }
     },
+    
 
-    async loadAppointmentsForDate(date: string): Promise<void> {
-      await this.loadAppointments({ date });
+    async loadAppointmentsForDate(date: Date): Promise<void> {
+      try {
+        // Konvertiere das Datum ins ISO-Format (yyyy-MM-dd)
+        const formattedDate = date.toISOString().split('T')[0];
+        
+        // API-Aufruf
+        const responseData = (await apiClient.get(`/appointments/date?date=${formattedDate}`)).data;
+    
+        // Überprüfe, ob die Antwort leer ist
+        if (responseData.length === 0) {
+          console.log('Keine Termine für den ausgewählten Tag.');
+          this.appointments = []; // Leere Liste zuweisen, wenn keine Termine gefunden wurden
+        } else {
+          // Konvertiere die DTOs in Appointment-Objekte
+          this.appointments = responseData.map((dto: JSONSingleAppointmentDTO) => convertToAppointment(dto));
+        }
+        
+      } catch (err) {
+        console.error(err);
+        toast.error('Fehler beim Laden der Termine.');
+      }
     },
 
     async loadAppointmentConflicts(): Promise<void> {
@@ -49,7 +78,6 @@ export const useAppointmentStore = defineStore('appointment', {
       try {
         const appointmentDTO = convertToAppointmentDTO(appointment);
         await apiClient.post('appointments', appointmentDTO);
-        this.loadAppointments({ date: appointment.date.toISOString() });
         toast.success("Termin erfolgreich erstellt.");
       } catch (err) {
         console.error(err);
@@ -61,7 +89,6 @@ export const useAppointmentStore = defineStore('appointment', {
       try {
         const appointmentDTO = convertToAppointmentDTO(appointment);
         await apiClient.put(`appointments/${id}`, appointmentDTO);
-        this.loadAppointments();
         toast.success('Termin erfolgreich aktualisiert.');
       } catch (err) {
         console.error(err);
@@ -72,7 +99,6 @@ export const useAppointmentStore = defineStore('appointment', {
     async deleteAppointment(id: number): Promise<void> {
       try {
         await apiClient.delete(`appointments/${id}`);
-        this.loadAppointments();
         toast.success('Termin erfolgreich gelöscht.');
       } catch (err) {
         console.error(err);
@@ -80,11 +106,12 @@ export const useAppointmentStore = defineStore('appointment', {
       }
     },
 
-    buildQueryString(params: { date?: string; therapistId?: number; patientId?: number }): string {
+    buildQueryString(params: { date?: Date; therapistId?: number; patientId?: number }): string {
       const queryParts: string[] = [];
 
       if (params.date) {
-        queryParts.push(`date=${encodeURIComponent(params.date)}`);
+        const formattedDate = params.date.toISOString().split('T')[0];
+        queryParts.push(`date=${encodeURIComponent(formattedDate)}`);
       }
 
       if (params.therapistId !== undefined) {

@@ -202,6 +202,7 @@ export default defineComponent({
     const patientStore = usePatientStore();
 
     const loadAppointments = async () => {
+      await appointmentStore.loadAppointments({ patientId: props.patientId });
       loadingAppointments.value = true;
       appointments.value = await appointmentStore.getAppointmentsByPatientId(props.patientId);
       loadingAppointments.value = false;

@@ -15,12 +15,16 @@
         <v-icon>mdi-plus</v-icon>
       </v-btn>
     </v-col>
+    <v-col cols="auto">
+      <v-btn color="primary" @click="setToday">Heute</v-btn>
+    </v-col>
+
     <v-dialog v-model="datePickerOpen" max-width="290">
       <v-date-picker
         v-model="dateObject"
         :header="formatHeader(dateObject)"
         :allowed-dates="dateIsAllowed"
-        locale="de-de"
+        :locale=locale
         :first-day-of-week="1"
         @input="updateDate"
       ></v-date-picker>
@@ -29,31 +33,44 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, onMounted, PropType } from 'vue';
+import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import { getWeekdayStringForDate, convertEnglishToGermanReadableString } from '@/class/Dateconversions';
 import holidays from '@/data/holidays.json';
+import {  de } from 'vuetify/locale'
 
 export default defineComponent({
   props: {
     currentSingleDay: {
-      type: Date as PropType<Date>,
+      type: Date,
       required: true,
-      default: () => new Date(),
     },
   },
   emits: ['currentDayChanged'],
   setup(props, { emit }) {
-    const dateObject = ref<Date>(props.currentSingleDay); // Ref to hold Date object
     const holidaysSet = new Set(holidays.days);
     const datePickerOpen = ref(false);
     const weekday = ref<string>('');
+    const initialDate = sessionStorage.getItem('currentDay');
+    const dateObject = ref<Date>(initialDate ? new Date(initialDate) : new Date()); // Lade das Datum aus sessionStorage oder setze auf Gegenwart
+    const locale = de;
 
-    watch(
-      () => props.currentSingleDay,
-      (newDate: Date) => {
-        dateObject.value = newDate;
+    onMounted(() => {
+      if (!initialDate) {
+        sessionStorage.setItem('currentDay', dateObject.value.toISOString());
+        updateWeekday();
       }
-    );
+      updateWeekday();
+      emit('currentDayChanged', dateObject.value);
+    });
+
+    watch(() => props.currentSingleDay, (newDate: Date) => {
+      // Aktualisiere nur, wenn das neue Datum anders ist als das aktuelle dateObject
+      if (newDate.toISOString() !== dateObject.value.toISOString()) {
+          dateObject.value = new Date(newDate);
+          updateWeekday();
+        }
+      });
+
 
     const dateFormatted = computed(() =>
       convertEnglishToGermanReadableString(dateObject.value.toISOString().substr(0, 10))
@@ -69,6 +86,8 @@ export default defineComponent({
 
     const updateDate = () => {
       datePickerOpen.value = false;
+      updateWeekday();
+      sessionStorage.setItem('currentDay', dateObject.value.toISOString());
       emit('currentDayChanged', dateObject.value);
     };
 
@@ -88,7 +107,7 @@ export default defineComponent({
         return false;
       }
       const day = new Date(dateToCheck).getDay();
-      return day != 0;
+      return day !== 0; // Sonntag ist nicht erlaubt
     };
 
     const getWeekdaybyDate = (date?: Date): string => {
@@ -104,6 +123,7 @@ export default defineComponent({
       }
       dateObject.value = newDate;
       updateWeekday();
+      sessionStorage.setItem('currentDay', newDate.toISOString());
       emit('currentDayChanged', newDate);
     };
 
@@ -115,11 +135,28 @@ export default defineComponent({
       }
       dateObject.value = newDate;
       updateWeekday();
+      sessionStorage.setItem('currentDay', newDate.toISOString());
+      emit('currentDayChanged', newDate);
+    };
+
+    const setToday = (): void => {
+      const today = new Date();
+      dateObject.value = today;
+      updateWeekday();
+      sessionStorage.setItem('currentDay', today.toISOString());
+      emit('currentDayChanged', today);
+    };
+
+    const setDateExternally = (newDate: Date): void => {
+      dateObject.value = new Date(newDate);
+      updateWeekday();
+      sessionStorage.setItem('currentDay', newDate.toISOString());
       emit('currentDayChanged', newDate);
     };
 
     watch(dateObject, () => {
       updateWeekday();
+      sessionStorage.setItem('currentDay', dateObject.value.toISOString());
       emit('currentDayChanged', dateObject.value);
     });
 
@@ -130,8 +167,10 @@ export default defineComponent({
       formatHeader,
       weekday,
       datePickerOpen,
+      locale,
       setPreviousDate,
       setNextDate,
+      setToday,
       updateDate,
       openDatePicker,
     };

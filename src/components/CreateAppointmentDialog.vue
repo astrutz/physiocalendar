@@ -223,7 +223,6 @@ export default defineComponent({
 
     onMounted(() => {
       loadPatients();
-      //console.log(singleAppointment.value);
     });
 
     watch(() => patientStore.getAllPatients, (newPatients) => {

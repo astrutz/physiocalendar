@@ -3,6 +3,7 @@
 import 'vuetify/styles'; // Importiert die Vuetify-Styles
 import { createVuetify } from 'vuetify';
 import { aliases, mdi } from 'vuetify/iconsets/mdi'; // Falls du Material Design Icons verwendest
+import { de } from 'vuetify/lib/locale/index.mjs';
 
 const vuetify = createVuetify({
   icons: {
@@ -22,6 +23,10 @@ const vuetify = createVuetify({
         },
       },
     },
+  },
+  locale: {
+    locale: 'de', // Setze Deutsch als Standard-Sprache
+    messages: { de },
   },
 });
 

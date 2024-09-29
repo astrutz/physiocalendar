@@ -1,26 +1,19 @@
 <template>
   <v-container class="d-flex flex-column align-center">
-    <!-- Konflikte anzeigen -->
-    <v-row justify="center">
-      <v-col cols="12">
-        <v-alert v-if="conflicts.length > 0" type="warning" dense>
-          Konflikt gefunden:
-          <v-list dense>
-            <v-list-item v-for="(conflict, index) in conflicts" :key="index">
-                 {{ formatDate(conflict.date) }} bei {{ conflict.therapist.firstName }} um {{ formatTime(conflict.startTime) }}
-            </v-list-item>
-          </v-list>
-        </v-alert>
-      </v-col>
-    </v-row>
   </v-container>
-    <!-- vue-cal Kalender -->
+        <v-progress-circular
+            v-if="isLoading"
+            indeterminate
+            color="primary"
+          ></v-progress-circular>
 
         <vue-cal
+          v-else
           sticky-split-labels
           :split-days="splits"
           :disable-views="['years', 'year', 'month']"
           :hide-view-selector="true"
+          :hideTitleBar="true"
           :activeView="'day'"
           v-model="selectedDate"
           :events="events"
@@ -85,6 +78,7 @@ import VueCal from 'vue-cal';
 import { format } from 'date-fns';
 import { formatDate, formatTime } from '../class/Dateconversions';
 import { useAbsenceStore } from '@/store/AbsenceStore';
+import { tr } from 'vuetify/lib/locale/index.mjs';
 
 export default defineComponent({
   components: {
@@ -100,6 +94,7 @@ export default defineComponent({
   },
   setup(props) {
     const createDialog = ref(false);
+    const isLoading = ref(false);
     const singleAppointmentDialog = ref(false);
     const seriesAppointmentDialog = ref(false);
     const selectedDate = ref<Date>(new Date());
@@ -173,7 +168,6 @@ export default defineComponent({
 
     const refreshData = async () => {
       await loadTherapists();
-      checkForConflicts();
     };
 
     const loadTherapists = async () => {
@@ -237,8 +231,7 @@ export default defineComponent({
     }
 
     const loadAppointments = async () => {
-        await appointmentStore.loadAppointments();
-        
+        await appointmentStore.loadAppointments( { date: selectedDate.value} );
         // Erstelle ein Mapping von therapistId zu Index
         const therapistIndexMap = new Map<number, number>();
         therapists.value.forEach((therapist, index) => {
@@ -270,12 +263,6 @@ export default defineComponent({
     function therapistIdToSplitIndex(therapistId: number) {
       return therapists.value.findIndex(t => t.id === therapistId) + 1;
     }
-    
-    const checkForConflicts = async () => {
-      await appointmentStore.loadAppointmentConflicts();
-      const conflictResults = await appointmentStore.getAppointmentConflicts;
-      conflicts.value = conflictResults;
-    }
 
     const formatDateString = (date: Date): string => {
         return format(date, 'yyyy-MM-dd HH:mm');
@@ -303,7 +290,6 @@ export default defineComponent({
 
           // Speichere das aktualisierte Appointment
           await appointmentStore.updateAppointment(appointment.id, appointment);
-          await loadAppointments(); // Lade die aktualisierten Termine
         }
       } catch (error) {
         console.error('Error handling event drop:', error);
@@ -335,7 +321,6 @@ export default defineComponent({
     const handleEventDelete = async (event: any) => {
       const { id } = event;
       try {
-        // Lösche das Appointment
         await appointmentStore.deleteAppointment(id);
       } catch (error) {
         console.error('Error handling event delete:', error);
@@ -422,6 +407,7 @@ export default defineComponent({
       initAppointment,
       events,
       therapists,
+      isLoading,
       handleEventClick,
       handleDateClick,
       handleEventDrop,
@@ -497,6 +483,10 @@ export default defineComponent({
 
 .absence {
   background-color: #333; /* Dunkelgrau für Nicht-Arbeitszeiten */
+}
+
+.vuecal__event-time {
+  display: none;
 }
 
 </style>
