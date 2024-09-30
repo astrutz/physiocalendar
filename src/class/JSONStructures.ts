@@ -76,6 +76,12 @@ export interface JSONAbsenceDTO {
   endTime: Date;
 }
 
+export interface JSONUserDTO {
+  id: number;
+  username: string;
+  therapistId: number;
+}
+
 export interface JSONTherapistDTO {
   id: number;
   fullName: string;

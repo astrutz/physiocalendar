@@ -3,14 +3,15 @@ import { defineStore } from 'pinia';
 import Therapist from '@/class/Therapist';
 import { JSONTherapistDTO } from '@/class/JSONStructures';
 import { convertToTherapist, convertToTherapistDTO } from './convert';
-import { useAuthStore } from './authStore';
 import apiClient from './apiClient';
 import { toast } from 'vue3-toastify';
+import User from '@/class/User';
 
 export const useTherapistStore = defineStore('therapist', {
   state: () => ({
     therapists: [] as Therapist[],
     therapist: {} as Therapist | null,
+    therapistUser: {} as { [key: number]: User },
     loading: false,
     error: null as string | null,
   }),
@@ -22,6 +23,11 @@ export const useTherapistStore = defineStore('therapist', {
       try {
         const responseData: JSONTherapistDTO[] = (await apiClient.get('therapists')).data;
         this.therapists = responseData.map((dto) => convertToTherapist(dto));
+
+        for (const therapist of this.therapists) {
+          const userResponse = await apiClient.get(`/auth/user/therapist/${therapist.id}`);
+          this.therapistUser[therapist.id] = userResponse.data;
+        }
       } catch (err) {
         this.error = 'Failed to load therapists';
         console.error(err);
@@ -34,6 +40,9 @@ export const useTherapistStore = defineStore('therapist', {
       try {
         const responseData: JSONTherapistDTO = (await apiClient.get(`therapist/${id}`)).data;
         this.therapist = convertToTherapist(responseData);
+
+        const userResponse = await apiClient.get(`/auth/user/therapist/${id}`);
+        this.therapistUser[id] = userResponse.data;
       } catch (err) {
         console.error(err);
       }
@@ -83,6 +92,10 @@ export const useTherapistStore = defineStore('therapist', {
 
     getTherapists: (state) => () => {
       return state.therapists || [];
+    },
+
+    getTherapistUserById: (state) => (therapistId: number) => {
+      return state.therapistUser[therapistId];
     },
   },
 });

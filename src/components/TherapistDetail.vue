@@ -6,13 +6,16 @@
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-card-title>
-    <v-card-text v-if="therapistInput">
+    <v-card-text v-if="therapistInput && therapistUser">
       <v-row>
         <v-col>
           <v-text-field label="Vorname" v-model="therapistInput.firstName" clearable></v-text-field>
         </v-col>
         <v-col>
           <v-text-field label="Nachname" v-model="therapistInput.lastName" clearable></v-text-field>
+        </v-col>
+        <v-col>
+          <v-text-field label="Benutzername" v-model="therapistUser.username"></v-text-field>
         </v-col>
         <v-col cols="auto">
           <v-checkbox label="Aktiv" v-model="therapistInput.isActive"></v-checkbox>
@@ -192,6 +195,7 @@ import AbsenceDialog from './AbsenceDialog.vue';
 import SingleAppointmentDialog from './SingleAppointmentDialog.vue';
 import AppointmentSeriesDialog from './AppointmentSeriesDialog.vue';
 import { formatDate, formatTime } from '@/class/Dateconversions';
+import User from '@/class/User';
 
 export default defineComponent({
   components: {
@@ -207,6 +211,7 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const therapistInput = ref<Therapist | undefined>(undefined);
+    const therapistUser = ref<User | undefined>(undefined);
     const appointments = ref<SingleAppointment[]>([]);
     const appointmentSeries = ref<AppointmentSeries[]>([]);
     const loadingAppointments = ref(true);
@@ -278,6 +283,7 @@ export default defineComponent({
 
     onMounted(async () => {
       therapistInput.value = await therapistStore.getTherapistById(props.therapistId);
+      therapistUser.value = await therapistStore.getTherapistUserById(props.therapistId);
       await loadAppointments();
       await loadAppointmentSeries();
       await loadAbsences();
@@ -411,6 +417,7 @@ export default defineComponent({
       isAbsenceDialogVisible,
       editingAbsence,
       absenceInput,
+      therapistUser,
       cancelChanges,
       saveChanges,
       deleteTherapist,

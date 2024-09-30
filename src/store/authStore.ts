@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia';
 import { onMounted, ref } from 'vue';
 import apiClient from './apiClient';
+import { toast } from 'vue3-toastify';
 
 interface User {
   id: number;
@@ -37,39 +38,45 @@ export const useAuthStore = defineStore('auth', () => {
     }
   });
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string): Promise<boolean> => {
     try {
       const response = await apiClient.post('/auth/login', { username, password });
-
+  
       if (!response.data || !response.data.token) {
         throw new Error('Fehler beim Anmelden: Token nicht gefunden');
       }
-
+  
       token.value = response.data.token;
       localStorage.setItem('authToken', response.data.token);
       apiClient.defaults.headers['Authorization'] = `Bearer ${token.value}`;
-
+  
       // Benutzerdaten abrufen
       const userResponse = await apiClient.get('/auth/user');
       if (!userResponse.data) {
         throw new Error('Fehler beim Anmelden: Benutzerdaten nicht gefunden');
       }
-
+  
       user.value = userResponse.data;
       isAuthenticated.value = true;
-      console.log('Login erfolgreich:', user.value);
-    } catch (error) {
-      console.error('Fehler beim Anmelden:', error);
-      logout(); // Bei Fehler sicherstellen, dass alle Anmelde-Daten entfernt werden
+      toast.success('Login erfolgreich!');
+      return true; // Erfolg: true zurückgeben
+    } catch (error: any) {
+      if (error.response && error.response.status === 403) {
+        toast.error('Benutzername oder Passwort ist falsch');
+      } else {
+        toast.error('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+      }
+      return false; // Fehler: false zurückgeben
     }
   };
+  
 
   const logout = () => {
     token.value = null;
     user.value = null;
     isAuthenticated.value = false;
     localStorage.removeItem('authToken');
-    apiClient.defaults.headers['Authorization'] = ''; // Auth-Header entfernen
+    apiClient.defaults.headers['Authorization'] = '';
   };
 
   return {
