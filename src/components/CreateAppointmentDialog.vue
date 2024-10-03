@@ -256,6 +256,7 @@ export default defineComponent({
     watch(() => props.appointment, (newAppointment) => {
       selectedPatientId.value = null;
       singleAppointment.value = newAppointment;
+      seriesAppointment.value.therapist = newAppointment.therapist;
     });
 
     const handleSearchInput = (search: string) => {

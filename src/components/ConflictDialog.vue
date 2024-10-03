@@ -51,7 +51,7 @@ import EventBus from '@/class/EventBus';
       const appointmentStore = useAppointmentStore();
   
       const headers = ref([
-        { title: 'Datum', value: 'date' },
+        { title: 'Datum', value: 'date', sortable: true },
         { title: 'Therapeut', value: 'therapist' },
         { title: 'Startzeit', value: 'startTime' },
         { title: 'Endzeit', value: 'endTime' },

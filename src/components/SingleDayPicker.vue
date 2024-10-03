@@ -107,7 +107,7 @@ export default defineComponent({
         return false;
       }
       const day = new Date(dateToCheck).getDay();
-      return day !== 0; // Sonntag ist nicht erlaubt
+      return day !== 6; // Sonntag ist nicht erlaubt
     };
 
     const getWeekdaybyDate = (date?: Date): string => {

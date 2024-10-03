@@ -11,17 +11,19 @@ export const useAbsenceStore = defineStore('absence', {
   }),
 
   actions: {
-    async loadAbsences(therapistId: number): Promise<void> {
+
+    async loadAbsences(therapistId: number, params?: { date?: string; weekday?: string }) {
       try {
-        const responseData: JSONAbsenceDTO[] = (await apiClient.get(`/absences/therapist/${therapistId}`)).data;
-        if(responseData) {
-          this.absences = responseData.map(dto => convertToAbsence(dto));
-        }
+        const queryString = params ? this.buildQueryString(params) : '';
+        const responseData: JSONAbsenceDTO[] = (await apiClient.get(`absences/therapist/${therapistId}/date${queryString}`)).data;
+        this.absences = responseData.map((dto) => convertToAbsence(dto));
+
       } catch (err) {
-        console.error(err);
+        console.error('Fehler beim Laden der Abwesenheiten', err);
+        toast.error('Fehler beim Laden der Abwesenheiten.');
       }
     },
-
+    
     async addAbsence(therapistId: number, absence: Absence): Promise<void> {
       try {
         const absenceDTO = convertToAbsenceDTO(absence);
@@ -63,7 +65,18 @@ export const useAbsenceStore = defineStore('absence', {
         toast.error('Fehler beim Überprüfen der Abwesenheit.');
         return false;
       }
-    }    
+    },
+    
+    buildQueryString(params: { [key: string]: any }): string {
+      const queryParts: string[] = [];
+      for (const key in params) {
+        if (params[key] !== undefined && params[key] !== null) {
+          queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`);
+        }
+      }
+      return queryParts.length ? `?${queryParts.join('&')}` : '';
+    }
+    
   },
 
   getters: {

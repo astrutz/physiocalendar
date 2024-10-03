@@ -1,14 +1,16 @@
 <template>
   <v-container class="d-flex flex-column align-center">
-  </v-container>
-        <v-progress-circular
+    <v-progress-circular
             v-if="isLoading"
             indeterminate
             color="primary"
+            size="50"
           ></v-progress-circular>
+  </v-container>
+
 
         <vue-cal
-          v-else
+          v-if="!isLoading"
           sticky-split-labels
           :split-days="splits"
           :disable-views="['years', 'year', 'month']"
@@ -76,9 +78,8 @@ import 'vue-cal/dist/vuecal.css';
 // @ts-ignore
 import VueCal from 'vue-cal';
 import { format } from 'date-fns';
-import { formatDate, formatTime } from '../class/Dateconversions';
+import { formatDate, formatTime, getWeekdayForDate } from '../class/Dateconversions';
 import { useAbsenceStore } from '@/store/AbsenceStore';
-import { tr } from 'vuetify/lib/locale/index.mjs';
 
 export default defineComponent({
   components: {
@@ -167,7 +168,50 @@ export default defineComponent({
     );
 
     const refreshData = async () => {
+      isLoading.value = true;
+      events.value = [];
       await loadTherapists();
+      await loadAppointments();
+      for (const therapist of therapists.value) {
+        await loadAbsences(therapist.id);
+      }
+
+      isLoading.value = false;
+    };
+
+    const loadAppointments = async () => {
+      await appointmentStore.loadAppointments({ date: selectedDate.value });
+      
+      // Erstelle ein Mapping von therapistId zu Index
+      const therapistIndexMap = new Map<number, number>();
+      therapists.value.forEach((therapist, index) => {
+        therapistIndexMap.set(therapist.id, index + 1);
+      });
+      
+      // Konvertiere Termine in vue-cal Format
+      const appointmentEvents = appointmentStore.getAllAppointments.map((appointment) => {
+        const therapistIndex = therapistIndexMap.get(appointment.therapist.id) || 0;
+        
+        // Definiere die Klasse basierend auf dem isGeneratedBySeries-Flag
+        let className = appointment.createdBySeriesAppointment ? 'generated-single-appointment' : 'single-appointment';
+        className = appointment.patient.isBWO ? 'bwo-appointment' : className;
+        className = appointment.isElectric ? 'checkbox-electric' : className;
+        className = appointment.isHotair ? 'checkbox-hotair' : className;
+        className = appointment.isUltrasonic ? 'checkbox-ultrasonic' : className;
+
+        return {
+          id: appointment.id,
+          start: formatDateString(appointment.startTime),
+          end: formatDateString(appointment.endTime),
+          title: appointment.patient.fullName,
+          class: className,
+          split: therapistIndex,
+        };
+      });
+      
+      // Setze nur die appointment events, behalte bestehende Absences
+      events.value = [...events.value, ...appointmentEvents];
+      console.log( events.value);
     };
 
     const loadTherapists = async () => {
@@ -177,88 +221,46 @@ export default defineComponent({
         label: therapist.firstName,
         class: generateClassName(index)
       }));
-      await loadAppointments();
-      for (const therapist of therapists.value) {
-        await loadAbsences(therapist.id);
-      }
     };
 
     const loadAbsences = async (therapistId: number) => {
-      await absenceStore.loadAbsences(therapistId);
+      await absenceStore.loadAbsences(therapistId, { date: selectedDate.value.toISOString().split('T')[0], weekday: getWeekdayForDate(selectedDate.value) });
+      
       const therapistAbsences = absenceStore.getAbsencesForTherapist(therapistId);
-      const today = new Date(selectedDate.value);
+      console.log(therapistAbsences);
+      const absenceEvents = therapistAbsences.map(absence => createAbsenceEvent(absence));
 
-      therapistAbsences.forEach(absence => {
-        let eventAdded = false;
+      console.log(absenceEvents);
 
-        if (absence.weekday) {
-          const absenceDayIndex = getDayIndex(absence.weekday);
-          const todayDayIndex = today.getDay();
-
-          if (absenceDayIndex === todayDayIndex) {
-            const startTime = new Date(today);
-            const endTime = new Date(today);
-
-            startTime.setHours(new Date(absence.startTime).getHours(), new Date(absence.startTime).getMinutes(), 0, 0);
-            endTime.setHours(new Date(absence.endTime).getHours(), new Date(absence.endTime).getMinutes(), 0, 0);
-
-            absence.startTime = startTime;
-            absence.endTime = endTime;
-
-            events.value.push(createAbsenceEvent(absence));
-            eventAdded = true;
-          }
-        } else if (absence.date) {
-          const absenceDate = new Date(absence.date);
-
-          if (absenceDate.setHours(0, 0, 0, 0) === today.setHours(0, 0, 0, 0)) {
-              events.value.push(createAbsenceEvent(absence));
-            eventAdded = true;
-          }
-        }
-
-      });
+      // Ergänze die Abwesenheiten zu den bestehenden Events
+      events.value = [...events.value, ...absenceEvents];
     };
 
     function createAbsenceEvent(absence: Absence) {
+      // Hole das aktuelle Datum (selectedDate) und extrahiere das Datum ohne Uhrzeit
+      const currentDate = new Date(selectedDate.value);
+      currentDate.setHours(0, 0, 0, 0); // Setze die Zeit auf Mitternacht
+
+      // Hole die Uhrzeiten der Abwesenheit
+      const absenceStartTime = new Date(absence.startTime);
+      const absenceEndTime = new Date(absence.endTime);
+
+      // Setze das Start- und Enddatum auf das aktuelle Datum, behalte aber die Uhrzeit
+      const start = new Date(currentDate);
+      start.setHours(absenceStartTime.getHours(), absenceStartTime.getMinutes(), 0, 0);
+
+      const end = new Date(currentDate);
+      end.setHours(absenceEndTime.getHours(), absenceEndTime.getMinutes(), 0, 0);
+
+      // Erstelle das Event mit dem aktualisierten Start- und Enddatum
       return {
         id: 'absence-' + absence.id,
-        start: format(absence.startTime, 'yyyy-MM-dd HH:mm'),
-        end: format(absence.endTime, 'yyyy-MM-dd HH:mm'),
+        start: format(start, 'yyyy-MM-dd HH:mm'),
+        end: format(end, 'yyyy-MM-dd HH:mm'),
         class: 'absence',
         split: therapistIdToSplitIndex(absence.therapistId)
       };
     }
-
-    const loadAppointments = async () => {
-        await appointmentStore.loadAppointments( { date: selectedDate.value} );
-        // Erstelle ein Mapping von therapistId zu Index
-        const therapistIndexMap = new Map<number, number>();
-        therapists.value.forEach((therapist, index) => {
-          therapistIndexMap.set(therapist.id, index + 1);
-        });
-        // Konvertiere Termine in vue-cal Format
-        const appointmentEvents = appointmentStore.getAppointmentsForDate(selectedDate.value).map((appointment) => {
-        const therapistIndex = therapistIndexMap.get(appointment.therapist.id) || 0;
-           // Definiere die Klasse basierend auf dem isGeneratedBySeries-Flag
-        let className = appointment.createdBySeriesAppointment ? 'generated-single-appointment' : 'single-appointment';
-        className = appointment.patient.isBWO ? 'bwo-appointment' : className;
-        className = appointment.isElectric ? 'checkbox-electric' : className;
-        className = appointment.isHotair ? 'checkbox-hotair' : className;
-        className = appointment.isUltrasonic ? 'checkbox-ultrasonic' : className;
-
-          return {
-            id: appointment.id,
-            start: formatDateString(appointment.startTime),
-            end: formatDateString(appointment.endTime),
-            title: appointment.patient.fullName,
-            class: className,
-            split: therapistIndex,
-          };
-        });
-
-        events.value = [...appointmentEvents];
-    };
 
     function therapistIdToSplitIndex(therapistId: number) {
       return therapists.value.findIndex(t => t.id === therapistId) + 1;
