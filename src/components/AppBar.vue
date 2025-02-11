@@ -13,30 +13,30 @@
       @click:prepend="search()"
       @keydown.enter="search()"
     ></v-text-field>
-    <v-card
-      v-if="showSearchResults"
-      class="search-results"
-      light
-      elevation="24"
-    >
-      <v-card-title>Suchergebnisse</v-card-title>
-      <ul class="pt-2 ml-4 mr-4 mb-4" v-if="searchResults.length > 0">
-        <li v-for="(result, i) in searchResults" :key="`${result.id}-${i}`">
-          <!-- Hier werden die Suchergebnisse in Button-Elemente gewrappt -->
-          <v-btn text @click="navigateTargetDate(result.date)">
-            <strong>{{ result.patient }}:</strong>
-            {{
-              result.startDate ? `${result.weekday}s` : getReadableDate(result.date)
-            }}, {{ result.startTime }} bis {{ result.endTime }} bei
-            {{ result.therapist }}
-          </v-btn>
-        </li>
-      </ul>
-      <p v-else>Keine Termine gefunden.</p>
-      <v-card-actions>
-        <v-btn color="primary" @click="closeSearchResults()">Schließen</v-btn>
-      </v-card-actions>
-    </v-card>
+    <v-card v-if="showSearchResults" class="search-results" light elevation="24">
+  <v-card-title>Suchergebnisse</v-card-title>
+
+  <!-- Der scrollbare Bereich -->
+  <v-card-text class="search-results-content">
+    <ul v-if="searchResults.length > 0">
+      <li v-for="(result, i) in searchResults" :key="`${result.id}-${i}`">
+        <v-btn block text @click="navigateTargetDate(result.date)">
+          <strong>{{ result.patient }}:</strong>
+          {{
+            result.startDate ? `${result.weekday}s` : getReadableDate(result.date)
+          }}, {{ result.startTime }} bis {{ result.endTime }} bei
+          {{ result.therapist }}
+        </v-btn>
+      </li>
+    </ul>
+    <p v-else>Keine Termine gefunden.</p>
+  </v-card-text>
+
+  <!-- Fixierte Schließen-Schaltfläche -->
+  <v-card-actions class="search-results-footer">
+    <v-btn color="primary" @click="closeSearchResults()">Schließen</v-btn>
+  </v-card-actions>
+</v-card>
     <Menu />
   </v-app-bar>
 </template>
@@ -134,9 +134,27 @@ export default class AppBar extends Vue {
 
 <style>
 .search-results {
-  position: absolute;
+  position: fixed; /* Damit der Dialog fixiert bleibt */
   top: 100px;
   right: 400px;
-  min-width: 400px;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.3);
 }
+
+.search-results-content {
+  flex-grow: 1; /* Sorgt dafür, dass sich der Inhalt flexibel anpasst */
+  overflow-y: auto; /* Macht den Inhalt scrollbar */
+  max-height: 300px; /* Begrenzte Höhe für das Scrollen */
+  padding: 10px;
+}
+
+.search-results-footer {
+  background: white;
+  padding: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 </style>
