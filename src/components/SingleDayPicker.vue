@@ -25,6 +25,7 @@
         </template>
         <v-date-picker
           v-model="date"
+          v-date-
           :allowed-dates="dateIsAllowed"
           @input="
             menu = false;
@@ -90,17 +91,30 @@ export default class SingleDayPicker extends Vue {
   }
 
   private dateIsAllowed(dateVal: string | Date): boolean {
+    const minDate = new Date('2024-01-01'); // 1. Januar 2024
+
     if (typeof dateVal === 'string') {
+      // Falls das Datum ein String ist, konvertieren wir es in ein Date-Objekt
+      const parsedDate = new Date(dateVal);
+      if (parsedDate < minDate) return false; // Blockiere alle Daten vor 2024
+
       if (this.holidays.includes(dateVal)) {
         return false;
       }
       const day = this.getCombinedDate(dateVal).getDay();
       return day > 0 && day < 7;
     }
-    const readableString = Dateconversions.convertGermanToEnglishReadableString(Dateconversions.convertDateToReadableString(dateVal));
+
+    // Falls es bereits ein Date-Objekt ist
+    if (dateVal < minDate) return false; // Blockiere alle Daten vor 2024
+
+    const readableString = Dateconversions.convertGermanToEnglishReadableString(
+      Dateconversions.convertDateToReadableString(dateVal),
+    );
     if (this.holidays.includes(readableString)) {
       return false;
     }
+
     const day = dateVal.getDay();
     return day > 0 && day < 7;
   }

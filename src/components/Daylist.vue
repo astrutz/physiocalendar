@@ -723,7 +723,7 @@ export default class Daylist extends Vue {
     return false;
   }
 
-  setRowspanTdId = (id: string, rowspan: number) => {
+  setRowspanTdId = (id: string, rowspan: number):void => {
     const td = document.getElementById(id);
     if (td) {
       td.setAttribute('rowspan', rowspan.toString());

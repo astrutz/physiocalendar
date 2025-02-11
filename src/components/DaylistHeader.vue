@@ -129,7 +129,6 @@
 </template>
 
 <script lang="ts">
-import Absence from '@/class/Absence';
 import Dateconversions from '@/class/Dateconversions';
 import { Time } from '@/class/Enums';
 import { Component, Prop, Vue } from 'vue-property-decorator';

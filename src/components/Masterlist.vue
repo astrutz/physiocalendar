@@ -444,8 +444,13 @@ export default class Masterlist extends Vue {
       };
       this.headers.forEach((header) => {
         if (header.text !== '' && !this.hasOngoingAppointments(header.value, row.startTime)) {
-          newRow[header.text] = this
-            .localBackup?.masterlist.searchAppointmentOnStartTime(header.id, this.currentWeekDay, row.startTime as Time) || '';
+          const appointment = this.localBackup?.masterlist.searchAppointmentOnStartTime(header.id,
+            this.currentWeekDay, row.startTime as Time);
+          if (appointment && appointment.endDate >= new Date()) {
+            newRow[header.text] = appointment;
+          } else {
+            newRow[header.text] = '';
+          }
         }
       });
       this.rows.push(newRow);

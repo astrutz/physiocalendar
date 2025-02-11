@@ -93,7 +93,7 @@ export default class Printer {
         }
         const dateAsString = Dateconversions.convertDateToReadableString(appointment.date);
         const weekdayReadable = Printer.getWeekday(appointment.date);
-        str += `${weekdayReadable}${dateAsString} ab ${appointment.startTime}\n`;
+        str += `${weekdayReadable}${dateAsString} um ${appointment.startTime}\n`;
         i += 1;
         if (j === singleAppointments.length - 1) {
           strs.push(str);
@@ -124,7 +124,6 @@ export default class Printer {
     const {
       startDate,
       endDate,
-      endTime,
       startTime,
       interval,
       cancellations,
